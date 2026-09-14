@@ -1,0 +1,29 @@
+{
+  "name": "@spectro/core",
+  "version": "0.1.0",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "check": "tsc -b --pretty false",
+    "test": "vitest run --exclude 'dist/**'"
+  },
+  "dependencies": {
+    "@spectro/protocol": "workspace:*",
+    "@spectro/types": "workspace:*",
+    "uuid": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

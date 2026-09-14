@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spectro.dev/schemas/custom.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["properties"],
+  "properties": {
+    "properties": { "$ref": "https://spectro.dev/schemas/common.schema.json#/$defs/jsonObject" }
+  }
+}

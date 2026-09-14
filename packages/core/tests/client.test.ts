@@ -1,0 +1,139 @@
+import { describe, expect, it } from 'vitest';
+
+import type { Envelope } from '@spectro/protocol';
+
+import { SpectroClient, SpectroValidationError, type Transport } from '../src/index.js';
+
+class MemoryTransport implements Transport {
+  envelopes: Envelope[] = [];
+
+  async send(envelope: Envelope): Promise<{ accepted: number }> {
+    this.envelopes.push(envelope);
+    return { accepted: envelope.items.length };
+  }
+}
+
+function createClient(transport: Transport, onError?: (error: Error) => void): SpectroClient {
+  return new SpectroClient(
+    {
+      projectId: 'prj_checkout',
+      apiKey: 'sp_local_dev',
+      environment: 'production',
+      endpoint: 'http://localhost:4401',
+      release: '1.8.2',
+      session: { id: 'ses_01' },
+      ...(onError ? { onError } : {}),
+    },
+    transport,
+  );
+}
+
+describe('SpectroClient', () => {
+  it('builds, queues, and flushes a contextual custom event', async () => {
+    const transport = new MemoryTransport();
+    const client = createClient(transport);
+
+    const eventId = client.track('checkout_started', { amount: 399 });
+    const result = await client.flush();
+
+    expect(eventId).toBeDefined();
+    expect(eventId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(result).toEqual({ sent: 1, remaining: 0 });
+    expect(transport.envelopes[0]?.items[0]?.payload).toMatchObject({
+      id: eventId,
+      type: 'custom',
+      name: 'checkout_started',
+      context: {
+        project: { id: 'prj_checkout' },
+        environment: 'production',
+        release: { version: '1.8.2' },
+        session: { id: 'ses_01' },
+      },
+      payload: { properties: { amount: 399 } },
+    });
+  });
+
+  it('restores drained events when transport fails', async () => {
+    let attempts = 0;
+    const errors: Error[] = [];
+    const transport: Transport = {
+      async send(envelope) {
+        attempts += 1;
+        if (attempts === 1) throw new Error('offline');
+        return { accepted: envelope.items.length };
+      },
+    };
+    const client = createClient(transport, (error) => errors.push(error));
+    client.track('checkout_started');
+
+    await expect(client.flush()).resolves.toEqual({ sent: 0, remaining: 1 });
+    expect(errors[0]?.message).toBe('offline');
+    await expect(client.flush()).resolves.toEqual({ sent: 1, remaining: 0 });
+  });
+
+  it('reports and drops invalid event names without throwing into the host', () => {
+    const errors: Error[] = [];
+    const client = createClient(new MemoryTransport(), (error) => errors.push(error));
+
+    expect(client.track('checkoutStarted')).toBeUndefined();
+    expect(errors[0]).toBeInstanceOf(SpectroValidationError);
+  });
+
+  it('reports unsupported and cyclic custom values without throwing into the host', () => {
+    const errors: Error[] = [];
+    const client = createClient(new MemoryTransport(), (error) => errors.push(error));
+    const properties: Record<string, unknown> = {};
+    properties.self = properties;
+
+    expect(client.track('cyclic_event', properties as never)).toBeUndefined();
+    expect(errors[0]?.message).toContain('cyclic');
+  });
+
+  it('contains failures thrown by the customer error hook', () => {
+    const client = createClient(new MemoryTransport(), () => {
+      throw new Error('customer callback failed');
+    });
+
+    expect(() => client.track('invalidName')).not.toThrow();
+  });
+
+  it('removes sensitive custom properties, user traits, and tags before transport', async () => {
+    const transport = new MemoryTransport();
+    const client = new SpectroClient(
+      {
+        projectId: 'prj_checkout',
+        apiKey: 'sp_local_dev',
+        environment: 'production',
+        endpoint: 'http://localhost:4401',
+        user: {
+          anonymousId: 'anon_01',
+          traits: { plan: 'pro', cookie: 'session=secret' },
+        },
+        tags: { region: 'cn', authorization: 'Bearer secret' },
+      },
+      transport,
+    );
+
+    client.capture({
+      type: 'custom',
+      name: 'checkout_started',
+      payload: {
+        properties: {
+          amount: 399,
+          user_password: 'secret',
+          document_cookie: 'session=secret',
+          auth_header: 'Bearer secret',
+          request: { request_payload: 'private', method: 'POST' },
+        },
+      },
+    });
+    await client.flush();
+
+    const captured = transport.envelopes[0]?.items[0]?.payload;
+    expect(captured?.payload).toEqual({
+      properties: { amount: 399, request: { method: 'POST' } },
+    });
+    expect(captured?.context.user?.traits).toEqual({ plan: 'pro' });
+    expect(captured?.context.tags).toEqual({ region: 'cn' });
+  });
+});

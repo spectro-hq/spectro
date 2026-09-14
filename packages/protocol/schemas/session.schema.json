@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spectro.dev/schemas/session.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["action"],
+  "properties": {
+    "action": { "type": "string", "enum": ["start", "end"] },
+    "duration": { "type": "number", "minimum": 0 }
+  }
+}

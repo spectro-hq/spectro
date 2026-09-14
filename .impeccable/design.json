@@ -1,0 +1,258 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-14T05:18:00Z",
+  "title": "Design System: Spectro",
+  "extensions": {
+    "colorMeta": {
+      "observatory-ink": {
+        "role": "neutral",
+        "displayName": "Observatory Ink",
+        "canonical": "#142238",
+        "tonalRamp": [
+          "#07101e",
+          "#142238",
+          "#2c3d56",
+          "#52647d",
+          "#7d8da2",
+          "#aeb9c8",
+          "#d9e0e9",
+          "#f5f7fa"
+        ]
+      },
+      "atmospheric-bg": {
+        "role": "neutral",
+        "displayName": "Atmospheric Background",
+        "canonical": "#f4f7fb",
+        "tonalRamp": [
+          "#17202b",
+          "#303b48",
+          "#4d5968",
+          "#6e7b8b",
+          "#939fac",
+          "#bac3cd",
+          "#dce2e8",
+          "#f4f7fb"
+        ]
+      },
+      "operational-status": {
+        "role": "neutral",
+        "displayName": "Operational Status",
+        "canonical": "#38506f",
+        "tonalRamp": [
+          "#0d1827",
+          "#1b2c42",
+          "#2a405d",
+          "#38506f",
+          "#627894",
+          "#92a3b7",
+          "#c4cfdb",
+          "#edf1f6"
+        ]
+      },
+      "ultraviolet-signal": {
+        "role": "primary",
+        "displayName": "Ultraviolet Signal",
+        "canonical": "#635bff",
+        "tonalRamp": [
+          "#171151",
+          "#26207d",
+          "#3830ac",
+          "#4d44db",
+          "#635bff",
+          "#918cff",
+          "#c0bdff",
+          "#efeeff"
+        ]
+      },
+      "cyan-terminal": {
+        "role": "secondary",
+        "displayName": "Cyan Terminal",
+        "canonical": "#12a8c4",
+        "tonalRamp": [
+          "#052c35",
+          "#075063",
+          "#08758d",
+          "#0b93ad",
+          "#12a8c4",
+          "#55c3d5",
+          "#9bdeea",
+          "#e7f8fb"
+        ]
+      },
+      "healthy-green": {
+        "role": "tertiary",
+        "displayName": "Healthy Green",
+        "canonical": "#087f5b",
+        "tonalRamp": [
+          "#06291e",
+          "#074832",
+          "#086646",
+          "#087f5b",
+          "#2b9d78",
+          "#68bea0",
+          "#a9dec9",
+          "#e9f7f1"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Editorial Display",
+        "purpose": "Short page-level or milestone statements."
+      },
+      "body": {
+        "displayName": "Observatory Body",
+        "purpose": "Calm, readable explanation and analysis."
+      },
+      "label": {
+        "displayName": "Instrument Label",
+        "purpose": "Coordinates, state labels, and compact captions."
+      },
+      "mono": {
+        "displayName": "Telemetry Mono",
+        "purpose": "Protocol names, identifiers, versions, and values."
+      },
+      "brand": {
+        "displayName": "Wordmark",
+        "purpose": "Compact product identity in structural navigation."
+      },
+      "status": {
+        "displayName": "Operational Status",
+        "purpose": "Small truthful service and workflow states."
+      },
+      "fact": {
+        "displayName": "Foundation Fact",
+        "purpose": "Compact high-confidence values in definition lists."
+      },
+      "instrument-title": {
+        "displayName": "Instrument Title",
+        "purpose": "Machine-shaped event names heading a focused instrument."
+      },
+      "node-index": {
+        "displayName": "Node Index",
+        "purpose": "Tabular sequence coordinates."
+      },
+      "node-detail": {
+        "displayName": "Node Detail",
+        "purpose": "Supporting captions beneath signal nodes."
+      },
+      "display-compact": {
+        "displayName": "Compact Display",
+        "purpose": "Mobile form of the primary editorial statement."
+      }
+    },
+    "shadows": [
+      {
+        "name": "instrument-lift",
+        "value": "0 28px 60px rgb(28 47 78 / 12%)",
+        "purpose": "Lift the primary working instrument above the atmospheric field."
+      },
+      {
+        "name": "signal-glow",
+        "value": "0 3px 12px rgb(82 76 214 / 30%)",
+        "purpose": "Clarify an active signal node."
+      },
+      {
+        "name": "health-glow",
+        "value": "0 2px 8px rgb(8 127 91 / 28%)",
+        "purpose": "Clarify a compact verified-health state."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-only",
+        "value": "purposeful and reduced-motion safe",
+        "purpose": "Motion explains state; it does not decorate state."
+      }
+    ],
+    "breakpoints": [
+      { "name": "stack", "value": "980px" },
+      { "name": "compact", "value": "640px" },
+      { "name": "minimum", "value": "320px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Protocol Tag",
+      "kind": "chip",
+      "refersTo": "protocol-tag",
+      "description": "Identifies an event type and protocol version without competing with the event name.",
+      "html": "<span class=\"ds-protocol-tag\">custom · v1</span>",
+      "css": ".ds-protocol-tag { display: inline-flex; width: fit-content; padding: 0.4rem 0.62rem; border-radius: 999px; color: var(--ultraviolet-text, #463ccf); background: var(--ultraviolet-wash, #eeedff); font: 700 0.7rem SFMono-Regular, Consolas, monospace; } .ds-protocol-tag:focus-visible { outline: 2px solid var(--violet, #635bff); outline-offset: 4px; }"
+    },
+    {
+      "name": "Instrument Card",
+      "kind": "card",
+      "refersTo": "instrument-card",
+      "description": "The focal analytical surface for a single coherent signal or investigation.",
+      "html": "<section class=\"ds-instrument\"><small>VERIFIED VERTICAL SLICE</small><h2>checkout_started</h2><p>Context-rich signal readout</p></section>",
+      "css": ".ds-instrument { color: var(--ink, #142238); background: var(--surface, #fff); border: 1px solid #bfcbd9; border-radius: 16px; padding: 2rem; box-shadow: 0 28px 60px rgb(28 47 78 / 12%); font-family: Avenir Next, Avenir, Segoe UI, sans-serif; } .ds-instrument small { color: var(--muted, #56657a); font-size: .72rem; font-weight: 700; letter-spacing: .08em; } .ds-instrument h2 { font-family: SFMono-Regular, Consolas, monospace; } .ds-instrument:focus-within { outline: 2px solid var(--violet, #635bff); outline-offset: 4px; }"
+    },
+    {
+      "name": "Event Readout",
+      "kind": "custom",
+      "refersTo": "event-readout",
+      "description": "A compact machine-readable summary of context and acceptance state.",
+      "html": "<dl class=\"ds-readout\"><dt>environment</dt><dd>production</dd><dt>accepted</dt><dd class=\"ds-accepted\">1 event</dd></dl>",
+      "css": ".ds-readout { display: grid; grid-template-columns: max-content 1fr; gap: .65rem 1.25rem; margin: 0; padding: 1rem 1.15rem; border-radius: 12px; background: var(--readout-bg, #f0f4f9); color: var(--ink, #142238); font: 700 .7rem SFMono-Regular, Consolas, monospace; } .ds-readout dt { color: var(--muted, #56657a); } .ds-readout dd { margin: 0; } .ds-readout .ds-accepted { color: var(--good, #087f5b); }"
+    },
+    {
+      "name": "Foundation Navigation",
+      "kind": "nav",
+      "description": "A low-noise structural rail pairing identity with truthful system status.",
+      "html": "<nav class=\"ds-nav\"><strong>◉ spectro</strong><span><i></i> Foundation online</span></nav>",
+      "css": ".ds-nav { display: flex; min-height: 5rem; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--hairline, #cdd6e3); color: var(--ink, #142238); font-family: Avenir Next, Avenir, Segoe UI, sans-serif; } .ds-nav strong { letter-spacing: -.02em; } .ds-nav span { display: inline-flex; align-items: center; gap: .55rem; color: #38506f; font-size: .78rem; font-weight: 650; } .ds-nav i { width: .5rem; height: .5rem; border-radius: 50%; background: var(--good, #087f5b); box-shadow: 0 2px 8px rgb(8 127 91 / 28%); }"
+    },
+    {
+      "name": "Signal Path",
+      "kind": "custom",
+      "description": "The signature directional sequence from capture to accepted storage.",
+      "html": "<ol class=\"ds-path\"><li><i></i><b>Capture</b></li><li><i></i><b>Event</b></li><li><i></i><b>Envelope</b></li><li><i></i><b>Ingest</b></li><li><i></i><b>Store</b></li></ol>",
+      "css": ".ds-path { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); margin: 0; padding: 2.5rem 0; list-style: none; color: var(--ink, #142238); font-family: Avenir Next, Avenir, Segoe UI, sans-serif; } .ds-path::before { position: absolute; top: 3.38rem; right: 10%; left: 10%; height: 2px; background: linear-gradient(90deg, var(--violet, #635bff), var(--cyan, #12a8c4)); content: ''; } .ds-path li { position: relative; display: grid; justify-items: center; gap: .75rem; font-size: .72rem; } .ds-path i { z-index: 1; width: 1.85rem; height: 1.85rem; border: 5px solid #fff; border-radius: 50%; background: var(--violet, #635bff); box-shadow: 0 3px 12px rgb(82 76 214 / 30%); } .ds-path li:last-child i { background: var(--cyan, #12a8c4); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Digital Observatory",
+    "overview": "Spectro should feel like a precision instrument operated in cool daylight: quiet enough for sustained analytical work, but unmistakably alive when a meaningful signal appears. The interface favors evidence, context, and readable structure over dashboard theater. The visual ratio is 90% quiet, 10% signal. Pale atmospheric space, ink typography, and hairline rules form the stable field; ultraviolet and cyan appear only where state or information flow deserves attention. Motion explains state; it does not decorate state.",
+    "keyCharacteristics": [
+      "Cool daylight surfaces with dark blue-black ink.",
+      "Strong editorial hierarchy paired with compact monospaced telemetry.",
+      "Sparse signal color used to reveal state, sequence, and health.",
+      "Responsive layouts that preserve reading order before visual symmetry."
+    ],
+    "rules": [
+      {
+        "name": "The Ten-Percent Signal Rule",
+        "body": "Accent color should occupy no more than roughly one tenth of a working view; its rarity is what makes it informative.",
+        "section": "colors"
+      },
+      {
+        "name": "The Meaningful Green Rule",
+        "body": "Green is evidence of health or acceptance, never a generic brand accent.",
+        "section": "colors"
+      },
+      {
+        "name": "The Telemetry Boundary Rule",
+        "body": "Use monospaced type only when the content is machine-shaped; use the humanist face for meaning and guidance.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-by-Default Rule",
+        "body": "Surfaces earn depth through task importance or state; ordinary containers stay flat.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do pair every visible signal with available project, environment, user, session, or page context.",
+      "Do reserve high-chroma color for state, direction, selection, and health.",
+      "Do keep metadata compact, tabular, and visibly subordinate to the analytical question.",
+      "Do preserve semantic reading order when a horizontal composition stacks on mobile."
+    ],
+    "donts": [
+      "Don't fill pages with interchangeable KPI cards or decorative gradients.",
+      "Don't animate without explaining causality, progress, or state change.",
+      "Don't use monospaced typography for prose or product guidance.",
+      "Don't present illustrative data as live production telemetry."
+    ]
+  }
+}

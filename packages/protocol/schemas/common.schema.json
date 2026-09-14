@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spectro.dev/schemas/common.schema.json",
+  "$defs": {
+    "uuidV7": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "jsonValue": {
+      "oneOf": [
+        { "type": "string", "maxLength": 2048 },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" },
+        {
+          "type": "array",
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/jsonValue" }
+        },
+        {
+          "type": "object",
+          "maxProperties": 100,
+          "propertyNames": { "maxLength": 128 },
+          "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+        }
+      ]
+    },
+    "jsonObject": {
+      "type": "object",
+      "maxProperties": 100,
+      "propertyNames": { "maxLength": 128 },
+      "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+    },
+    "sdkContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "version": { "type": "string", "minLength": 1, "maxLength": 64 }
+      }
+    },
+    "projectContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^prj_[A-Za-z0-9_-]{1,120}$" }
+      }
+    },
+    "sessionContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "startedAt": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "userContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["anonymousId"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "anonymousId": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "traits": { "$ref": "#/$defs/jsonObject" }
+      }
+    },
+    "pageContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "url", "path"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "url": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "path": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "title": { "type": "string", "maxLength": 512 },
+        "referrer": { "type": "string", "maxLength": 2048 }
+      }
+    },
+    "deviceContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": { "type": "string", "enum": ["desktop", "mobile", "tablet", "unknown"] },
+        "model": { "type": "string", "maxLength": 128 }
+      }
+    },
+    "browserContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "maxLength": 128 },
+        "version": { "type": "string", "maxLength": 64 }
+      }
+    },
+    "osContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "maxLength": 128 },
+        "version": { "type": "string", "maxLength": 64 }
+      }
+    },
+    "releaseContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version"],
+      "properties": {
+        "version": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "traceContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "traceId": { "type": "string", "maxLength": 64 },
+        "spanId": { "type": "string", "maxLength": 32 },
+        "parentSpanId": { "type": "string", "maxLength": 32 }
+      }
+    },
+    "tags": {
+      "type": "object",
+      "maxProperties": 50,
+      "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
+      "additionalProperties": { "type": "string", "maxLength": 256 }
+    },
+    "eventContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sdk", "project", "environment"],
+      "properties": {
+        "sdk": { "$ref": "#/$defs/sdkContext" },
+        "project": { "$ref": "#/$defs/projectContext" },
+        "environment": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "session": { "$ref": "#/$defs/sessionContext" },
+        "user": { "$ref": "#/$defs/userContext" },
+        "page": { "$ref": "#/$defs/pageContext" },
+        "device": { "$ref": "#/$defs/deviceContext" },
+        "browser": { "$ref": "#/$defs/browserContext" },
+        "os": { "$ref": "#/$defs/osContext" },
+        "release": { "$ref": "#/$defs/releaseContext" },
+        "trace": { "$ref": "#/$defs/traceContext" },
+        "tags": { "$ref": "#/$defs/tags" }
+      }
+    }
+  }
+}

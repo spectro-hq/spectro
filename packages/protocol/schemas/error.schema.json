@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spectro.dev/schemas/error.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mechanism", "message", "handled"],
+  "properties": {
+    "mechanism": { "type": "string", "enum": ["runtime", "promise", "resource", "manual"] },
+    "name": { "type": "string", "maxLength": 256 },
+    "message": { "type": "string", "minLength": 1, "maxLength": 2048 },
+    "handled": { "type": "boolean" },
+    "fingerprint": {
+      "type": "array",
+      "maxItems": 10,
+      "items": { "type": "string", "maxLength": 256 }
+    },
+    "stack": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "filename": { "type": "string", "maxLength": 2048 },
+          "function": { "type": "string", "maxLength": 512 },
+          "line": { "type": "integer", "minimum": 0 },
+          "column": { "type": "integer", "minimum": 0 },
+          "inApp": { "type": "boolean" }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": { "type": "string", "maxLength": 2048 },
+        "line": { "type": "integer", "minimum": 0 },
+        "column": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

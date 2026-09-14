@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spectro.dev/schemas/network.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["request", "timing", "initiator", "success"],
+  "properties": {
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "url"],
+      "properties": {
+        "method": { "type": "string", "pattern": "^[A-Z]+$", "maxLength": 16 },
+        "url": { "type": "string", "minLength": 1, "maxLength": 2048 }
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "type": "integer", "minimum": 0, "maximum": 599 }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "duration"],
+      "properties": {
+        "start": { "type": "number", "minimum": 0 },
+        "duration": { "type": "number", "minimum": 0 }
+      }
+    },
+    "initiator": { "type": "string", "enum": ["fetch", "xhr", "resource"] },
+    "success": { "type": "boolean" }
+  }
+}

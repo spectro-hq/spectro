@@ -1,0 +1,25 @@
+{
+  "name": "@spectro/ingest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "check": "tsc -b --pretty false && tsc -p tsconfig.check.json --pretty false",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "test": "vitest run --exclude 'dist/**'"
+  },
+  "dependencies": {
+    "@fastify/cors": "catalog:",
+    "@spectro/protocol": "workspace:*",
+    "fastify": "catalog:"
+  },
+  "devDependencies": {
+    "@spectro/core": "workspace:*",
+    "@types/node": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

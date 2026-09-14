@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spectro.dev/schemas/event.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "type", "name", "version", "timestamp", "context", "payload"],
+  "properties": {
+    "id": { "$ref": "https://spectro.dev/schemas/common.schema.json#/$defs/uuidV7" },
+    "type": {
+      "type": "string",
+      "enum": ["session", "page", "error", "performance", "network", "interaction", "custom"]
+    },
+    "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" },
+    "version": { "const": 1 },
+    "timestamp": { "type": "integer", "minimum": 0 },
+    "context": { "$ref": "https://spectro.dev/schemas/common.schema.json#/$defs/eventContext" },
+    "payload": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "session" } }, "required": ["type"] },
+      "then": {
+        "properties": { "payload": { "$ref": "https://spectro.dev/schemas/session.schema.json" } }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "page" } }, "required": ["type"] },
+      "then": {
+        "properties": { "payload": { "$ref": "https://spectro.dev/schemas/page.schema.json" } }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "error" } }, "required": ["type"] },
+      "then": {
+        "properties": { "payload": { "$ref": "https://spectro.dev/schemas/error.schema.json" } }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "performance" } }, "required": ["type"] },
+      "then": {
+        "properties": {
+          "payload": { "$ref": "https://spectro.dev/schemas/performance.schema.json" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "network" } }, "required": ["type"] },
+      "then": {
+        "properties": { "payload": { "$ref": "https://spectro.dev/schemas/network.schema.json" } }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "interaction" } }, "required": ["type"] },
+      "then": {
+        "properties": {
+          "payload": { "$ref": "https://spectro.dev/schemas/interaction.schema.json" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "custom" } }, "required": ["type"] },
+      "then": {
+        "properties": { "payload": { "$ref": "https://spectro.dev/schemas/custom.schema.json" } }
+      }
+    }
+  ]
+}

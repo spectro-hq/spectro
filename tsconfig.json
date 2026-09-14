@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/protocol" },
+    { "path": "packages/types" },
+    { "path": "packages/core" },
+    { "path": "packages/browser" },
+    { "path": "apps/api" },
+    { "path": "apps/ingest" },
+    { "path": "services/processor" }
+  ]
+}
