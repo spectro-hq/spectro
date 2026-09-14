@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ENVELOPE_VERSION, EVENT_VERSION, type Envelope } from '@spectro/protocol';
 
-import { destroy, FetchTransport, flush, init, track } from '../src/index.js';
+import { captureException, destroy, FetchTransport, flush, init, track } from '../src/index.js';
 
 afterEach(() => {
   destroy();
@@ -80,7 +80,7 @@ describe('FetchTransport', () => {
 
   it('captures lifecycle events through the public browser API and restores History', async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(JSON.stringify({ accepted: 3 }), {
+      new Response(JSON.stringify({ accepted: 5 }), {
         status: 202,
         headers: { 'content-type': 'application/json' },
       }),
@@ -126,6 +126,16 @@ describe('FetchTransport', () => {
     expect(history.pushState).not.toBe(originalPushState);
 
     track('app_ready');
+    captureException(new Error('Manual failure'));
+    const runtimeError = new Event('error');
+    Object.defineProperties(runtimeError, {
+      message: { value: 'Runtime failure' },
+      error: { value: new Error('Runtime failure') },
+      filename: { value: 'https://app.example/app.js?token=private' },
+      lineno: { value: 7 },
+      colno: { value: 9 },
+    });
+    windowEvents.dispatchEvent(runtimeError);
     await flush();
 
     expect(fetchMock).toHaveBeenCalledOnce();
@@ -142,6 +152,16 @@ describe('FetchTransport', () => {
           },
         },
         { payload: { name: 'app_ready' } },
+        { payload: { name: 'manual_error', payload: { handled: true } } },
+        {
+          payload: {
+            name: 'runtime_error',
+            payload: {
+              handled: false,
+              source: { url: 'https://app.example/app.js', line: 7, column: 9 },
+            },
+          },
+        },
       ],
     });
 

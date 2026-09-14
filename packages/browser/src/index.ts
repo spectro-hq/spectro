@@ -2,6 +2,12 @@ import { SpectroClient } from '@spectro/core';
 import type { EventContext, JSONObject } from '@spectro/protocol';
 import type { FlushResult, SpectroClientOptions, SpectroClientPublic } from '@spectro/types';
 
+import {
+  BrowserErrorCapture,
+  type BrowserErrorOptions,
+  type CaptureExceptionOptions,
+} from './error.js';
+import { createBrowserErrorRuntime } from './error-runtime.js';
 import { SessionPageLifecycle, type SessionPageLifecycleOptions } from './lifecycle.js';
 import { createBrowserLifecycleRuntime } from './runtime.js';
 import { FetchTransport } from './transport.js';
@@ -11,11 +17,13 @@ export interface BrowserLifecycleOptions {
 }
 
 export interface BrowserClientOptions extends SpectroClientOptions {
+  errors?: false | BrowserErrorOptions;
   fetch?: typeof globalThis.fetch;
   lifecycle?: false | BrowserLifecycleOptions;
 }
 
 export interface BrowserClientPublic extends SpectroClientPublic {
+  captureException(value: unknown, options?: CaptureExceptionOptions): string | undefined;
   destroy(): void;
 }
 
@@ -32,13 +40,15 @@ function reportSafely(onError: ((error: Error) => void) | undefined, error: unkn
 
 class BrowserClient implements BrowserClientPublic {
   readonly #core: SpectroClient;
+  readonly #errorCapture: BrowserErrorCapture;
   readonly #lifecycle: SessionPageLifecycle | undefined;
   #destroyed = false;
 
   constructor(options: BrowserClientOptions) {
     this.#core = new SpectroClient(options, new FetchTransport(options));
-    const runtime = createBrowserLifecycleRuntime();
-    if (runtime !== undefined && options.lifecycle !== false) {
+    const lifecycleRuntime = createBrowserLifecycleRuntime();
+    let lifecycle: SessionPageLifecycle | undefined;
+    if (lifecycleRuntime !== undefined && options.lifecycle !== false) {
       const lifecycleOptions: SessionPageLifecycleOptions = {
         projectId: options.projectId,
         environment: options.environment,
@@ -46,16 +56,35 @@ class BrowserClient implements BrowserClientPublic {
           ? {}
           : { sessionTimeoutMs: options.lifecycle.sessionTimeoutMs }),
       };
-      this.#lifecycle = new SessionPageLifecycle(
+      lifecycle = new SessionPageLifecycle(
         {
           capture: (input) => this.#core.capture(input),
           updateContext: (context) => this.#core.updateContext(context),
           report: (error) => reportSafely(options.onError, error),
         },
-        runtime,
+        lifecycleRuntime,
         lifecycleOptions,
       );
-      this.#lifecycle.start();
+    }
+    this.#lifecycle = lifecycle;
+    const errorOptions = options.errors === false ? {} : (options.errors ?? {});
+    this.#errorCapture = new BrowserErrorCapture(
+      {
+        activity: () => this.#lifecycle?.touch(),
+        capture: (input) => this.#core.capture(input),
+        report: (error) => reportSafely(options.onError, error),
+      },
+      options.errors === false ? undefined : createBrowserErrorRuntime(),
+      errorOptions,
+    );
+
+    try {
+      this.#lifecycle?.start();
+      this.#errorCapture.start();
+    } catch (error) {
+      this.#errorCapture.stop();
+      this.#lifecycle?.stop();
+      throw error;
     }
   }
 
@@ -70,6 +99,11 @@ class BrowserClient implements BrowserClientPublic {
     return this.#core.flush();
   }
 
+  captureException(value: unknown, options?: CaptureExceptionOptions): string | undefined {
+    if (this.#destroyed) return undefined;
+    return this.#errorCapture.captureException(value, options);
+  }
+
   getContext(): EventContext {
     return this.#core.getContext();
   }
@@ -77,6 +111,7 @@ class BrowserClient implements BrowserClientPublic {
   destroy(): void {
     if (this.#destroyed) return;
     this.#destroyed = true;
+    this.#errorCapture.stop();
     this.#lifecycle?.stop();
     if (client === this) client = undefined;
   }
@@ -101,6 +136,13 @@ export function track(name: string, properties: JSONObject = {}): string | undef
   return client.track(name, properties);
 }
 
+export function captureException(
+  value: unknown,
+  options?: CaptureExceptionOptions,
+): string | undefined {
+  return client?.captureException(value, options);
+}
+
 export async function flush(): Promise<FlushResult> {
   if (!client) {
     return { sent: 0, remaining: 0 };
@@ -114,5 +156,6 @@ export function destroy(): void {
 
 export { FetchTransport } from './transport.js';
 export { DEFAULT_SESSION_TIMEOUT_MS } from './lifecycle.js';
+export type { BrowserErrorOptions, CaptureExceptionOptions } from './error.js';
 export type { FetchTransportOptions } from './transport.js';
 export type { JSONObject, SpectroClientOptions, SpectroClientPublic };

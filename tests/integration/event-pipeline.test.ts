@@ -37,7 +37,8 @@ describeIntegration('durable event pipeline', () => {
     });
 
     try {
-      const eventId = uuidv7();
+      const customEventId = uuidv7();
+      const errorEventId = uuidv7();
       const envelope: Envelope = {
         version: ENVELOPE_VERSION,
         sentAt: 1_789_368_123_456,
@@ -45,7 +46,7 @@ describeIntegration('durable event pipeline', () => {
           {
             type: 'event',
             payload: {
-              id: eventId,
+              id: customEventId,
               type: 'custom',
               name: 'durable_pipeline_verified',
               version: EVENT_VERSION,
@@ -58,6 +59,41 @@ describeIntegration('durable event pipeline', () => {
               payload: { properties: { source: 'real-boundary-test' } },
             },
           },
+          {
+            type: 'event',
+            payload: {
+              id: errorEventId,
+              type: 'error',
+              name: 'runtime_error',
+              version: EVENT_VERSION,
+              timestamp: 1_789_368_123_457,
+              context: {
+                sdk: { name: '@spectro/browser', version: '0.1.0' },
+                project: { id: 'prj_durable_pipeline' },
+                environment: 'test',
+                session: { id: 'ses_integration', startedAt: 1_789_368_100_000 },
+                page: {
+                  id: 'page_integration',
+                  url: 'https://app.example/checkout',
+                  path: '/checkout',
+                },
+              },
+              payload: {
+                mechanism: 'runtime',
+                name: 'CheckoutError',
+                message: 'Checkout failed for order 48291',
+                handled: false,
+                stack: [
+                  {
+                    filename: 'https://app.example/assets/app.js',
+                    function: 'submitOrder',
+                    line: 12,
+                    column: 34,
+                  },
+                ],
+              },
+            },
+          },
         ],
       };
 
@@ -68,26 +104,30 @@ describeIntegration('durable event pipeline', () => {
         payload: envelope,
       });
       expect(response.statusCode).toBe(202);
-      expect(response.json()).toEqual({ accepted: 1 });
+      expect(response.json()).toEqual({ accepted: 2 });
 
       const source = await JetStreamAdmissionSource.create(connection);
       const writer = new ClickHouseProcessedEventWriter(clickhouse);
       const worker = new ProcessorWorker(source, new EventProcessor(writer));
       await expect(worker.runOnce(2_000)).resolves.toMatchObject({
         status: 'processed',
-        processed: 1,
+        processed: 2,
       });
 
       const result = await clickhouse.query({
         query: `
-          SELECT count() AS count
+          SELECT
+            count() AS count,
+            countIf(event_name = 'runtime_error' AND error_fingerprint != '') AS fingerprinted
           FROM spectro.events_v1 FINAL
-          WHERE event_id = {eventId:UUID}
+          WHERE event_id IN ({customEventId:UUID}, {errorEventId:UUID})
         `,
-        query_params: { eventId },
+        query_params: { customEventId, errorEventId },
         format: 'JSONEachRow',
       });
-      await expect(result.json<{ count: number }>()).resolves.toEqual([{ count: 1 }]);
+      await expect(result.json<{ count: number; fingerprinted: number }>()).resolves.toEqual([
+        { count: 2, fingerprinted: 1 },
+      ]);
     } finally {
       await app.close();
       await connection.drain();

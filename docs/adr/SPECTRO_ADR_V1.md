@@ -40,12 +40,14 @@ Status: accepted unless marked open.
 | ADR-034 | Use NATS JetStream as the V1 durable admission source with pull consumption, explicit acknowledgements, and at-least-once delivery.                    |
 | ADR-035 | Store processed V1 events in one ClickHouse `ReplacingMergeTree` table with typed common dimensions and bounded JSON payload/context columns.          |
 | ADR-036 | Use tab-scoped browser sessions with 30-minute inactivity rotation and a new page lifecycle for initial load and every client-side route transition.   |
+| ADR-037 | Capture bounded structured browser errors without raw stacks or arbitrary object serialization; retain final fingerprinting on the server.             |
 
 Detailed records:
 
 - [ADR-034: Durable admission with NATS JetStream](./ADR-034_DURABLE_ADMISSION_JETSTREAM.md)
 - [ADR-035: ClickHouse event storage V1](./ADR-035_CLICKHOUSE_EVENT_STORAGE_V1.md)
 - [ADR-036: Browser session and page lifecycle](./ADR-036_BROWSER_SESSION_PAGE_LIFECYCLE.md)
+- [ADR-037: Browser error capture V1](./ADR-037_BROWSER_ERROR_CAPTURE.md)
 
 ## Change rule
 

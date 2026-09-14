@@ -57,6 +57,7 @@ interface SpectroClient {
 }
 
 interface BrowserClient extends SpectroClient {
+  captureException(value: unknown, options?: CaptureExceptionOptions): string | undefined;
   destroy(): void;
 }
 
@@ -80,3 +81,11 @@ The inactivity timeout can be set with `lifecycle.sessionTimeoutMs`; `lifecycle:
 Every initialization creates a page ID and emits `page_view`. A `pushState`, `replaceState`, `popstate`, or hash route that changes the sanitized URL creates a new page ID and emits `page_route_change`; later events receive that new page context. Query strings, credentials, and arbitrary fragments are excluded from captured URLs. Hash-router paths beginning with `#/` are retained without their query portion.
 
 `destroy()` removes lifecycle listeners and restores owned History wrappers. It does not implicitly flush or emit unreliable unload end events.
+
+## Browser error capture
+
+Browser `init()` enables error capture by default. Uncaught runtime errors emit `runtime_error`, unhandled promise rejections emit `unhandled_rejection`, and failed script, stylesheet, image, or other resource loads emit `resource_error`. Automatic capture can be disabled with `errors: false`; runtime, promise, and resource capture can also be toggled independently.
+
+`captureException(value, options)` emits `manual_error`, defaults to `handled: true`, and accepts optional bounded fingerprint hints. Arbitrary thrown or rejected objects are never serialized. The SDK extracts bounded error-like scalar fields, converts recognized browser stacks to structured frames, discards unsupported stack lines, and removes credentials, queries, and fragments from source URLs. Final error normalization and fingerprinting remain server-side.
+
+Automatic listeners do not prevent browser defaults. `destroy()` removes both lifecycle and error listeners.
