@@ -89,3 +89,13 @@ Browser `init()` enables error capture by default. Uncaught runtime errors emit 
 `captureException(value, options)` emits `manual_error`, defaults to `handled: true`, and accepts optional bounded fingerprint hints. Arbitrary thrown or rejected objects are never serialized. The SDK extracts bounded error-like scalar fields, converts recognized browser stacks to structured frames, discards unsupported stack lines, and removes credentials, queries, and fragments from source URLs. Final error normalization and fingerprinting remain server-side.
 
 Automatic listeners do not prevent browser defaults. `destroy()` removes both lifecycle and error listeners.
+
+## Browser performance capture
+
+Browser `init()` enables performance capture by default. Google's `web-vitals` library supplies CLS, FCP, INP, LCP, and TTFB semantics. Spectro emits `web_vital_cls`, `web_vital_fcp`, `web_vital_inp`, `web_vital_lcp`, and `web_vital_ttfb`, plus native `long_task` and `navigation_timing` events.
+
+Performance capture can be disabled with `performance: false`; Web Vitals, long tasks, and navigation timing can also be toggled independently. CLS uses the `score` unit and other emitted performance metrics use milliseconds. The library's `needs-improvement` rating maps to `needs_improvement` in the protocol.
+
+The SDK never queues raw attribution objects, DOM nodes, selectors, `PerformanceEntry` objects, or resource URLs. It retains only an explicit primitive allowlist. DOM targets become a bounded `monitor:<id>` only for valid `data-spectro-monitor-id` values and otherwise become `element`.
+
+Web Vitals registration is page-global and happens at most once per loaded SDK module. Client destruction unsubscribes Spectro delivery and disconnects native observers. Delayed callbacks use their navigation URL to recover the matching bounded session/page context instead of inheriting a later SPA route. Unsupported browser APIs degrade silently.

@@ -17,6 +17,7 @@ type CaptureInputOfType<TType extends EventType> = {
   name: string;
   payload: EventPayloadByType[TType];
   timestamp?: number;
+  context?: ClientContextInput;
 };
 
 export type CaptureInput<TType extends EventType = EventType> = TType extends EventType

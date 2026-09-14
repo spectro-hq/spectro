@@ -176,6 +176,9 @@ catalogs:
     vitest:
       specifier: ^5.0.0
       version: 5.0.0
+    web-vitals:
+      specifier: ^6.2.1
+      version: 6.2.1
 
 importers:
 
@@ -298,6 +301,9 @@ importers:
       uuid:
         specifier: 'catalog:'
         version: 14.0.2
+      web-vitals:
+        specifier: 'catalog:'
+        version: 6.2.1
     devDependencies:
       typescript:
         specifier: 'catalog:'
@@ -1880,6 +1886,9 @@ packages:
       jsdom:
         optional: true
 
+  web-vitals@6.2.1:
+    resolution: {integrity: sha512-rLcLXA2sx6+9dE88NHFubwTtGxpK4yYBLj6qHPdFoCaLr0cXGb4efOqtKLlm4loGA4OEKHIQKMKzZkKyOh5ctw==}
+
   why-is-node-running@2.3.0:
     resolution: {integrity: sha512-hUrmaWBdVDcxvYqnyh09zunKzROWjbZTiNy8dBEjkS7ehEDQibXJ7XvlmtbwuTclUiIyN+CyXQD4Vmko8fNm8w==}
     engines: {node: '>=8'}
@@ -2915,6 +2924,8 @@ snapshots:
       '@types/node': 22.20.2
     transitivePeerDependencies:
       - msw
+
+  web-vitals@6.2.1: {}
 
   why-is-node-running@2.3.0:
     dependencies:

@@ -9,6 +9,8 @@ import {
 } from './error.js';
 import { createBrowserErrorRuntime } from './error-runtime.js';
 import { SessionPageLifecycle, type SessionPageLifecycleOptions } from './lifecycle.js';
+import { BrowserPerformanceCapture, type BrowserPerformanceOptions } from './performance.js';
+import { createBrowserPerformanceRuntime } from './performance-runtime.js';
 import { createBrowserLifecycleRuntime } from './runtime.js';
 import { FetchTransport } from './transport.js';
 
@@ -20,6 +22,7 @@ export interface BrowserClientOptions extends SpectroClientOptions {
   errors?: false | BrowserErrorOptions;
   fetch?: typeof globalThis.fetch;
   lifecycle?: false | BrowserLifecycleOptions;
+  performance?: false | BrowserPerformanceOptions;
 }
 
 export interface BrowserClientPublic extends SpectroClientPublic {
@@ -42,6 +45,7 @@ class BrowserClient implements BrowserClientPublic {
   readonly #core: SpectroClient;
   readonly #errorCapture: BrowserErrorCapture;
   readonly #lifecycle: SessionPageLifecycle | undefined;
+  readonly #performanceCapture: BrowserPerformanceCapture;
   #destroyed = false;
 
   constructor(options: BrowserClientOptions) {
@@ -77,11 +81,35 @@ class BrowserClient implements BrowserClientPublic {
       options.errors === false ? undefined : createBrowserErrorRuntime(),
       errorOptions,
     );
+    const performanceOptions = options.performance === false ? {} : (options.performance ?? {});
+    this.#performanceCapture = new BrowserPerformanceCapture(
+      {
+        capture: (input, navigationUrl) => {
+          const context = this.#lifecycle?.contextForNavigationUrl(navigationUrl);
+          if (
+            navigationUrl !== undefined &&
+            this.#lifecycle !== undefined &&
+            context === undefined
+          ) {
+            return undefined;
+          }
+          return this.#core.capture({
+            ...input,
+            ...(context === undefined ? {} : { context }),
+          });
+        },
+        report: (error) => reportSafely(options.onError, error),
+      },
+      options.performance === false ? undefined : createBrowserPerformanceRuntime(),
+      performanceOptions,
+    );
 
     try {
       this.#lifecycle?.start();
       this.#errorCapture.start();
+      this.#performanceCapture.start();
     } catch (error) {
+      this.#performanceCapture.stop();
       this.#errorCapture.stop();
       this.#lifecycle?.stop();
       throw error;
@@ -111,6 +139,7 @@ class BrowserClient implements BrowserClientPublic {
   destroy(): void {
     if (this.#destroyed) return;
     this.#destroyed = true;
+    this.#performanceCapture.stop();
     this.#errorCapture.stop();
     this.#lifecycle?.stop();
     if (client === this) client = undefined;
@@ -157,5 +186,6 @@ export function destroy(): void {
 export { FetchTransport } from './transport.js';
 export { DEFAULT_SESSION_TIMEOUT_MS } from './lifecycle.js';
 export type { BrowserErrorOptions, CaptureExceptionOptions } from './error.js';
+export type { BrowserPerformanceOptions } from './performance.js';
 export type { FetchTransportOptions } from './transport.js';
 export type { JSONObject, SpectroClientOptions, SpectroClientPublic };

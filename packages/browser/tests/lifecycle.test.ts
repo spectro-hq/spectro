@@ -174,6 +174,16 @@ describe('SessionPageLifecycle', () => {
       title: 'Order',
       referrer: '',
     });
+    expect(
+      harness.lifecycle.contextForNavigationUrl(
+        'https://app.example/checkout?late_callback=private',
+      ),
+    ).toMatchObject({ page: { id: 'page_1' }, session: { id: 'session_1' } });
+    expect(
+      harness.lifecycle.contextForNavigationUrl(
+        'https://app.example/orders/42?late_callback=private#/details?token=private',
+      ),
+    ).toMatchObject({ page: { id: 'page_2' }, session: { id: 'session_1' } });
     harness.core.track('order_opened');
     const events = await flushedEvents(harness.core, harness.transport);
 
