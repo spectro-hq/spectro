@@ -13,6 +13,8 @@ import { BrowserPerformanceCapture, type BrowserPerformanceOptions } from './per
 import { createBrowserPerformanceRuntime } from './performance-runtime.js';
 import { createBrowserLifecycleRuntime } from './runtime.js';
 import { FetchTransport } from './transport.js';
+import { BrowserNetworkCapture, type BrowserNetworkOptions } from './network.js';
+import { createBrowserNetworkRuntime } from './network-runtime.js';
 
 export interface BrowserLifecycleOptions {
   sessionTimeoutMs?: number;
@@ -22,6 +24,7 @@ export interface BrowserClientOptions extends SpectroClientOptions {
   errors?: false | BrowserErrorOptions;
   fetch?: typeof globalThis.fetch;
   lifecycle?: false | BrowserLifecycleOptions;
+  network?: false | BrowserNetworkOptions;
   performance?: false | BrowserPerformanceOptions;
 }
 
@@ -45,6 +48,7 @@ class BrowserClient implements BrowserClientPublic {
   readonly #core: SpectroClient;
   readonly #errorCapture: BrowserErrorCapture;
   readonly #lifecycle: SessionPageLifecycle | undefined;
+  readonly #networkCapture: BrowserNetworkCapture;
   readonly #performanceCapture: BrowserPerformanceCapture;
   #destroyed = false;
 
@@ -103,12 +107,37 @@ class BrowserClient implements BrowserClientPublic {
       options.performance === false ? undefined : createBrowserPerformanceRuntime(),
       performanceOptions,
     );
+    const networkOptions = options.network === false ? {} : (options.network ?? {});
+    this.#networkCapture = new BrowserNetworkCapture(
+      {
+        capture: (input, navigationUrl) => {
+          const context = this.#lifecycle?.contextForNavigationUrl(navigationUrl);
+          if (
+            navigationUrl !== undefined &&
+            this.#lifecycle !== undefined &&
+            context === undefined
+          ) {
+            return undefined;
+          }
+          return this.#core.capture({
+            ...input,
+            ...(context === undefined ? {} : { context }),
+          });
+        },
+        report: (error) => reportSafely(options.onError, error),
+      },
+      options.network === false ? undefined : createBrowserNetworkRuntime(),
+      options.endpoint,
+      networkOptions,
+    );
 
     try {
       this.#lifecycle?.start();
       this.#errorCapture.start();
       this.#performanceCapture.start();
+      this.#networkCapture.start();
     } catch (error) {
+      this.#networkCapture.stop();
       this.#performanceCapture.stop();
       this.#errorCapture.stop();
       this.#lifecycle?.stop();
@@ -139,6 +168,7 @@ class BrowserClient implements BrowserClientPublic {
   destroy(): void {
     if (this.#destroyed) return;
     this.#destroyed = true;
+    this.#networkCapture.stop();
     this.#performanceCapture.stop();
     this.#errorCapture.stop();
     this.#lifecycle?.stop();
@@ -187,5 +217,6 @@ export { FetchTransport } from './transport.js';
 export { DEFAULT_SESSION_TIMEOUT_MS } from './lifecycle.js';
 export type { BrowserErrorOptions, CaptureExceptionOptions } from './error.js';
 export type { BrowserPerformanceOptions } from './performance.js';
+export type { BrowserNetworkOptions } from './network.js';
 export type { FetchTransportOptions } from './transport.js';
 export type { JSONObject, SpectroClientOptions, SpectroClientPublic };

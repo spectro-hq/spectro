@@ -78,6 +78,68 @@ describe('FetchTransport', () => {
     expect(errors).toHaveLength(1);
   });
 
+  it('captures application Fetch traffic without recursively capturing envelope delivery', async () => {
+    const originalFetch = vi.fn<typeof fetch>().mockImplementation(async (input) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url === 'https://ingest.example/v1/envelope') {
+        return new Response(JSON.stringify({ accepted: 1 }), {
+          status: 202,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      return new Response(null, { status: 503 });
+    });
+    vi.stubGlobal('window', {
+      location: { href: 'https://app.example/checkout?cart=private' },
+    });
+    vi.stubGlobal('fetch', originalFetch);
+
+    const initialized = init({
+      projectId: 'prj_test',
+      environment: 'test',
+      endpoint: 'https://ingest.example',
+      apiKey: 'sp_test',
+      lifecycle: false,
+      errors: false,
+      performance: false,
+    });
+    expect(initialized).toBeDefined();
+    expect(globalThis.fetch).not.toBe(originalFetch);
+
+    await expect(
+      globalThis.fetch('https://api.example/orders?authorization=private'),
+    ).resolves.toMatchObject({ status: 503 });
+    await expect(flush()).resolves.toEqual({ sent: 1, remaining: 0 });
+
+    expect(originalFetch).toHaveBeenCalledTimes(2);
+    const envelopeRequest = originalFetch.mock.calls[1];
+    expect(envelopeRequest?.[0]).toBe('https://ingest.example/v1/envelope');
+    const requestBody = envelopeRequest?.[1]?.body;
+    expect(typeof requestBody).toBe('string');
+    const sent: unknown = JSON.parse(typeof requestBody === 'string' ? requestBody : '{}');
+    expect(sent).toMatchObject({
+      items: [
+        {
+          payload: {
+            type: 'network',
+            name: 'fetch_request',
+            payload: {
+              request: { method: 'GET', url: 'https://api.example/orders' },
+              response: { status: 503 },
+              initiator: 'fetch',
+              success: false,
+            },
+          },
+        },
+      ],
+    });
+    expect(JSON.stringify(sent)).not.toContain('authorization');
+    expect(JSON.stringify(sent)).not.toContain('private');
+
+    initialized?.destroy();
+    expect(globalThis.fetch).toBe(originalFetch);
+  });
+
   it('captures lifecycle events through the public browser API and restores History', async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ accepted: 5 }), {

@@ -40,6 +40,7 @@ describeIntegration('durable event pipeline', () => {
       const customEventId = uuidv7();
       const errorEventId = uuidv7();
       const performanceEventId = uuidv7();
+      const networkEventId = uuidv7();
       const envelope: Envelope = {
         version: ENVELOPE_VERSION,
         sentAt: 1_789_368_123_456,
@@ -129,6 +130,34 @@ describeIntegration('durable event pipeline', () => {
               },
             },
           },
+          {
+            type: 'event',
+            payload: {
+              id: networkEventId,
+              type: 'network',
+              name: 'fetch_request',
+              version: EVENT_VERSION,
+              timestamp: 1_789_368_123_459,
+              context: {
+                sdk: { name: '@spectro/browser', version: '0.1.0' },
+                project: { id: 'prj_durable_pipeline' },
+                environment: 'test',
+                session: { id: 'ses_integration', startedAt: 1_789_368_100_000 },
+                page: {
+                  id: 'page_integration',
+                  url: 'https://app.example/checkout',
+                  path: '/checkout',
+                },
+              },
+              payload: {
+                request: { method: 'POST', url: 'https://api.example/orders' },
+                response: { status: 503 },
+                timing: { start: 420, duration: 87 },
+                initiator: 'fetch',
+                success: false,
+              },
+            },
+          },
         ],
       };
 
@@ -139,14 +168,14 @@ describeIntegration('durable event pipeline', () => {
         payload: envelope,
       });
       expect(response.statusCode).toBe(202);
-      expect(response.json()).toEqual({ accepted: 3 });
+      expect(response.json()).toEqual({ accepted: 4 });
 
       const source = await JetStreamAdmissionSource.create(connection);
       const writer = new ClickHouseProcessedEventWriter(clickhouse);
       const worker = new ProcessorWorker(source, new EventProcessor(writer));
       await expect(worker.runOnce(2_000)).resolves.toMatchObject({
         status: 'processed',
-        processed: 3,
+        processed: 4,
       });
 
       const result = await clickhouse.query({
@@ -154,16 +183,22 @@ describeIntegration('durable event pipeline', () => {
           SELECT
             count() AS count,
             countIf(event_name = 'runtime_error' AND error_fingerprint != '') AS fingerprinted,
-            countIf(event_type = 'performance' AND event_name = 'web_vital_lcp') AS performance_count
+            countIf(event_type = 'performance' AND event_name = 'web_vital_lcp') AS performance_count,
+            countIf(event_type = 'network' AND event_name = 'fetch_request') AS network_count
           FROM spectro.events_v1 FINAL
-          WHERE event_id IN ({customEventId:UUID}, {errorEventId:UUID}, {performanceEventId:UUID})
+          WHERE event_id IN ({customEventId:UUID}, {errorEventId:UUID}, {performanceEventId:UUID}, {networkEventId:UUID})
         `,
-        query_params: { customEventId, errorEventId, performanceEventId },
+        query_params: { customEventId, errorEventId, performanceEventId, networkEventId },
         format: 'JSONEachRow',
       });
       await expect(
-        result.json<{ count: number; fingerprinted: number; performance_count: number }>(),
-      ).resolves.toEqual([{ count: 3, fingerprinted: 1, performance_count: 1 }]);
+        result.json<{
+          count: number;
+          fingerprinted: number;
+          performance_count: number;
+          network_count: number;
+        }>(),
+      ).resolves.toEqual([{ count: 4, fingerprinted: 1, performance_count: 1, network_count: 1 }]);
     } finally {
       await app.close();
       await connection.drain();

@@ -42,6 +42,7 @@ Status: accepted unless marked open.
 | ADR-036 | Use tab-scoped browser sessions with 30-minute inactivity rotation and a new page lifecycle for initial load and every client-side route transition.   |
 | ADR-037 | Capture bounded structured browser errors without raw stacks or arbitrary object serialization; retain final fingerprinting on the server.             |
 | ADR-038 | Use Google's `web-vitals` for standard field metrics behind a privacy-safe singleton bridge, supplemented by bounded native timing signals.            |
+| ADR-039 | Capture privacy-bounded Fetch and XMLHttpRequest signals through shared reversible wrappers; keep Resource Timing opt-in until sampling exists.        |
 
 Detailed records:
 
@@ -50,6 +51,7 @@ Detailed records:
 - [ADR-036: Browser session and page lifecycle](./ADR-036_BROWSER_SESSION_PAGE_LIFECYCLE.md)
 - [ADR-037: Browser error capture V1](./ADR-037_BROWSER_ERROR_CAPTURE.md)
 - [ADR-038: Browser performance capture V1](./ADR-038_BROWSER_PERFORMANCE_CAPTURE.md)
+- [ADR-039: Browser network capture V1](./ADR-039_BROWSER_NETWORK_CAPTURE.md)
 
 ## Change rule
 
