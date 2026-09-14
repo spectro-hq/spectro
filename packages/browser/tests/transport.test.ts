@@ -121,6 +121,7 @@ describe('FetchTransport', () => {
       endpoint: 'https://ingest.example',
       apiKey: 'sp_test',
       fetch: fetchMock,
+      performance: false,
     });
     expect(initialized).toBeDefined();
     expect(history.pushState).not.toBe(originalPushState);

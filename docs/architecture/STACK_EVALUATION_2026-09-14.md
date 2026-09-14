@@ -12,6 +12,7 @@
 | Application validation    | Introduce Zod only when control-plane DTOs or forms exist | Do not duplicate event protocol schemas in Zod.                                       |
 | Client state              | Use Zustand only for genuine cross-route client state     | Local component state stays in React; shareable filter state stays in the URL.        |
 | Server state              | Use TanStack Query                                        | Remote data, caching, invalidation, retries, and async lifecycle stay out of Zustand. |
+| Field performance         | Use `web-vitals` 6                                        | Google owns Web Vitals algorithms; Spectro owns privacy-safe protocol adaptation.     |
 
 ## TypeScript 7
 
@@ -44,3 +45,7 @@ TanStack Query and Zustand are complementary only when their ownership is explic
 - Zustand owns the small residue of real global client state, such as a cross-route command palette, investigation workspace draft, or non-server UI preference.
 
 Do not copy TanStack Query data into Zustand, and do not make Zustand the default home for every filter. Zustand is not installed until the first qualifying global client-state slice exists; TanStack Query is already installed and wired at the console root.
+
+## Field performance
+
+Google's `web-vitals` 6 attribution build measures CLS, FCP, INP, LCP, and TTFB. Spectro registers it once per loaded browser SDK module and maps only bounded primitive attribution fields into the event protocol. DOM nodes, default selectors, browser performance entries, and resource URLs are excluded. Spectro supplements the library with native Long Task and Navigation Timing summaries; Resource Timing remains part of the later network instrumentation decision.

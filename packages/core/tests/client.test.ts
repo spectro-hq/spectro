@@ -161,4 +161,27 @@ describe('SpectroClient', () => {
       page: { id: 'page_02', path: '/checkout' },
     });
   });
+
+  it('applies event-local context without mutating the active client context', async () => {
+    const transport = new MemoryTransport();
+    const client = createClient(transport);
+
+    client.updateContext({
+      page: { id: 'page_current', url: 'https://shop.example/current', path: '/current' },
+    });
+    client.capture({
+      type: 'performance',
+      name: 'web_vital_lcp',
+      payload: { metric: 'lcp', value: 1_200, unit: 'ms' },
+      context: {
+        page: { id: 'page_previous', url: 'https://shop.example/previous', path: '/previous' },
+      },
+    });
+    client.track('after_metric');
+    await client.flush();
+
+    const events = transport.envelopes[0]?.items.map((item) => item.payload);
+    expect(events?.[0]?.context.page?.id).toBe('page_previous');
+    expect(events?.[1]?.context.page?.id).toBe('page_current');
+  });
 });

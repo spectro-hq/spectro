@@ -10,6 +10,7 @@ const ACTIVITY_PERSIST_INTERVAL_MS = 60_000;
 const SESSION_STORAGE_VERSION = 1;
 const MAX_URL_LENGTH = 2_048;
 const MAX_TITLE_LENGTH = 512;
+const MAX_PAGE_CONTEXT_HISTORY = 32;
 
 interface StoredSession {
   id: string;
@@ -90,6 +91,7 @@ export class SessionPageLifecycle {
   readonly #clock: () => number;
   readonly #idFactory: (kind: 'session' | 'page') => string;
   readonly #cleanups: Array<() => void> = [];
+  readonly #contextsByUrl = new Map<string, ClientContextInput>();
   #session: StoredSession | undefined;
   #page: PageContext | undefined;
   #lastPersistedAt = 0;
@@ -173,6 +175,18 @@ export class SessionPageLifecycle {
     this.#started = false;
   }
 
+  contextForNavigationUrl(rawUrl?: string): ClientContextInput | undefined {
+    if (rawUrl !== undefined) {
+      const url = sanitizeUrl(rawUrl)?.url;
+      return url === undefined ? undefined : this.#contextsByUrl.get(url);
+    }
+    if (this.#session === undefined || this.#page === undefined) return undefined;
+    return {
+      session: { id: this.#session.id, startedAt: this.#session.startedAt },
+      page: this.#page,
+    };
+  }
+
   #handleNavigation(): void {
     if (!this.#started || this.#session === undefined || this.#page === undefined) return;
     const nextPage = createPageContext(this.#runtime.readPage(), this.#idFactory('page'));
@@ -245,7 +259,15 @@ export class SessionPageLifecycle {
       id: this.#session.id,
       startedAt: this.#session.startedAt,
     };
-    this.#host.updateContext({ session, page: this.#page });
+    const context: ClientContextInput = { session, page: this.#page };
+    this.#host.updateContext(context);
+    this.#contextsByUrl.delete(this.#page.url);
+    this.#contextsByUrl.set(this.#page.url, context);
+    while (this.#contextsByUrl.size > MAX_PAGE_CONTEXT_HISTORY) {
+      const oldestUrl = this.#contextsByUrl.keys().next().value;
+      if (oldestUrl === undefined) break;
+      this.#contextsByUrl.delete(oldestUrl);
+    }
   }
 
   #captureSessionStart(timestamp: number): void {

@@ -39,6 +39,7 @@ describeIntegration('durable event pipeline', () => {
     try {
       const customEventId = uuidv7();
       const errorEventId = uuidv7();
+      const performanceEventId = uuidv7();
       const envelope: Envelope = {
         version: ENVELOPE_VERSION,
         sentAt: 1_789_368_123_456,
@@ -94,6 +95,40 @@ describeIntegration('durable event pipeline', () => {
               },
             },
           },
+          {
+            type: 'event',
+            payload: {
+              id: performanceEventId,
+              type: 'performance',
+              name: 'web_vital_lcp',
+              version: EVENT_VERSION,
+              timestamp: 1_789_368_123_458,
+              context: {
+                sdk: { name: '@spectro/browser', version: '0.1.0' },
+                project: { id: 'prj_durable_pipeline' },
+                environment: 'test',
+                session: { id: 'ses_integration', startedAt: 1_789_368_100_000 },
+                page: {
+                  id: 'page_integration',
+                  url: 'https://app.example/checkout',
+                  path: '/checkout',
+                },
+              },
+              payload: {
+                metric: 'lcp',
+                value: 2_500,
+                unit: 'ms',
+                rating: 'needs_improvement',
+                navigationType: 'navigate',
+                attribution: {
+                  metricId: 'v6-lcp-integration',
+                  timeToFirstByte: 100,
+                  elementRenderDelay: 1_650,
+                  target: 'monitor:hero',
+                },
+              },
+            },
+          },
         ],
       };
 
@@ -104,30 +139,31 @@ describeIntegration('durable event pipeline', () => {
         payload: envelope,
       });
       expect(response.statusCode).toBe(202);
-      expect(response.json()).toEqual({ accepted: 2 });
+      expect(response.json()).toEqual({ accepted: 3 });
 
       const source = await JetStreamAdmissionSource.create(connection);
       const writer = new ClickHouseProcessedEventWriter(clickhouse);
       const worker = new ProcessorWorker(source, new EventProcessor(writer));
       await expect(worker.runOnce(2_000)).resolves.toMatchObject({
         status: 'processed',
-        processed: 2,
+        processed: 3,
       });
 
       const result = await clickhouse.query({
         query: `
           SELECT
             count() AS count,
-            countIf(event_name = 'runtime_error' AND error_fingerprint != '') AS fingerprinted
+            countIf(event_name = 'runtime_error' AND error_fingerprint != '') AS fingerprinted,
+            countIf(event_type = 'performance' AND event_name = 'web_vital_lcp') AS performance_count
           FROM spectro.events_v1 FINAL
-          WHERE event_id IN ({customEventId:UUID}, {errorEventId:UUID})
+          WHERE event_id IN ({customEventId:UUID}, {errorEventId:UUID}, {performanceEventId:UUID})
         `,
-        query_params: { customEventId, errorEventId },
+        query_params: { customEventId, errorEventId, performanceEventId },
         format: 'JSONEachRow',
       });
-      await expect(result.json<{ count: number; fingerprinted: number }>()).resolves.toEqual([
-        { count: 2, fingerprinted: 1 },
-      ]);
+      await expect(
+        result.json<{ count: number; fingerprinted: number; performance_count: number }>(),
+      ).resolves.toEqual([{ count: 3, fingerprinted: 1, performance_count: 1 }]);
     } finally {
       await app.close();
       await connection.drain();

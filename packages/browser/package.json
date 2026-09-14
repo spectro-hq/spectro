@@ -14,14 +14,15 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "check": "tsc -b --pretty false",
+    "check": "tsc -b --pretty false && tsc -p tsconfig.check.json --pretty false",
     "test": "vitest run --exclude 'dist/**'"
   },
   "dependencies": {
     "@spectro/core": "workspace:*",
     "@spectro/protocol": "workspace:*",
     "@spectro/types": "workspace:*",
-    "uuid": "catalog:"
+    "uuid": "catalog:",
+    "web-vitals": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:",

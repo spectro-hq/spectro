@@ -65,7 +65,11 @@ export class SpectroClient implements SpectroClientPublic {
         name: input.name,
         version: EVENT_VERSION,
         timestamp: input.timestamp ?? Date.now(),
-        context: this.getContext(),
+        context: createEventContext({
+          ...this.#options,
+          ...this.#contextOverrides,
+          ...input.context,
+        }),
         payload: sanitizePayload(input),
       };
 
