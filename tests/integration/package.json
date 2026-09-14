@@ -1,0 +1,24 @@
+{
+  "name": "@spectro/integration-tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc -p tsconfig.json --pretty false",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@clickhouse/client": "catalog:",
+    "@nats-io/transport-node": "catalog:",
+    "@spectro/ingest": "workspace:*",
+    "@spectro/pipeline": "workspace:*",
+    "@spectro/processor": "workspace:*",
+    "@spectro/protocol": "workspace:*",
+    "uuid": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

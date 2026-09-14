@@ -37,6 +37,13 @@ Status: accepted unless marked open.
 | ADR-031 | Use Vite 8, `@vitejs/plugin-react` 6, Vitest 5, and Node.js 22.12 or newer.                                                                            |
 | ADR-032 | Keep JSON Schema + Ajv for the cross-language event protocol; reserve Zod for future TypeScript-owned application DTOs.                                |
 | ADR-033 | Keep server state in TanStack Query, shareable filter state in the router, local state in React, and use Zustand only for genuine global client state. |
+| ADR-034 | Use NATS JetStream as the V1 durable admission source with pull consumption, explicit acknowledgements, and at-least-once delivery.                    |
+| ADR-035 | Store processed V1 events in one ClickHouse `ReplacingMergeTree` table with typed common dimensions and bounded JSON payload/context columns.          |
+
+Detailed records:
+
+- [ADR-034: Durable admission with NATS JetStream](./ADR-034_DURABLE_ADMISSION_JETSTREAM.md)
+- [ADR-035: ClickHouse event storage V1](./ADR-035_CLICKHOUSE_EVENT_STORAGE_V1.md)
 
 ## Change rule
 

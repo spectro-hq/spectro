@@ -8,5 +8,5 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"],
-  "references": [{ "path": "../../packages/protocol" }]
+  "references": [{ "path": "../../packages/protocol" }, { "path": "../../packages/pipeline" }]
 }

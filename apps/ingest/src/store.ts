@@ -1,8 +1,7 @@
 import type { Envelope, SpectroEvent } from '@spectro/protocol';
+import type { AdmissionSink } from '@spectro/pipeline';
 
-export interface EventStore {
-  append(envelope: Envelope): Promise<void>;
-}
+export type EventStore = AdmissionSink;
 
 export class InMemoryEventStore implements EventStore {
   readonly #events: SpectroEvent[] = [];

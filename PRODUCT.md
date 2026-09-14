@@ -35,7 +35,8 @@ Customer web applications send events through `@spectro/browser` to an independe
 - Web, API, and ingestion are independently deployable. The console is a static SPA and does not become an application server.
 - Privacy defaults exclude passwords, authorization headers, cookies, input values, request/response bodies, and DOM snapshots.
 - Licensing is deliberately undecided. Do not add a repository-wide license until the SDK/protocol and platform licensing strategy is confirmed.
-- Open decisions include production sampling defaults, durable queue technology, physical ClickHouse table layout, and the platform source-available license.
+- NATS JetStream is the V1 durable admission source, and processed events begin in one ClickHouse table with typed common dimensions plus bounded JSON payload/context columns.
+- Open decisions include production sampling defaults, event retention policy, and the platform source-available license.
 
 ## Brand Commitments
 

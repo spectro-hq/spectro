@@ -1,0 +1,39 @@
+name: spectro-local
+
+services:
+  nats:
+    image: nats:2.14.6-alpine
+    command: ['--jetstream', '--store_dir', '/data', '--http_port', '8222']
+    ports:
+      - '4222:4222'
+      - '8222:8222'
+    volumes:
+      - nats-data:/data
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--output-document=-', 'http://localhost:8222/healthz']
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.3.33.24-alpine
+    environment:
+      CLICKHOUSE_DB: spectro
+      CLICKHOUSE_USER: spectro
+      CLICKHOUSE_PASSWORD: spectro_local
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: '1'
+    ports:
+      - '8123:8123'
+      - '9000:9000'
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ./clickhouse/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--output-document=-', 'http://127.0.0.1:8123/ping']
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+volumes:
+  nats-data:
+  clickhouse-data:

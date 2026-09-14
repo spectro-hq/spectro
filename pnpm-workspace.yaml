@@ -2,11 +2,15 @@ packages:
   - apps/*
   - packages/*
   - services/*
+  - tests/*
 
 allowBuilds:
   esbuild: true
 
 catalog:
+  '@clickhouse/client': ^1.23.1
+  '@nats-io/jetstream': ^3.4.0
+  '@nats-io/transport-node': ^3.4.0
   '@fastify/cors': ^11.1.0
   '@tailwindcss/vite': ^4.1.13
   '@tanstack/react-query': ^5.102.8

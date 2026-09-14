@@ -107,9 +107,18 @@ settings:
 
 catalogs:
   default:
+    '@clickhouse/client':
+      specifier: ^1.23.1
+      version: 1.23.1
     '@fastify/cors':
       specifier: ^11.1.0
       version: 11.3.0
+    '@nats-io/jetstream':
+      specifier: ^3.4.0
+      version: 3.4.0
+    '@nats-io/transport-node':
+      specifier: ^3.4.0
+      version: 3.4.0
     '@tailwindcss/vite':
       specifier: ^4.1.13
       version: 4.3.3
@@ -209,6 +218,12 @@ importers:
       '@fastify/cors':
         specifier: 'catalog:'
         version: 11.3.0
+      '@nats-io/transport-node':
+        specifier: 'catalog:'
+        version: 3.4.0
+      '@spectro/pipeline':
+        specifier: workspace:*
+        version: link:../../packages/pipeline
       '@spectro/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
@@ -307,6 +322,28 @@ importers:
         specifier: 'catalog:'
         version: 5.0.0(@types/node@22.20.2)(vite@8.3.0(@types/node@22.20.2)(jiti@2.7.0)(tsx@4.23.13))
 
+  packages/pipeline:
+    dependencies:
+      '@nats-io/jetstream':
+        specifier: 'catalog:'
+        version: 3.4.0
+      '@nats-io/transport-node':
+        specifier: 'catalog:'
+        version: 3.4.0
+      '@spectro/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.20.2
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.0(@types/node@22.20.2)(vite@8.3.0(@types/node@22.20.2)(jiti@2.7.0)(tsx@4.23.13))
+
   packages/protocol:
     dependencies:
       ajv:
@@ -332,9 +369,55 @@ importers:
 
   services/processor:
     dependencies:
+      '@clickhouse/client':
+        specifier: 'catalog:'
+        version: 1.23.1
+      '@nats-io/transport-node':
+        specifier: 'catalog:'
+        version: 3.4.0
+      '@spectro/pipeline':
+        specifier: workspace:*
+        version: link:../../packages/pipeline
       '@spectro/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.20.2
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.13
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.0(@types/node@22.20.2)(vite@8.3.0(@types/node@22.20.2)(jiti@2.7.0)(tsx@4.23.13))
+
+  tests/integration:
+    dependencies:
+      '@clickhouse/client':
+        specifier: 'catalog:'
+        version: 1.23.1
+      '@nats-io/transport-node':
+        specifier: 'catalog:'
+        version: 3.4.0
+      '@spectro/ingest':
+        specifier: workspace:*
+        version: link:../../apps/ingest
+      '@spectro/pipeline':
+        specifier: workspace:*
+        version: link:../../packages/pipeline
+      '@spectro/processor':
+        specifier: workspace:*
+        version: link:../../services/processor
+      '@spectro/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
+      uuid:
+        specifier: 'catalog:'
+        version: 14.0.2
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -347,6 +430,10 @@ importers:
         version: 5.0.0(@types/node@22.20.2)(vite@8.3.0(@types/node@22.20.2)(jiti@2.7.0)(tsx@4.23.13))
 
 packages:
+
+  '@clickhouse/client@1.23.1':
+    resolution: {integrity: sha512-vs3/Zc1dHvT171btW5nMoPsPCJ6QVJ5pp7obxzO5sjqwFx/jjz9wwCAqcFOdc2DhprugDBaVn+4dVY8hG3A9nw==}
+    engines: {node: '>=20'}
 
   '@esbuild/aix-ppc64@0.28.2':
     resolution: {integrity: sha512-XExcO+dvLKvVtNTibSTBej1NCAbaGhWn9Ww1ZPx80qsahhPFe/8jgWP0IchNe0F3HwkU7n8ejhH8bjonqht8mQ==}
@@ -540,6 +627,24 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@nats-io/jetstream@3.4.0':
+    resolution: {integrity: sha512-GzHQodNJ942+R5LRb8PuZ5ugVWVWMRiufxUYLLVWkXKfwDXYN+Owo0d7L/b9O7BPyrbYD7jQWAC6+ZVuXa9Gyw==}
+
+  '@nats-io/nats-core@3.4.0':
+    resolution: {integrity: sha512-QMDM86EUNm+wudlKC67HLar/KHHQUvJGLfb4jbahje3pUk3K9afeck9fwsxBZF0eUFox6T/TA6m/t+lQqf+QsQ==}
+
+  '@nats-io/nkeys@2.0.3':
+    resolution: {integrity: sha512-JVt56GuE6Z89KUkI4TXUbSI9fmIfAmk6PMPknijmuL72GcD+UgIomTcRWiNvvJKxA01sBbmIPStqJs5cMRBC3A==}
+    engines: {node: '>=18.0.0'}
+
+  '@nats-io/nuid@3.0.0':
+    resolution: {integrity: sha512-QbXZDrxmYlrn5AD06gYcUTmEHwxn96HBQMIk7XTjDlEcx6FPzVBBPjp4AMRh1lEv6B4iJ6Xb/Uz61JugPXFRQg==}
+    engines: {node: '>= 22.x'}
+
+  '@nats-io/transport-node@3.4.0':
+    resolution: {integrity: sha512-hH7u7ejIBTFEJIZ8rIcMrHJI6wl+HhpO5sVFs1+ppmXa8RuB2+Lh1+UwTzZ5xTNNm1TKcRkYy+2qCV56qp8RxA==}
+    engines: {node: '>= 18.0.0'}
 
   '@oxc-project/types@0.149.0':
     resolution: {integrity: sha512-Efcc+iF0j3Bf67YjEqIqWXbX5XddXoK/Mw4K1/JuXwRCZ8N16VR7iT23nlCc9XrveFVh/E5Rqs2StT0V8v9LdA==}
@@ -1668,6 +1773,9 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
+  tweetnacl@1.0.3:
+    resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
+
   typescript@7.0.2:
     resolution: {integrity: sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA==}
     engines: {node: '>=16.20.0'}
@@ -1775,6 +1883,8 @@ packages:
     hasBin: true
 
 snapshots:
+
+  '@clickhouse/client@1.23.1': {}
 
   '@esbuild/aix-ppc64@0.28.2':
     optional: true
@@ -1900,6 +2010,27 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
+
+  '@nats-io/jetstream@3.4.0':
+    dependencies:
+      '@nats-io/nats-core': 3.4.0
+
+  '@nats-io/nats-core@3.4.0':
+    dependencies:
+      '@nats-io/nkeys': 2.0.3
+      '@nats-io/nuid': 3.0.0
+
+  '@nats-io/nkeys@2.0.3':
+    dependencies:
+      tweetnacl: 1.0.3
+
+  '@nats-io/nuid@3.0.0': {}
+
+  '@nats-io/transport-node@3.4.0':
+    dependencies:
+      '@nats-io/nats-core': 3.4.0
+      '@nats-io/nkeys': 2.0.3
+      '@nats-io/nuid': 3.0.0
 
   '@oxc-project/types@0.149.0': {}
 
@@ -2713,6 +2844,8 @@ snapshots:
       esbuild: 0.28.2
     optionalDependencies:
       fsevents: 2.3.3
+
+  tweetnacl@1.0.3: {}
 
   typescript@7.0.2:
     optionalDependencies:

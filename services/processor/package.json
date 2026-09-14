@@ -15,13 +15,20 @@
   "scripts": {
     "build": "tsc -b",
     "check": "tsc -b --pretty false && tsc -p tsconfig.check.json --pretty false",
-    "test": "vitest run --exclude 'dist/**'"
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "test": "vitest run --exclude 'dist/**' --exclude '**/*.integration.test.ts'",
+    "test:integration": "vitest run src/clickhouse.integration.test.ts"
   },
   "dependencies": {
+    "@clickhouse/client": "catalog:",
+    "@nats-io/transport-node": "catalog:",
+    "@spectro/pipeline": "workspace:*",
     "@spectro/protocol": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

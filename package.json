@@ -12,7 +12,10 @@
     "lint:fix": "oxlint --fix .",
     "test": "pnpm -r --if-present test",
     "verify": "pnpm format:check && pnpm lint && pnpm check && pnpm test && pnpm build",
-    "dev": "pnpm --parallel --filter @spectro/web --filter @spectro/api --filter @spectro/ingest dev"
+    "dev": "pnpm --parallel --filter @spectro/web --filter @spectro/api --filter @spectro/ingest --filter @spectro/processor dev",
+    "infra:up": "docker compose -f infra/docker/compose.yaml up -d --wait",
+    "infra:down": "docker compose -f infra/docker/compose.yaml down",
+    "test:integration": "SPECTRO_INTEGRATION=1 pnpm --filter @spectro/integration-tests test"
   },
   "devDependencies": {
     "oxfmt": "catalog:",

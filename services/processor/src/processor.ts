@@ -6,6 +6,7 @@ export const PROCESSING_VERSION = 1 as const;
 
 export interface ProcessingMetadata {
   version: typeof PROCESSING_VERSION;
+  envelopeSentAt: number;
   processedAt: number;
   errorFingerprint?: string;
 }
@@ -26,8 +27,12 @@ export interface ProcessEnvelopeResult {
 
 export type ProcessorClock = () => number;
 
-function processEvent(event: SpectroEvent, processedAt: number): ProcessedEvent {
-  const common = { version: PROCESSING_VERSION, processedAt } as const;
+function processEvent(
+  event: SpectroEvent,
+  envelopeSentAt: number,
+  processedAt: number,
+): ProcessedEvent {
+  const common = { version: PROCESSING_VERSION, envelopeSentAt, processedAt } as const;
   if (event.type !== 'error') {
     return { event, processing: common };
   }
@@ -52,7 +57,9 @@ export class EventProcessor {
 
   async process(envelope: Envelope): Promise<ProcessEnvelopeResult> {
     const processedAt = this.#clock();
-    const events = envelope.items.map((item) => processEvent(item.payload, processedAt));
+    const events = envelope.items.map((item) =>
+      processEvent(item.payload, envelope.sentAt, processedAt),
+    );
     await this.#writer.append(events);
     return { processed: events.length };
   }

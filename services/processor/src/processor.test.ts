@@ -99,7 +99,11 @@ describe('EventProcessor', () => {
     expect(written).toHaveLength(1);
     expect(written[0]?.[0]).toEqual({
       event: customEvent,
-      processing: { version: 1, processedAt: 1_789_368_130_000 },
+      processing: {
+        version: 1,
+        envelopeSentAt: 1_789_368_123_456,
+        processedAt: 1_789_368_130_000,
+      },
     });
     expect(written[0]?.[1]?.processing.errorFingerprint).toMatch(/^[0-9a-f]{32}$/u);
   });

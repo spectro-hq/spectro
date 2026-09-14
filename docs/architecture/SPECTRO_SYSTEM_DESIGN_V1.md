@@ -12,6 +12,7 @@ Customer browser
   -> POST /v1/envelope
   -> Ingestion API
   -> validation and admission
+  -> NATS JetStream durable source
   -> event processor
   -> ClickHouse event plane
 
@@ -31,13 +32,14 @@ apps/
   ingest/    public high-throughput ingestion edge
 packages/
   protocol/  JSON Schema, protocol types, strict validation
+  pipeline/  private admission identity and durable delivery contracts
   types/     public SDK/product configuration types
   core/      client pipeline, context, queue, transport contracts
   browser/   browser singleton API and fetch transport
 services/
   processor/ normalization, fingerprinting, enrichment, event-plane writer port
 infra/
-  docker/    future local production topology
+  docker/    local NATS JetStream and ClickHouse topology
 ```
 
 Dependencies point inward: apps and browser depend on core/types/protocol; core depends on types/protocol; protocol has no product or browser dependency.
@@ -55,7 +57,8 @@ track()
   -> Transport
   -> Ingestion authentication
   -> strict schema and size validation
-  -> admitted envelope boundary
+  -> NATS JetStream publish acknowledgement
+  -> durable pull consumer
   -> processor
   -> durable event-plane writer
 ```
@@ -71,7 +74,8 @@ Instrumentation -> Capture -> Context -> Privacy -> beforeSend
 
 - PostgreSQL: organizations, members, projects, API keys, environments, releases, source maps, dashboards, alert rules, flags, and experiments.
 - ClickHouse: accepted event, error, performance, network, behavior, and business signal data.
-- Physical ClickHouse tables are decided from query and retention evidence. UI navigation must not dictate physical table boundaries.
+- V1 begins with one `events_v1` `ReplacingMergeTree` table. Stable common dimensions are typed and bounded protocol context/payload remain available as JSON strings.
+- Event-type tables, projections, materialized views, and retention TTLs require query or retention evidence. UI navigation does not dictate physical table boundaries.
 
 ## Delivery sequence
 
@@ -81,7 +85,7 @@ Instrumentation -> Capture -> Context -> Privacy -> beforeSend
 4. `@spectro/core` event builder, context, queue, and transport.
 5. `@spectro/browser` public `init`, `track`, and `flush` path.
 6. Ingestion admission and replaceable storage port.
-7. Processor service and durable event plane. The deterministic processor core and writer port are implemented; durable source and ClickHouse adapters remain.
+7. Processor service and durable event plane. JetStream admission, processing, ClickHouse storage, replay convergence, and the complete real-boundary integration test are implemented.
 8. Session/page lifecycle, then error, performance, network, and behavior plugins.
 9. Product API and console data surfaces.
 
