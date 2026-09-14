@@ -20,7 +20,8 @@
   "dependencies": {
     "@spectro/core": "workspace:*",
     "@spectro/protocol": "workspace:*",
-    "@spectro/types": "workspace:*"
+    "@spectro/types": "workspace:*",
+    "uuid": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:",

@@ -2,10 +2,10 @@
 
 Spectro is a digital product observatory that connects technical health, user experience, behavior, and business outcomes.
 
-The current milestone establishes the protocol-first monorepo and a durable event-plane vertical slice:
+The current milestone provides the protocol-first monorepo, browser session/page lifecycle, and a durable event-plane vertical slice:
 
 ```text
-track -> SpectroEvent -> Envelope -> ingestion -> JetStream -> processor -> ClickHouse
+browser lifecycle/custom track -> SpectroEvent -> Envelope -> ingestion -> JetStream -> processor -> ClickHouse
 ```
 
 ## Commands

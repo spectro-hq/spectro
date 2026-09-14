@@ -56,6 +56,10 @@ interface SpectroClient {
   flush(): Promise<FlushResult>;
 }
 
+interface BrowserClient extends SpectroClient {
+  destroy(): void;
+}
+
 interface Transport {
   send(envelope: Envelope): Promise<TransportResult>;
 }
@@ -66,3 +70,13 @@ interface Transport {
 `init()` follows the same containment rule: malformed runtime options or missing platform capabilities are reported through `onError` when available and return `undefined` rather than throwing into the host application.
 
 Browser fetch transport does not set `keepalive` for ordinary envelopes because browser keepalive quotas are smaller than the protocol's 1 MiB envelope limit. Unload delivery will use a separately bounded transport policy when that lifecycle is introduced.
+
+## Browser session and page lifecycle
+
+Browser `init()` enables the session/page lifecycle plugin by default. Sessions are scoped to a tab and project/environment, survive reloads through `sessionStorage`, and rotate after 30 minutes without SDK or browser activity. A new session emits `session_start`.
+
+The inactivity timeout can be set with `lifecycle.sessionTimeoutMs`; `lifecycle: false` disables automatic lifecycle instrumentation. The timeout must be a positive finite number of milliseconds.
+
+Every initialization creates a page ID and emits `page_view`. A `pushState`, `replaceState`, `popstate`, or hash route that changes the sanitized URL creates a new page ID and emits `page_route_change`; later events receive that new page context. Query strings, credentials, and arbitrary fragments are excluded from captured URLs. Hash-router paths beginning with `#/` are retained without their query portion.
+
+`destroy()` removes lifecycle listeners and restores owned History wrappers. It does not implicitly flush or emit unreliable unload end events.

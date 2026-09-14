@@ -11,6 +11,7 @@ import {
 } from '@spectro/protocol';
 import type {
   CaptureInput,
+  ClientContextInput,
   FlushResult,
   SpectroClientOptions,
   SpectroClientPublic,
@@ -35,6 +36,7 @@ function sanitizePayload(input: CaptureInput): unknown {
 
 export class SpectroClient implements SpectroClientPublic {
   readonly #options: SpectroClientOptions;
+  #contextOverrides: ClientContextInput = {};
   readonly #queue = new EventQueue();
   readonly #transport: Transport;
 
@@ -44,7 +46,11 @@ export class SpectroClient implements SpectroClientPublic {
   }
 
   getContext(): EventContext {
-    return createEventContext(this.#options);
+    return createEventContext({ ...this.#options, ...this.#contextOverrides });
+  }
+
+  updateContext(context: ClientContextInput): void {
+    this.#contextOverrides = { ...this.#contextOverrides, ...context };
   }
 
   capture(input: CaptureInput): string | undefined {

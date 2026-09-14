@@ -295,6 +295,9 @@ importers:
       '@spectro/types':
         specifier: workspace:*
         version: link:../types
+      uuid:
+        specifier: 'catalog:'
+        version: 14.0.2
     devDependencies:
       typescript:
         specifier: 'catalog:'

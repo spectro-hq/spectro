@@ -136,4 +136,29 @@ describe('SpectroClient', () => {
     expect(captured?.context.user?.traits).toEqual({ plan: 'pro' });
     expect(captured?.context.tags).toEqual({ region: 'cn' });
   });
+
+  it('applies updated session and page context to later events only', async () => {
+    const transport = new MemoryTransport();
+    const client = createClient(transport);
+
+    client.track('before_route');
+    client.updateContext({
+      session: { id: 'ses_02', startedAt: 1_789_368_100_000 },
+      page: {
+        id: 'page_02',
+        url: 'https://shop.example/checkout',
+        path: '/checkout',
+      },
+    });
+    client.track('after_route');
+    await client.flush();
+
+    const events = transport.envelopes[0]?.items.map((item) => item.payload);
+    expect(events?.[0]?.context).toMatchObject({ session: { id: 'ses_01' } });
+    expect(events?.[0]?.context.page).toBeUndefined();
+    expect(events?.[1]?.context).toMatchObject({
+      session: { id: 'ses_02', startedAt: 1_789_368_100_000 },
+      page: { id: 'page_02', path: '/checkout' },
+    });
+  });
 });

@@ -1,8 +1,13 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ENVELOPE_VERSION, EVENT_VERSION, type Envelope } from '@spectro/protocol';
 
-import { FetchTransport, init, track } from '../src/index.js';
+import { destroy, FetchTransport, flush, init, track } from '../src/index.js';
+
+afterEach(() => {
+  destroy();
+  vi.unstubAllGlobals();
+});
 
 const envelope: Envelope = {
   version: ENVELOPE_VERSION,
@@ -71,5 +76,77 @@ describe('FetchTransport', () => {
       }),
     ).not.toThrow();
     expect(errors).toHaveLength(1);
+  });
+
+  it('captures lifecycle events through the public browser API and restores History', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ accepted: 3 }), {
+        status: 202,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    const windowEvents = new EventTarget();
+    const documentEvents = new EventTarget();
+    const storage = new Map<string, string>();
+    const location = { href: 'https://app.example/start?token=private' };
+    const originalPushState = (_data: unknown, _unused: string, url?: string | URL | null) => {
+      if (url !== undefined && url !== null) {
+        location.href = new URL(String(url), location.href).href;
+      }
+    };
+    const originalReplaceState = originalPushState;
+    const history = { pushState: originalPushState, replaceState: originalReplaceState };
+    const browserWindow = {
+      location,
+      history,
+      sessionStorage: {
+        getItem: (key: string) => storage.get(key) ?? null,
+        setItem: (key: string, value: string) => storage.set(key, value),
+      },
+      addEventListener: windowEvents.addEventListener.bind(windowEvents),
+      removeEventListener: windowEvents.removeEventListener.bind(windowEvents),
+    };
+    const browserDocument = {
+      title: 'Start',
+      referrer: '',
+      addEventListener: documentEvents.addEventListener.bind(documentEvents),
+      removeEventListener: documentEvents.removeEventListener.bind(documentEvents),
+    };
+    vi.stubGlobal('window', browserWindow);
+    vi.stubGlobal('document', browserDocument);
+
+    const initialized = init({
+      projectId: 'prj_test',
+      environment: 'test',
+      endpoint: 'https://ingest.example',
+      apiKey: 'sp_test',
+      fetch: fetchMock,
+    });
+    expect(initialized).toBeDefined();
+    expect(history.pushState).not.toBe(originalPushState);
+
+    track('app_ready');
+    await flush();
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const requestBody = fetchMock.mock.calls[0]?.[1]?.body;
+    expect(typeof requestBody).toBe('string');
+    const sent: unknown = JSON.parse(typeof requestBody === 'string' ? requestBody : '{}');
+    expect(sent).toMatchObject({
+      items: [
+        { payload: { name: 'session_start' } },
+        {
+          payload: {
+            name: 'page_view',
+            context: { page: { url: 'https://app.example/start', path: '/start' } },
+          },
+        },
+        { payload: { name: 'app_ready' } },
+      ],
+    });
+
+    initialized?.destroy();
+    expect(history.pushState).toBe(originalPushState);
+    expect(history.replaceState).toBe(originalReplaceState);
   });
 });
