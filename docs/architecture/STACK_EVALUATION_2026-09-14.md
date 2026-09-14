@@ -48,4 +48,4 @@ Do not copy TanStack Query data into Zustand, and do not make Zustand the defaul
 
 ## Field performance
 
-Google's `web-vitals` 6 attribution build measures CLS, FCP, INP, LCP, and TTFB. Spectro registers it once per loaded browser SDK module and maps only bounded primitive attribution fields into the event protocol. DOM nodes, default selectors, browser performance entries, and resource URLs are excluded. Spectro supplements the library with native Long Task and Navigation Timing summaries; Resource Timing remains part of the later network instrumentation decision.
+Google's `web-vitals` 6 attribution build measures CLS, FCP, INP, LCP, and TTFB. Spectro registers it once per loaded browser SDK module and maps only bounded primitive attribution fields into the event protocol. DOM nodes, default selectors, browser performance entries, and resource URLs are excluded. Spectro supplements the library with native Long Task and Navigation Timing summaries. Network instrumentation now owns Resource Timing under ADR-039 and keeps it opt-in until production sampling defaults exist.

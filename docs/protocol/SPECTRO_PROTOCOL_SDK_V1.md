@@ -99,3 +99,11 @@ Performance capture can be disabled with `performance: false`; Web Vitals, long 
 The SDK never queues raw attribution objects, DOM nodes, selectors, `PerformanceEntry` objects, or resource URLs. It retains only an explicit primitive allowlist. DOM targets become a bounded `monitor:<id>` only for valid `data-spectro-monitor-id` values and otherwise become `element`.
 
 Web Vitals registration is page-global and happens at most once per loaded SDK module. Client destruction unsubscribes Spectro delivery and disconnects native observers. Delayed callbacks use their navigation URL to recover the matching bounded session/page context instead of inheriting a later SPA route. Unsupported browser APIs degrade silently.
+
+## Browser network capture
+
+Browser `init()` enables Fetch and XMLHttpRequest capture by default. Completed operations emit `fetch_request` or `xhr_request`; `network: false` disables all automatic network capture, and `captureFetch` and `captureXhr` can be toggled independently. Resource Timing emits `resource_request` only when `captureResourceTiming: true` because asset-level collection remains opt-in until production sampling and volume defaults exist.
+
+Network events contain only an uppercase bounded method, a sanitized HTTP(S) URL, monotonic start and duration values, optional response status, initiator, and success state. Credentials, queries, fragments, headers, cookies, request bodies, response bodies, response text, and arbitrary request objects are never queued. Fetch rejection and XHR abort, timeout, or network completion are unsuccessful; HTTP 4xx and 5xx responses are also unsuccessful.
+
+Fetch and XMLHttpRequest wrappers are shared by active SDK subscribers and are restored when the last subscriber is destroyed, provided another library has not replaced them. Spectro's ingestion envelope URL is excluded from capture. In-flight Fetch and XMLHttpRequest callbacks retain the sanitized page URL present when the request starts so a later SPA transition does not replace their session/page context. Resource Timing uses the active page context when its observer delivers the entry because it has no request-start hook.

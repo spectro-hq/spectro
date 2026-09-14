@@ -56,7 +56,7 @@ function safeHashRoute(hash: string): string {
   return queryIndex === -1 ? hash : hash.slice(0, queryIndex);
 }
 
-function sanitizeUrl(rawUrl: string): { url: string; path: string } | undefined {
+export function sanitizePageUrl(rawUrl: string): { url: string; path: string } | undefined {
   try {
     const parsed = new URL(rawUrl);
     const hashRoute = safeHashRoute(parsed.hash);
@@ -71,9 +71,9 @@ function sanitizeUrl(rawUrl: string): { url: string; path: string } | undefined 
 }
 
 export function createPageContext(snapshot: RawPageSnapshot, id: string): PageContext {
-  const location = sanitizeUrl(snapshot.href) ?? { url: 'about:blank', path: '/' };
+  const location = sanitizePageUrl(snapshot.href) ?? { url: 'about:blank', path: '/' };
   const title = snapshot.title.trim().slice(0, MAX_TITLE_LENGTH);
-  const referrer = sanitizeUrl(snapshot.referrer)?.url;
+  const referrer = sanitizePageUrl(snapshot.referrer)?.url;
 
   return {
     id,
@@ -177,7 +177,7 @@ export class SessionPageLifecycle {
 
   contextForNavigationUrl(rawUrl?: string): ClientContextInput | undefined {
     if (rawUrl !== undefined) {
-      const url = sanitizeUrl(rawUrl)?.url;
+      const url = sanitizePageUrl(rawUrl)?.url;
       return url === undefined ? undefined : this.#contextsByUrl.get(url);
     }
     if (this.#session === undefined || this.#page === undefined) return undefined;
