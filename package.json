@@ -15,7 +15,7 @@
     "dev": "pnpm --parallel --filter @spectro/web --filter @spectro/api --filter @spectro/ingest --filter @spectro/processor dev",
     "infra:up": "docker compose -f infra/docker/compose.yaml up -d --wait",
     "infra:down": "docker compose -f infra/docker/compose.yaml down",
-    "test:integration": "SPECTRO_INTEGRATION=1 pnpm --filter @spectro/integration-tests test"
+    "test:integration": "SPECTRO_INTEGRATION=1 pnpm --filter @spectro/integration-tests test && pnpm --filter @spectro/api test:integration"
   },
   "devDependencies": {
     "oxfmt": "catalog:",
