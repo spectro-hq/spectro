@@ -94,6 +94,7 @@ export interface ExplorerSearch {
   readonly sessionId?: string | undefined;
   readonly pageId?: string | undefined;
   readonly event?: string | undefined;
+  readonly fingerprint?: string | undefined;
 }
 
 function optionalBoundedString(value: unknown, maxLength: number): string | undefined {
@@ -118,6 +119,7 @@ export function parseExplorerSearch(search: Record<string, unknown>): ExplorerSe
   const sessionId = optionalBoundedString(search.sessionId, 128);
   const pageId = optionalBoundedString(search.pageId, 128);
   const event = optionalBoundedString(search.event, 64);
+  const fingerprint = optionalBoundedString(search.fingerprint, 32);
 
   return {
     project,
@@ -130,6 +132,7 @@ export function parseExplorerSearch(search: Record<string, unknown>): ExplorerSe
     ...(sessionId === undefined ? {} : { sessionId }),
     ...(pageId === undefined ? {} : { pageId }),
     ...(event === undefined ? {} : { event }),
+    ...(fingerprint !== undefined && /^[0-9a-f]{32}$/.test(fingerprint) ? { fingerprint } : {}),
   };
 }
 
@@ -143,6 +146,7 @@ export interface EventQueryInput {
   readonly release?: string;
   readonly sessionId?: string;
   readonly pageId?: string;
+  readonly fingerprint?: string;
   readonly cursor?: string;
   readonly limit?: number;
 }
@@ -161,6 +165,7 @@ export function buildEventQueryUrl(input: EventQueryInput): string {
     ['release', input.release],
     ['sessionId', input.sessionId],
     ['pageId', input.pageId],
+    ['fingerprint', input.fingerprint],
     ['cursor', input.cursor],
   ] as const) {
     if (value !== undefined) {

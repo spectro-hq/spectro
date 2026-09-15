@@ -18,6 +18,7 @@ describe('parseExplorerSearch', () => {
         range: '6h',
         source: 'live',
         type: 'error',
+        fingerprint: '6f87a1e0c93a4b156f87a1e0c93a4b15',
         event: '01994f36-0188-7450-a24f-7bbed18796a1',
       }),
     ).toEqual({
@@ -26,6 +27,7 @@ describe('parseExplorerSearch', () => {
       range: '6h',
       source: 'live',
       type: 'error',
+      fingerprint: '6f87a1e0c93a4b156f87a1e0c93a4b15',
       event: '01994f36-0188-7450-a24f-7bbed18796a1',
     });
 
@@ -49,12 +51,13 @@ describe('buildEventQueryUrl', () => {
       to: 200,
       type: 'network',
       release: 'web@1.4.2',
+      fingerprint: '6f87a1e0c93a4b156f87a1e0c93a4b15',
       cursor: 'opaque+cursor',
       limit: 25,
     });
 
     expect(url).toBe(
-      '/v1/projects/prj_checkout/events?environment=production&from=100&to=200&limit=25&type=network&release=web%401.4.2&cursor=opaque%2Bcursor',
+      '/v1/projects/prj_checkout/events?environment=production&from=100&to=200&limit=25&type=network&release=web%401.4.2&fingerprint=6f87a1e0c93a4b156f87a1e0c93a4b15&cursor=opaque%2Bcursor',
     );
     expect(url).not.toContain('authorization');
   });

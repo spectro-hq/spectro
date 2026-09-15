@@ -3,6 +3,7 @@ import { createClient } from '@clickhouse/client';
 import { createApiApp } from './app.js';
 import { createLocalProjectAuthorizer } from './auth.js';
 import { ClickHouseEventQueryStore } from './clickhouse-events.js';
+import { ClickHouseIssueQueryStore } from './clickhouse-issues.js';
 
 const clickhouse = createClient({
   url: process.env.SPECTRO_CLICKHOUSE_URL ?? 'http://localhost:8123',
@@ -13,6 +14,7 @@ const clickhouse = createClient({
 const app = createApiApp({
   authorizer: createLocalProjectAuthorizer(process.env),
   eventStore: new ClickHouseEventQueryStore(clickhouse),
+  issueStore: new ClickHouseIssueQueryStore(clickhouse),
 });
 app.addHook('onClose', async () => {
   await clickhouse.close();

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createApiApp } from './app.js';
 import type { EventListQuery, EventQueryStore, ProjectAuthorizer } from './events.js';
+import type { IssueListQuery } from './issues.js';
 
 describe('GET /health', () => {
   it('reports the product API boundary', async () => {
@@ -123,5 +124,69 @@ describe('GET /v1/projects/:projectId/events', () => {
       },
     });
     expect(unavailableResponse.body).not.toContain('private database details');
+  });
+});
+
+const validIssueUrl =
+  '/v1/projects/prj_checkout/issues?environment=production&from=1789368000000&to=1789368060000';
+
+describe('GET /v1/projects/:projectId/issues', () => {
+  it('authorizes, validates, and forwards a bounded issue query', async () => {
+    let received: IssueListQuery | undefined;
+    const app = createApiApp({
+      authorizer: allowProject,
+      issueStore: {
+        list: async (query) => {
+          received = query;
+          return { data: [] };
+        },
+      },
+    });
+
+    const response = await app.inject({
+      method: 'GET',
+      url: `${validIssueUrl}&name=runtime_error&release=web%401.4.2&limit=25`,
+      headers: { authorization: 'Bearer local-secret' },
+    });
+    await app.close();
+
+    expect(response.statusCode).toBe(200);
+    expect(received).toEqual({
+      projectId: 'prj_checkout',
+      environment: 'production',
+      from: 1_789_368_000_000,
+      to: 1_789_368_060_000,
+      name: 'runtime_error',
+      release: 'web@1.4.2',
+      limit: 25,
+    });
+  });
+
+  it('fails before storage without authorization and hides storage errors', async () => {
+    let queried = false;
+    const app = createApiApp({
+      authorizer: allowProject,
+      issueStore: {
+        list: async () => {
+          queried = true;
+          throw new Error('private ClickHouse details');
+        },
+      },
+    });
+    const unauthorized = await app.inject({ method: 'GET', url: validIssueUrl });
+    expect(unauthorized.statusCode).toBe(401);
+    expect(queried).toBe(false);
+
+    const unavailable = await app.inject({
+      method: 'GET',
+      url: validIssueUrl,
+      headers: { authorization: 'Bearer local-secret' },
+    });
+    await app.close();
+    expect(unavailable.statusCode).toBe(503);
+    expect(unavailable.json()).toEqual({
+      error: { code: 'query_unavailable', message: 'Issue query is temporarily unavailable.' },
+    });
+    expect(unavailable.body).not.toContain('private ClickHouse details');
   });
 });

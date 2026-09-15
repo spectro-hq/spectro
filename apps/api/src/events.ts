@@ -26,6 +26,7 @@ export const eventListQuerySchema = z
     release: z.string().min(1).max(128),
     sessionId: z.string().min(1).max(128),
     pageId: z.string().min(1).max(128),
+    fingerprint: z.string().regex(/^[0-9a-f]{32}$/),
     limit: integerInputSchema.pipe(z.number().min(1).max(100)).default(50),
     cursor: z.string().min(1).max(512),
   })
@@ -35,6 +36,7 @@ export const eventListQuerySchema = z
     release: true,
     sessionId: true,
     pageId: true,
+    fingerprint: true,
     cursor: true,
   })
   .strict()
@@ -78,6 +80,7 @@ export interface EventListQuery {
   readonly release?: string;
   readonly sessionId?: string;
   readonly pageId?: string;
+  readonly fingerprint?: string;
   readonly limit: number;
   readonly cursor?: EventCursor;
 }

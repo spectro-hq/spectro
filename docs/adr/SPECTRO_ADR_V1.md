@@ -45,6 +45,7 @@ Status: accepted unless marked open.
 | ADR-039 | Capture privacy-bounded Fetch and XMLHttpRequest signals through shared reversible wrappers; keep Resource Timing opt-in until sampling exists.        |
 | ADR-040 | Capture only explicitly marked clicks and form submissions with bounded target metadata; exclude content, values, and generated selectors.             |
 | ADR-041 | Expose bounded, authorized event queries through the product API using parameterized ClickHouse SQL and stable keyset cursors.                         |
+| ADR-042 | Aggregate error issues by server fingerprint in bounded authorized queries and reuse event queries for occurrence drill-down.                          |
 
 Detailed records:
 
@@ -56,6 +57,7 @@ Detailed records:
 - [ADR-039: Browser network capture V1](./ADR-039_BROWSER_NETWORK_CAPTURE.md)
 - [ADR-040: Browser interaction capture V1](./ADR-040_BROWSER_INTERACTION_CAPTURE.md)
 - [ADR-041: Event query API V1](./ADR-041_EVENT_QUERY_API_V1.md)
+- [ADR-042: Error issues query V1](./ADR-042_ERROR_ISSUES_QUERY_V1.md)
 
 ## Change rule
 
