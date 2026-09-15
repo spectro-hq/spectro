@@ -21,7 +21,7 @@ Spectro Console
   -> PostgreSQL control plane + ClickHouse query plane
 ```
 
-The web console, product API, and ingestion service are separate deployable units. The first implementation uses an injected in-memory event store to prove the protocol-to-storage boundary; this is not a production storage decision.
+The web console, product API, and ingestion service are separate deployable units. Ingestion publishes to JetStream, the processor writes the ClickHouse event plane, and the product API reads it through an injected query port. Product authorization is also injected; a deny-by-default static adapter exists only for local development and does not decide the production identity provider.
 
 ## Monorepo boundaries
 
@@ -87,7 +87,7 @@ Instrumentation -> Capture -> Context -> Privacy -> beforeSend
 6. Ingestion admission and replaceable storage port.
 7. Processor service and durable event plane. JetStream admission, processing, ClickHouse storage, replay convergence, and the complete real-boundary integration test are implemented.
 8. Session/page lifecycle, then error, performance, network, and behavior plugins. Browser lifecycle, error capture, performance capture, network capture, and explicit interaction capture are implemented under ADR-036 through ADR-040.
-9. Product API and console data surfaces are next.
+9. Product API and console data surfaces. The bounded, authorized ClickHouse event-list query is implemented under ADR-041; the console event explorer is next.
 
 ## V1 product scope
 

@@ -44,6 +44,7 @@ Status: accepted unless marked open.
 | ADR-038 | Use Google's `web-vitals` for standard field metrics behind a privacy-safe singleton bridge, supplemented by bounded native timing signals.            |
 | ADR-039 | Capture privacy-bounded Fetch and XMLHttpRequest signals through shared reversible wrappers; keep Resource Timing opt-in until sampling exists.        |
 | ADR-040 | Capture only explicitly marked clicks and form submissions with bounded target metadata; exclude content, values, and generated selectors.             |
+| ADR-041 | Expose bounded, authorized event queries through the product API using parameterized ClickHouse SQL and stable keyset cursors.                         |
 
 Detailed records:
 
@@ -54,6 +55,7 @@ Detailed records:
 - [ADR-038: Browser performance capture V1](./ADR-038_BROWSER_PERFORMANCE_CAPTURE.md)
 - [ADR-039: Browser network capture V1](./ADR-039_BROWSER_NETWORK_CAPTURE.md)
 - [ADR-040: Browser interaction capture V1](./ADR-040_BROWSER_INTERACTION_CAPTURE.md)
+- [ADR-041: Event query API V1](./ADR-041_EVENT_QUERY_API_V1.md)
 
 ## Change rule
 
