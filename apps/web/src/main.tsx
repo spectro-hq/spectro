@@ -1,4 +1,9 @@
-import { QueryClient, QueryClientProvider, useInfiniteQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryClientProvider,
+  useInfiniteQuery,
+  useMutation,
+} from '@tanstack/react-query';
 import {
   createRootRoute,
   createRoute,
@@ -25,9 +30,11 @@ import { createIllustrativeIssues } from './illustrative-issues.js';
 import {
   fetchIssuePage,
   parseIssueSearch,
+  updateIssueStatus,
   type ErrorIssue,
   type IssuePage,
   type IssueSearch,
+  type IssueStatus,
 } from './issue-query.js';
 import './styles.css';
 
@@ -1061,7 +1068,13 @@ function IssuesExplorer() {
             ) : null}
           </section>
 
-          <IssueDetail anchor={queryAnchor} issue={selectedIssue} search={search} />
+          <IssueDetail
+            anchor={queryAnchor}
+            issue={selectedIssue}
+            search={search}
+            token={token}
+            onUpdated={() => void issuesQuery.refetch()}
+          />
         </div>
       </main>
     </div>
@@ -1071,12 +1084,30 @@ function IssuesExplorer() {
 function IssueDetail({
   anchor,
   issue,
+  onUpdated,
   search,
+  token,
 }: {
   readonly anchor: number;
   readonly issue: ErrorIssue | undefined;
+  readonly onUpdated: () => void;
   readonly search: IssueSearch;
+  readonly token: string;
 }) {
+  const lifecycle = useMutation({
+    mutationFn: (status: IssueStatus) => {
+      if (issue === undefined) throw new Error('Select an issue before changing its status.');
+      return updateIssueStatus({
+        projectId: search.project,
+        environment: search.environment,
+        fingerprint: issue.fingerprint,
+        status,
+        token,
+      });
+    },
+    onSuccess: onUpdated,
+  });
+
   if (!issue) {
     return (
       <aside className="issue-detail empty-detail" aria-label="Issue detail">
@@ -1120,6 +1151,27 @@ function IssueDetail({
           <span>Users</span>
         </div>
       </div>
+      <section className="issue-lifecycle" aria-labelledby="issue-status-title">
+        <div>
+          <span id="issue-status-title">Lifecycle status</span>
+          <strong>{issue.status}</strong>
+        </div>
+        <div className="status-actions" aria-label="Set issue lifecycle status">
+          {(['open', 'resolved', 'ignored'] as const).map((status) => (
+            <button
+              type="button"
+              key={status}
+              aria-pressed={issue.status === status}
+              disabled={search.source !== 'live' || lifecycle.isPending}
+              onClick={() => lifecycle.mutate(status)}
+            >
+              {status}
+            </button>
+          ))}
+        </div>
+        {search.source !== 'live' ? <p>Connect the API to persist lifecycle changes.</p> : null}
+        {lifecycle.isError ? <p role="alert">{lifecycle.error.message}</p> : null}
+      </section>
       <dl className="issue-readout">
         <div>
           <dt>First seen</dt>
@@ -1147,8 +1199,8 @@ function IssueDetail({
         <span aria-hidden="true">→</span>
       </a>
       <p className="issue-scope-note">
-        Counts are calculated inside this query window; this version does not assign workflow status
-        or ownership.
+        Counts are calculated inside this query window. Lifecycle status persists across windows;
+        ownership is not part of this version.
       </p>
     </aside>
   );

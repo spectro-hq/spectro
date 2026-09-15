@@ -71,6 +71,8 @@ export interface ErrorIssueSummary {
   readonly latestEventId: string;
   readonly latestPagePath?: string;
   readonly latestRelease?: string;
+  readonly status?: 'open' | 'resolved' | 'ignored';
+  readonly statusUpdatedAt?: string;
 }
 
 export interface IssueListPage {

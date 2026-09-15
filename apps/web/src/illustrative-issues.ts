@@ -21,6 +21,7 @@ export function createIllustrativeIssues(anchor: number, search: IssueSearch): E
       latestEventId: '01994f36-0188-7450-a24f-7bbed18796a1',
       latestPagePath: '/checkout',
       latestRelease: 'web@1.4.2',
+      status: 'open',
     },
     {
       fingerprint: fingerprints.promise,
@@ -34,6 +35,7 @@ export function createIllustrativeIssues(anchor: number, search: IssueSearch): E
       latestEventId: '01994f36-0186-7450-a24f-7bbed18796a1',
       latestPagePath: '/checkout/payment',
       latestRelease: 'web@1.4.2',
+      status: 'open',
     },
     {
       fingerprint: fingerprints.resource,
@@ -47,6 +49,7 @@ export function createIllustrativeIssues(anchor: number, search: IssueSearch): E
       latestEventId: '01994f36-0184-7450-a24f-7bbed18796a1',
       latestPagePath: '/products/spectro-kit',
       latestRelease: 'web@1.4.1',
+      status: 'resolved',
     },
     {
       fingerprint: fingerprints.cart,
@@ -60,6 +63,7 @@ export function createIllustrativeIssues(anchor: number, search: IssueSearch): E
       latestEventId: '01994f36-0182-7450-a24f-7bbed18796a1',
       latestPagePath: '/cart',
       latestRelease: 'web@1.4.1',
+      status: 'ignored',
     },
   ];
   return issues.filter(

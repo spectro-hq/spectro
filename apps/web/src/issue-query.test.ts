@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { buildIssueQueryUrl, fetchIssuePage, parseIssueSearch } from './issue-query.js';
+import {
+  buildIssueQueryUrl,
+  fetchIssuePage,
+  parseIssueSearch,
+  updateIssueStatus,
+} from './issue-query.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -57,5 +62,34 @@ describe('issue query client', () => {
     expect(fetchMock).toHaveBeenCalledWith(expect.not.stringContaining('local-secret'), {
       headers: { authorization: 'Bearer local-secret' },
     });
+  });
+
+  it('writes lifecycle status with authorization outside the URL', async () => {
+    const fingerprint = '6f87a1e0c93a4b156f87a1e0c93a4b15';
+    const updatedAt = '2026-09-15T13:00:00.000Z';
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ fingerprint, status: 'resolved', updatedAt }), {
+        status: 200,
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      updateIssueStatus({
+        projectId: 'prj_checkout',
+        environment: 'production',
+        fingerprint,
+        status: 'resolved',
+        token: 'local-secret',
+      }),
+    ).resolves.toEqual({ fingerprint, status: 'resolved', updatedAt });
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/v1/projects/prj_checkout/issues/${fingerprint}`,
+      expect.objectContaining({
+        method: 'PATCH',
+        headers: expect.objectContaining({ authorization: 'Bearer local-secret' }),
+        body: JSON.stringify({ environment: 'production', status: 'resolved' }),
+      }),
+    );
   });
 });

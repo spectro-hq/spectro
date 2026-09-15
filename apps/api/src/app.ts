@@ -17,6 +17,11 @@ import {
   type IssueListQuery,
   type IssueQueryStore,
 } from './issues.js';
+import {
+  issueLifecycleBodySchema,
+  issueLifecyclePathSchema,
+  type IssueLifecycleStore,
+} from './issue-lifecycle.js';
 
 const denyAllProjects: ProjectAuthorizer = { authorize: async () => false };
 const unavailableEventStore: EventQueryStore = {
@@ -29,11 +34,18 @@ const unavailableIssueStore: IssueQueryStore = {
     throw new Error('Issue query store is not configured');
   },
 };
+const defaultLifecycleStore: IssueLifecycleStore = {
+  getMany: async () => new Map(),
+  set: async () => {
+    throw new Error('Issue lifecycle store is not configured');
+  },
+};
 
 export interface ApiAppOptions {
   readonly authorizer?: ProjectAuthorizer;
   readonly eventStore?: EventQueryStore;
   readonly issueStore?: IssueQueryStore;
+  readonly issueLifecycleStore?: IssueLifecycleStore;
 }
 
 function validationIssues(issues: readonly { path: readonly PropertyKey[]; message: string }[]): {
@@ -51,6 +63,7 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
   const authorizer = options.authorizer ?? denyAllProjects;
   const eventStore = options.eventStore ?? unavailableEventStore;
   const issueStore = options.issueStore ?? unavailableIssueStore;
+  const issueLifecycleStore = options.issueLifecycleStore ?? defaultLifecycleStore;
   void app.register(cors, { origin: false });
 
   app.get('/health', async () => ({ service: 'spectro-api', status: 'ok' }));
@@ -226,12 +239,89 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
     }
 
     try {
-      return await issueStore.list(issueQuery);
+      const page = await issueStore.list(issueQuery);
+      const lifecycle = await issueLifecycleStore.getMany({
+        projectId: issueQuery.projectId,
+        environment: issueQuery.environment,
+        fingerprints: page.data.map((issue) => issue.fingerprint),
+      });
+      return {
+        ...page,
+        data: page.data.map((issue) => {
+          const record = lifecycle.get(issue.fingerprint);
+          return {
+            ...issue,
+            status: record?.status ?? 'open',
+            ...(record === undefined ? {} : { statusUpdatedAt: record.updatedAt }),
+          };
+        }),
+      };
     } catch {
       return reply.code(503).send({
         error: {
           code: 'query_unavailable',
           message: 'Issue query is temporarily unavailable.',
+        },
+      });
+    }
+  });
+
+  app.patch('/v1/projects/:projectId/issues/:fingerprint', async (request, reply) => {
+    const path = issueLifecyclePathSchema.safeParse(request.params);
+    if (!path.success) {
+      return reply.code(400).send({
+        error: {
+          code: 'invalid_request',
+          message: 'The request path is invalid.',
+          issues: validationIssues(path.error.issues),
+        },
+      });
+    }
+    if (request.headers.authorization === undefined) {
+      return reply.code(401).send({
+        error: { code: 'unauthorized', message: 'Authentication is required.' },
+      });
+    }
+    try {
+      const authorized = await authorizer.authorize({
+        authorization: request.headers.authorization,
+        projectId: path.data.projectId,
+      });
+      if (!authorized) {
+        return reply.code(403).send({
+          error: { code: 'forbidden', message: 'Access to this project is denied.' },
+        });
+      }
+    } catch {
+      return reply.code(503).send({
+        error: {
+          code: 'authorization_unavailable',
+          message: 'Authorization is temporarily unavailable.',
+        },
+      });
+    }
+    const body = issueLifecycleBodySchema.safeParse(request.body);
+    if (!body.success) {
+      return reply.code(400).send({
+        error: {
+          code: 'invalid_body',
+          message: 'The issue lifecycle update is invalid.',
+          issues: validationIssues(body.error.issues),
+        },
+      });
+    }
+    try {
+      return await issueLifecycleStore.set({
+        projectId: path.data.projectId,
+        fingerprint: path.data.fingerprint,
+        environment: body.data.environment,
+        status: body.data.status,
+      });
+    } catch {
+      return reply.code(503).send({
+        error: {
+          code: 'control_plane_unavailable',
+          message: 'Issue lifecycle update is temporarily unavailable.',
         },
       });
     }

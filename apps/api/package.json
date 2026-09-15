@@ -25,6 +25,7 @@
     "@fastify/cors": "catalog:",
     "@spectro/protocol": "workspace:*",
     "fastify": "catalog:",
+    "postgres": "^3.4.9",
     "zod": "catalog:"
   },
   "devDependencies": {

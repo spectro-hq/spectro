@@ -14,6 +14,8 @@ const issueSchema = z.object({
   latestEventId: z.string(),
   latestPagePath: z.string().optional(),
   latestRelease: z.string().optional(),
+  status: z.enum(['open', 'resolved', 'ignored']).default('open'),
+  statusUpdatedAt: z.string().datetime().optional(),
 });
 
 const issuePageSchema = z.object({
@@ -23,6 +25,7 @@ const issuePageSchema = z.object({
 
 export type ErrorIssue = z.infer<typeof issueSchema>;
 export type IssuePage = z.infer<typeof issuePageSchema>;
+export type IssueStatus = ErrorIssue['status'];
 
 export interface IssueSearch {
   readonly project: string;
@@ -108,4 +111,42 @@ export async function fetchIssuePage(input: {
     throw new Error(message);
   }
   return issuePageSchema.parse(await response.json());
+}
+
+export async function updateIssueStatus(input: {
+  readonly projectId: string;
+  readonly environment: string;
+  readonly fingerprint: string;
+  readonly status: IssueStatus;
+  readonly token: string;
+}): Promise<{
+  readonly fingerprint: string;
+  readonly status: IssueStatus;
+  readonly updatedAt: string;
+}> {
+  const response = await fetch(
+    `/v1/projects/${encodeURIComponent(input.projectId)}/issues/${input.fingerprint}`,
+    {
+      method: 'PATCH',
+      headers: {
+        authorization: `Bearer ${input.token}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ environment: input.environment, status: input.status }),
+    },
+  );
+  if (!response.ok) {
+    let message = `Issue lifecycle update failed with status ${response.status}.`;
+    const body: unknown = await response.json().catch(() => undefined);
+    const errorBody = z.object({ error: z.object({ message: z.string() }) }).safeParse(body);
+    if (errorBody.success) message = errorBody.data.error.message;
+    throw new Error(message);
+  }
+  return z
+    .object({
+      fingerprint: z.string().regex(/^[0-9a-f]{32}$/),
+      status: z.enum(['open', 'resolved', 'ignored']),
+      updatedAt: z.string().datetime(),
+    })
+    .parse(await response.json());
 }
