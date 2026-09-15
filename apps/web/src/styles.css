@@ -1520,6 +1520,59 @@ td {
   font-size: 0.75rem;
 }
 
+.issue-lifecycle {
+  display: grid;
+  gap: 12px;
+  padding: 18px 20px;
+  border-top: 1px solid var(--hairline);
+}
+
+.issue-lifecycle > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.issue-lifecycle strong {
+  color: var(--ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.status-actions button {
+  min-height: 38px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-actions button[aria-pressed='true'] {
+  border-color: var(--violet);
+  background: var(--violet-wash);
+  color: var(--violet-dark);
+}
+
+.issue-lifecycle p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
 .issue-readout {
   display: grid;
   margin: 0;

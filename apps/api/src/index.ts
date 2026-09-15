@@ -4,3 +4,5 @@ export * from './clickhouse-events.js';
 export * from './clickhouse-issues.js';
 export * from './events.js';
 export * from './issues.js';
+export * from './issue-lifecycle.js';
+export * from './postgres-issue-lifecycle.js';

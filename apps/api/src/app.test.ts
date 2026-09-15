@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createApiApp } from './app.js';
 import type { EventListQuery, EventQueryStore, ProjectAuthorizer } from './events.js';
 import type { IssueListQuery } from './issues.js';
+import type { IssueLifecycleStore } from './issue-lifecycle.js';
 
 describe('GET /health', () => {
   it('reports the product API boundary', async () => {
@@ -162,6 +163,50 @@ describe('GET /v1/projects/:projectId/issues', () => {
     });
   });
 
+  it('joins lifecycle state onto derived issues', async () => {
+    const fingerprint = '6f87a1e0c93a4b156f87a1e0c93a4b15';
+    const app = createApiApp({
+      authorizer: allowProject,
+      issueStore: {
+        list: async () => ({
+          data: [
+            {
+              fingerprint,
+              message: 'boom',
+              occurrenceCount: 3,
+              affectedSessionCount: 2,
+              affectedUserCount: 1,
+              firstSeen: 100,
+              lastSeen: 200,
+              latestEventId: 'evt_1',
+            },
+          ],
+        }),
+      },
+      issueLifecycleStore: {
+        getMany: async () =>
+          new Map([
+            [
+              fingerprint,
+              { fingerprint, status: 'resolved', updatedAt: '2026-09-15T13:00:00.000Z' },
+            ],
+          ]),
+        set: async () => {
+          throw new Error('not used');
+        },
+      },
+    });
+    const response = await app.inject({
+      method: 'GET',
+      url: validIssueUrl,
+      headers: { authorization: 'Bearer local-secret' },
+    });
+    await app.close();
+    expect(response.json()).toMatchObject({
+      data: [{ fingerprint, status: 'resolved', statusUpdatedAt: '2026-09-15T13:00:00.000Z' }],
+    });
+  });
+
   it('fails before storage without authorization and hides storage errors', async () => {
     let queried = false;
     const app = createApiApp({
@@ -188,5 +233,70 @@ describe('GET /v1/projects/:projectId/issues', () => {
       error: { code: 'query_unavailable', message: 'Issue query is temporarily unavailable.' },
     });
     expect(unavailable.body).not.toContain('private ClickHouse details');
+  });
+});
+
+describe('PATCH /v1/projects/:projectId/issues/:fingerprint', () => {
+  it('authorizes and persists an idempotent lifecycle status', async () => {
+    const fingerprint = '6f87a1e0c93a4b156f87a1e0c93a4b15';
+    let received: Parameters<IssueLifecycleStore['set']>[0] | undefined;
+    const app = createApiApp({
+      authorizer: allowProject,
+      issueLifecycleStore: {
+        getMany: async () => new Map(),
+        set: async (input) => {
+          received = input;
+          return { fingerprint, status: input.status, updatedAt: '2026-09-15T13:00:00.000Z' };
+        },
+      },
+    });
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/v1/projects/prj_checkout/issues/${fingerprint}`,
+      headers: { authorization: 'Bearer local-secret' },
+      payload: { environment: 'production', status: 'resolved' },
+    });
+    await app.close();
+    expect(response.statusCode).toBe(200);
+    expect(received).toEqual({
+      projectId: 'prj_checkout',
+      environment: 'production',
+      fingerprint,
+      status: 'resolved',
+    });
+  });
+
+  it('rejects invalid status and hides control-plane failures', async () => {
+    const fingerprint = '6f87a1e0c93a4b156f87a1e0c93a4b15';
+    const app = createApiApp({
+      authorizer: allowProject,
+      issueLifecycleStore: {
+        getMany: async () => new Map(),
+        set: async () => Promise.reject(new Error('private postgres details')),
+      },
+    });
+    const invalid = await app.inject({
+      method: 'PATCH',
+      url: `/v1/projects/prj_checkout/issues/${fingerprint}`,
+      headers: { authorization: 'Bearer local-secret' },
+      payload: { environment: 'production', status: 'closed' },
+    });
+    expect(invalid.statusCode).toBe(400);
+
+    const unavailable = await app.inject({
+      method: 'PATCH',
+      url: `/v1/projects/prj_checkout/issues/${fingerprint}`,
+      headers: { authorization: 'Bearer local-secret' },
+      payload: { environment: 'production', status: 'ignored' },
+    });
+    await app.close();
+    expect(unavailable.statusCode).toBe(503);
+    expect(unavailable.json()).toEqual({
+      error: {
+        code: 'control_plane_unavailable',
+        message: 'Issue lifecycle update is temporarily unavailable.',
+      },
+    });
+    expect(unavailable.body).not.toContain('private postgres details');
   });
 });

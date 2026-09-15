@@ -34,6 +34,24 @@ services:
       timeout: 2s
       retries: 30
 
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: spectro
+      POSTGRES_USER: spectro
+      POSTGRES_PASSWORD: spectro_local
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U spectro -d spectro']
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
 volumes:
   nats-data:
   clickhouse-data:
+  postgres-data:
