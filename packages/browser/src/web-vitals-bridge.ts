@@ -8,6 +8,8 @@ import {
   type MetricWithAttribution,
 } from 'web-vitals/attribution';
 
+import { readMonitorId } from './monitor-target.js';
+
 export type WebVitalListener = (metric: MetricWithAttribution) => void;
 export type WebVitalErrorListener = (error: unknown) => void;
 
@@ -16,20 +18,9 @@ export interface WebVitalRegistration {
   softNavigations: boolean;
 }
 
-const MONITOR_ID_PATTERN = /^[A-Za-z0-9_-]{1,120}$/u;
-
 export function createSafeTargetName(node: unknown): string {
-  if (typeof node !== 'object' || node === null) return 'element';
-  try {
-    const getAttribute: unknown = Reflect.get(node, 'getAttribute');
-    if (typeof getAttribute !== 'function') return 'element';
-    const monitorId: unknown = Reflect.apply(getAttribute, node, ['data-spectro-monitor-id']);
-    return typeof monitorId === 'string' && MONITOR_ID_PATTERN.test(monitorId)
-      ? `monitor:${monitorId}`
-      : 'element';
-  } catch {
-    return 'element';
-  }
+  const monitorId = readMonitorId(node);
+  return monitorId === undefined ? 'element' : `monitor:${monitorId}`;
 }
 
 const DEFAULT_REGISTRATIONS: WebVitalRegistration[] = [
