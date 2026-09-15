@@ -8,3 +8,5 @@ coverage/
 !.env.example
 .vite/
 .impeccable/hook.cache.json
+.impeccable/questions/
+.impeccable/event-explorer-brief.md

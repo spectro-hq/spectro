@@ -2,7 +2,16 @@
   "name": "@spectro/api",
   "version": "0.1.0",
   "private": true,
+  "files": [
+    "dist"
+  ],
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc -b",
     "check": "tsc -b --pretty false && tsc -p tsconfig.check.json --pretty false",

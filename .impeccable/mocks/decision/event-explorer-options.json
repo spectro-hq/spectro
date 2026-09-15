@@ -1,0 +1,43 @@
+{
+  "title": "选择事件浏览器的工作台结构",
+  "question": "三个方案都继承 Spectro 的冷日光观测站体系；请选择最适合高频排查事件的工作结构。",
+  "options": [
+    {
+      "id": "focus-bench",
+      "label": "聚焦工作台",
+      "kicker": "THE ROLL",
+      "lineage": "precision analysis bench",
+      "thesis": "时间带负责定位，事件账本负责扫描，右侧上下文工作台负责解释同一条信号。",
+      "palette": ["#f4f7fb", "#ffffff", "#142238", "#635bff", "#12a8c4"],
+      "materials": ["冷日光仪器面板", "细线时间刻度", "紧凑遥测账本"],
+      "viewport": "窄侧栏之后是一条全宽时间概览；下方约六成宽事件账本与四成宽固定详情台并排，当前事件跨两区以紫色刻度对齐。",
+      "risk": "详情台常驻会压缩小屏空间，必须在窄屏变成顺序清晰的抽屉。",
+      "comp": ".impeccable/mocks/decision/event-explorer-focus-bench.webp"
+    },
+    {
+      "id": "triage-rail",
+      "label": "分诊三栏",
+      "lineage": "incident triage console",
+      "thesis": "项目过滤、事件流和上下文检查各占一栏，让排查路径始终从左向右推进。",
+      "palette": ["#f4f7fb", "#ffffff", "#142238", "#635bff", "#12a8c4"],
+      "materials": ["结构化过滤轨", "高密度信号列表", "分层上下文读数"],
+      "viewport": "左侧过滤轨约二成，中间事件流约四成，右侧上下文检查约四成；顶部只保留项目、环境和时间。",
+      "risk": "三栏关系清楚，但在普通笔记本宽度上最容易显得拥挤。",
+      "comp": ".impeccable/mocks/decision/event-explorer-triage-rail.webp"
+    },
+    {
+      "id": "type-matrix",
+      "label": "信号矩阵",
+      "lineage": "multi-channel signal analyzer",
+      "thesis": "把事件类型变成并行信道，让错误、性能、网络与行为的时间关系先于单条事件出现。",
+      "palette": ["#f4f7fb", "#ffffff", "#142238", "#635bff", "#12a8c4"],
+      "materials": ["多信道时间矩阵", "发光信号节点", "底部事件读数"],
+      "viewport": "上半部是按类型分行的时间矩阵，下半部是所选节点的事件账本与详情读数；过滤器沿矩阵顶边排列。",
+      "risk": "跨类型模式极易看懂，但精确浏览大量事件时不如账本结构直接。",
+      "comp": ".impeccable/mocks/decision/event-explorer-type-matrix.webp"
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "buildPath": { "value": "comp", "toggle": true },
+  "steer": true
+}

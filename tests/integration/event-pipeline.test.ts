@@ -3,6 +3,7 @@ import { v7 as uuidv7 } from 'uuid';
 
 import { createClient } from '@clickhouse/client';
 import { connect } from '@nats-io/transport-node';
+import { ClickHouseEventQueryStore, createApiApp, StaticProjectAuthorizer } from '@spectro/api';
 import { createIngestApp } from '@spectro/ingest';
 import {
   JetStreamAdmissionSink,
@@ -30,10 +31,18 @@ describeIntegration('durable event pipeline', () => {
       password: process.env.SPECTRO_CLICKHOUSE_PASSWORD ?? 'spectro_local',
       database: process.env.SPECTRO_CLICKHOUSE_DATABASE ?? 'spectro',
     });
+    const projectId = `prj_pipeline_${uuidv7().replaceAll('-', '')}`;
     await ensureJetStreamPipeline(connection);
-    const app = createIngestApp({
+    const ingestApp = createIngestApp({
       apiKey: 'sp_integration',
       store: new JetStreamAdmissionSink(connection, () => 1_789_368_124_000),
+    });
+    const apiApp = createApiApp({
+      authorizer: new StaticProjectAuthorizer({
+        projectId,
+        token: 'integration-query-secret',
+      }),
+      eventStore: new ClickHouseEventQueryStore(clickhouse),
     });
 
     try {
@@ -56,7 +65,7 @@ describeIntegration('durable event pipeline', () => {
               timestamp: 1_789_368_123_456,
               context: {
                 sdk: { name: '@spectro/integration-test', version: '0.1.0' },
-                project: { id: 'prj_durable_pipeline' },
+                project: { id: projectId },
                 environment: 'test',
               },
               payload: { properties: { source: 'real-boundary-test' } },
@@ -72,7 +81,7 @@ describeIntegration('durable event pipeline', () => {
               timestamp: 1_789_368_123_457,
               context: {
                 sdk: { name: '@spectro/browser', version: '0.1.0' },
-                project: { id: 'prj_durable_pipeline' },
+                project: { id: projectId },
                 environment: 'test',
                 session: { id: 'ses_integration', startedAt: 1_789_368_100_000 },
                 page: {
@@ -107,7 +116,7 @@ describeIntegration('durable event pipeline', () => {
               timestamp: 1_789_368_123_458,
               context: {
                 sdk: { name: '@spectro/browser', version: '0.1.0' },
-                project: { id: 'prj_durable_pipeline' },
+                project: { id: projectId },
                 environment: 'test',
                 session: { id: 'ses_integration', startedAt: 1_789_368_100_000 },
                 page: {
@@ -141,7 +150,7 @@ describeIntegration('durable event pipeline', () => {
               timestamp: 1_789_368_123_459,
               context: {
                 sdk: { name: '@spectro/browser', version: '0.1.0' },
-                project: { id: 'prj_durable_pipeline' },
+                project: { id: projectId },
                 environment: 'test',
                 session: { id: 'ses_integration', startedAt: 1_789_368_100_000 },
                 page: {
@@ -169,7 +178,7 @@ describeIntegration('durable event pipeline', () => {
               timestamp: 1_789_368_123_460,
               context: {
                 sdk: { name: '@spectro/browser', version: '0.1.0' },
-                project: { id: 'prj_durable_pipeline' },
+                project: { id: projectId },
                 environment: 'test',
                 session: { id: 'ses_integration', startedAt: 1_789_368_100_000 },
                 page: {
@@ -186,7 +195,7 @@ describeIntegration('durable event pipeline', () => {
         ],
       };
 
-      const response = await app.inject({
+      const response = await ingestApp.inject({
         method: 'POST',
         url: '/v1/envelope',
         headers: { 'x-spectro-key': 'sp_integration' },
@@ -240,8 +249,81 @@ describeIntegration('durable event pipeline', () => {
           interaction_count: 1,
         },
       ]);
+
+      const baseQuery = `/v1/projects/${projectId}/events?environment=test&from=1789368123455&to=1789368123461&limit=2`;
+      const firstPageResponse = await apiApp.inject({
+        method: 'GET',
+        url: baseQuery,
+        headers: { authorization: 'Bearer integration-query-secret' },
+      });
+      expect(firstPageResponse.statusCode).toBe(200);
+      const firstPage = firstPageResponse.json<{
+        data: Array<{ event: { id: string; name: string } }>;
+        nextCursor: string;
+      }>();
+      expect(firstPage.data).toEqual([
+        expect.objectContaining({
+          event: expect.objectContaining({ id: interactionEventId, name: 'element_click' }),
+        }),
+        expect.objectContaining({
+          event: expect.objectContaining({ id: networkEventId, name: 'fetch_request' }),
+        }),
+      ]);
+      expect(firstPage.nextCursor).toBeTypeOf('string');
+
+      const secondPageResponse = await apiApp.inject({
+        method: 'GET',
+        url: `${baseQuery}&cursor=${encodeURIComponent(firstPage.nextCursor)}`,
+        headers: { authorization: 'Bearer integration-query-secret' },
+      });
+      expect(secondPageResponse.statusCode).toBe(200);
+      expect(
+        secondPageResponse
+          .json<{ data: Array<{ event: { id: string } }> }>()
+          .data.map((item) => item.event.id),
+      ).toEqual([performanceEventId, errorEventId]);
+
+      const errorResponse = await apiApp.inject({
+        method: 'GET',
+        url: `${baseQuery}&type=error&name=runtime_error&sessionId=ses_integration&pageId=page_integration`,
+        headers: { authorization: 'Bearer integration-query-secret' },
+      });
+      expect(errorResponse.statusCode).toBe(200);
+      expect(errorResponse.json()).toEqual({
+        data: [
+          expect.objectContaining({
+            event: expect.objectContaining({
+              id: errorEventId,
+              name: 'runtime_error',
+              context: expect.objectContaining({
+                session: expect.objectContaining({ id: 'ses_integration' }),
+                page: expect.objectContaining({ id: 'page_integration' }),
+              }),
+            }),
+            processing: expect.objectContaining({ errorFingerprint: expect.any(String) }),
+          }),
+        ],
+      });
+
+      const unauthorizedResponse = await apiApp.inject({
+        method: 'GET',
+        url: baseQuery,
+      });
+      expect(unauthorizedResponse.statusCode).toBe(401);
+      expect(unauthorizedResponse.json()).toEqual({
+        error: { code: 'unauthorized', message: 'Authentication is required.' },
+      });
+
+      const forbiddenResponse = await apiApp.inject({
+        method: 'GET',
+        url: baseQuery,
+        headers: { authorization: 'Bearer wrong-secret' },
+      });
+      expect(forbiddenResponse.statusCode).toBe(403);
+      expect(forbiddenResponse.body).not.toContain('wrong-secret');
     } finally {
-      await app.close();
+      await ingestApp.close();
+      await apiApp.close();
       await connection.drain();
       await clickhouse.close();
     }

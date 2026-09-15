@@ -10,6 +10,7 @@
   "dependencies": {
     "@clickhouse/client": "catalog:",
     "@nats-io/transport-node": "catalog:",
+    "@spectro/api": "workspace:*",
     "@spectro/ingest": "workspace:*",
     "@spectro/pipeline": "workspace:*",
     "@spectro/processor": "workspace:*",

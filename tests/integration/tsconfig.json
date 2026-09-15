@@ -9,6 +9,7 @@
   "references": [
     { "path": "../../packages/protocol" },
     { "path": "../../packages/pipeline" },
+    { "path": "../../apps/api" },
     { "path": "../../apps/ingest" },
     { "path": "../../services/processor" }
   ]
