@@ -8,6 +8,8 @@ import {
   type CaptureExceptionOptions,
 } from './error.js';
 import { createBrowserErrorRuntime } from './error-runtime.js';
+import { BrowserInteractionCapture, type BrowserInteractionOptions } from './interaction.js';
+import { createBrowserInteractionRuntime } from './interaction-runtime.js';
 import { SessionPageLifecycle, type SessionPageLifecycleOptions } from './lifecycle.js';
 import { BrowserPerformanceCapture, type BrowserPerformanceOptions } from './performance.js';
 import { createBrowserPerformanceRuntime } from './performance-runtime.js';
@@ -23,6 +25,7 @@ export interface BrowserLifecycleOptions {
 export interface BrowserClientOptions extends SpectroClientOptions {
   errors?: false | BrowserErrorOptions;
   fetch?: typeof globalThis.fetch;
+  interactions?: false | BrowserInteractionOptions;
   lifecycle?: false | BrowserLifecycleOptions;
   network?: false | BrowserNetworkOptions;
   performance?: false | BrowserPerformanceOptions;
@@ -47,6 +50,7 @@ function reportSafely(onError: ((error: Error) => void) | undefined, error: unkn
 class BrowserClient implements BrowserClientPublic {
   readonly #core: SpectroClient;
   readonly #errorCapture: BrowserErrorCapture;
+  readonly #interactionCapture: BrowserInteractionCapture;
   readonly #lifecycle: SessionPageLifecycle | undefined;
   readonly #networkCapture: BrowserNetworkCapture;
   readonly #performanceCapture: BrowserPerformanceCapture;
@@ -84,6 +88,16 @@ class BrowserClient implements BrowserClientPublic {
       },
       options.errors === false ? undefined : createBrowserErrorRuntime(),
       errorOptions,
+    );
+    const interactionOptions = options.interactions === false ? {} : (options.interactions ?? {});
+    this.#interactionCapture = new BrowserInteractionCapture(
+      {
+        activity: () => this.#lifecycle?.touch(),
+        capture: (input) => this.#core.capture(input),
+        report: (error) => reportSafely(options.onError, error),
+      },
+      options.interactions === false ? undefined : createBrowserInteractionRuntime(),
+      interactionOptions,
     );
     const performanceOptions = options.performance === false ? {} : (options.performance ?? {});
     this.#performanceCapture = new BrowserPerformanceCapture(
@@ -134,11 +148,13 @@ class BrowserClient implements BrowserClientPublic {
     try {
       this.#lifecycle?.start();
       this.#errorCapture.start();
+      this.#interactionCapture.start();
       this.#performanceCapture.start();
       this.#networkCapture.start();
     } catch (error) {
       this.#networkCapture.stop();
       this.#performanceCapture.stop();
+      this.#interactionCapture.stop();
       this.#errorCapture.stop();
       this.#lifecycle?.stop();
       throw error;
@@ -170,6 +186,7 @@ class BrowserClient implements BrowserClientPublic {
     this.#destroyed = true;
     this.#networkCapture.stop();
     this.#performanceCapture.stop();
+    this.#interactionCapture.stop();
     this.#errorCapture.stop();
     this.#lifecycle?.stop();
     if (client === this) client = undefined;
@@ -216,6 +233,7 @@ export function destroy(): void {
 export { FetchTransport } from './transport.js';
 export { DEFAULT_SESSION_TIMEOUT_MS } from './lifecycle.js';
 export type { BrowserErrorOptions, CaptureExceptionOptions } from './error.js';
+export type { BrowserInteractionOptions } from './interaction.js';
 export type { BrowserPerformanceOptions } from './performance.js';
 export type { BrowserNetworkOptions } from './network.js';
 export type { FetchTransportOptions } from './transport.js';

@@ -86,8 +86,8 @@ Instrumentation -> Capture -> Context -> Privacy -> beforeSend
 5. `@spectro/browser` public `init`, `track`, and `flush` path.
 6. Ingestion admission and replaceable storage port.
 7. Processor service and durable event plane. JetStream admission, processing, ClickHouse storage, replay convergence, and the complete real-boundary integration test are implemented.
-8. Session/page lifecycle, then error, performance, network, and behavior plugins. Browser lifecycle, error capture, performance capture, and network capture are implemented under ADR-036 through ADR-039; behavior instrumentation is next.
-9. Product API and console data surfaces.
+8. Session/page lifecycle, then error, performance, network, and behavior plugins. Browser lifecycle, error capture, performance capture, network capture, and explicit interaction capture are implemented under ADR-036 through ADR-040.
+9. Product API and console data surfaces are next.
 
 ## V1 product scope
 

@@ -107,3 +107,11 @@ Browser `init()` enables Fetch and XMLHttpRequest capture by default. Completed 
 Network events contain only an uppercase bounded method, a sanitized HTTP(S) URL, monotonic start and duration values, optional response status, initiator, and success state. Credentials, queries, fragments, headers, cookies, request bodies, response bodies, response text, and arbitrary request objects are never queued. Fetch rejection and XHR abort, timeout, or network completion are unsuccessful; HTTP 4xx and 5xx responses are also unsuccessful.
 
 Fetch and XMLHttpRequest wrappers are shared by active SDK subscribers and are restored when the last subscriber is destroyed, provided another library has not replaced them. Spectro's ingestion envelope URL is excluded from capture. In-flight Fetch and XMLHttpRequest callbacks retain the sanitized page URL present when the request starts so a later SPA transition does not replace their session/page context. Resource Timing uses the active page context when its observer delivers the entry because it has no request-start hook.
+
+## Browser interaction capture
+
+Browser `init()` enables delegated click and form-submit capture by default. It emits `element_click` and `form_submit` only when the event target or a bounded ancestor has a valid `data-spectro-monitor-id`. `interactions: false` disables the plugin; `captureClicks` and `captureFormSubmits` can be toggled independently.
+
+Interaction targets contain the explicit monitor ID and may contain a bounded tag and ARIA role from the same marked element. The SDK never captures element text, labels, values, names, DOM IDs, classes, HTML, generated selectors, form fields, event objects, or DOM nodes. It does not install telemetry listeners for input, change, keyboard, composition, clipboard, pointer-move, mouse-move, or scroll events.
+
+Click coordinates are absent by default and require `captureCoordinates: true`. Delegated listeners do not prevent browser defaults or propagation, work with dynamically rendered elements, use a bounded composed path for shadow DOM, and are removed by `destroy()`.
