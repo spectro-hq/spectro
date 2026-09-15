@@ -21,10 +21,19 @@ import {
   type ExplorerSearch,
 } from './event-query.js';
 import { createIllustrativePage } from './illustrative-events.js';
+import { createIllustrativeIssues } from './illustrative-issues.js';
+import {
+  fetchIssuePage,
+  parseIssueSearch,
+  type ErrorIssue,
+  type IssuePage,
+  type IssueSearch,
+} from './issue-query.js';
 import './styles.css';
 
 type IconName =
   | 'activity'
+  | 'alert'
   | 'book'
   | 'calendar'
   | 'chevron'
@@ -38,6 +47,9 @@ type IconName =
 function Icon({ name, size = 18 }: { readonly name: IconName; readonly size?: number }) {
   const paths: Record<IconName, ReactNode> = {
     activity: <path d="M3 12h3l2.2-6 3.7 12 2.5-7H21" />,
+    alert: (
+      <path d="M12 8v5m0 3.5v.5M10.3 3.8 2.6 18a2 2 0 0 0 1.8 3h15.2a2 2 0 0 0 1.8-3L13.7 3.8a2 2 0 0 0-3.4 0Z" />
+    ),
     book: (
       <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v17H6.5A2.5 2.5 0 0 0 4 22Zm16 0A2.5 2.5 0 0 0 17.5 3H13v17h4.5A2.5 2.5 0 0 1 20 22Z" />
     ),
@@ -84,7 +96,13 @@ const indexRoute = createRoute({
   validateSearch: parseExplorerSearch,
   component: EventExplorer,
 });
-const routeTree = rootRoute.addChildren([indexRoute]);
+const issuesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/issues',
+  validateSearch: parseIssueSearch,
+  component: IssuesExplorer,
+});
+const routeTree = rootRoute.addChildren([indexRoute, issuesRoute]);
 const router = createRouter({ routeTree });
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -209,13 +227,16 @@ function eventSummary(item: EventListItem): string {
 function filteredIllustrativePage(search: ExplorerSearch, anchor: number): EventListPage {
   const page = createIllustrativePage(anchor, search.project, search.environment);
   return {
-    data: page.data.filter(({ event }) => {
+    data: page.data.filter((item) => {
+      const { event } = item;
       return (
         (search.type === undefined || event.type === search.type) &&
         (search.name === undefined || event.name === search.name) &&
         (search.release === undefined || event.context.release?.version === search.release) &&
         (search.sessionId === undefined || event.context.session?.id === search.sessionId) &&
-        (search.pageId === undefined || event.context.page?.id === search.pageId)
+        (search.pageId === undefined || event.context.page?.id === search.pageId) &&
+        (search.fingerprint === undefined ||
+          item.processing.errorFingerprint === search.fingerprint)
       );
     }),
   };
@@ -271,6 +292,7 @@ function EventExplorer() {
       search.release,
       search.sessionId,
       search.pageId,
+      search.fingerprint,
       queryAnchor,
       credentialVersion,
     ],
@@ -291,6 +313,7 @@ function EventExplorer() {
           ...(search.release === undefined ? {} : { release: search.release }),
           ...(search.sessionId === undefined ? {} : { sessionId: search.sessionId }),
           ...(search.pageId === undefined ? {} : { pageId: search.pageId }),
+          ...(search.fingerprint === undefined ? {} : { fingerprint: search.fingerprint }),
           ...(pageParam === undefined ? {} : { cursor: pageParam }),
         },
         token,
@@ -345,6 +368,18 @@ function EventExplorer() {
           <a className="rail-link active" href="/" aria-current="page">
             <Icon name="activity" />
             <span>Events</span>
+          </a>
+          <a
+            className="rail-link"
+            href={`/issues?${new URLSearchParams({
+              project: search.project,
+              environment: search.environment,
+              range: search.range,
+              source: search.source,
+            }).toString()}`}
+          >
+            <Icon name="alert" />
+            <span>Issues</span>
           </a>
           <span className="rail-link" aria-disabled="true" title="Coming after the event explorer">
             <Icon name="pulse" />
@@ -534,9 +569,14 @@ function EventExplorer() {
             <summary>
               <Icon name="filter" />
               More filters
-              {[search.release, search.sessionId, search.pageId].filter(Boolean).length > 0 ? (
+              {[search.release, search.sessionId, search.pageId, search.fingerprint].filter(Boolean)
+                .length > 0 ? (
                 <span className="filter-count">
-                  {[search.release, search.sessionId, search.pageId].filter(Boolean).length}
+                  {
+                    [search.release, search.sessionId, search.pageId, search.fingerprint].filter(
+                      Boolean,
+                    ).length
+                  }
                 </span>
               ) : null}
             </summary>
@@ -568,6 +608,22 @@ function EventExplorer() {
                   }
                 />
               </label>
+              <label htmlFor="event-fingerprint-filter">
+                <span>Error fingerprint</span>
+                <CommittedInput
+                  ariaLabel="Error fingerprint"
+                  id="event-fingerprint-filter"
+                  key={`event-fingerprint-${search.fingerprint ?? ''}`}
+                  value={search.fingerprint ?? ''}
+                  placeholder="32 hexadecimal characters"
+                  pattern="[0-9a-fA-F]{32}"
+                  title="Enter a 32-character hexadecimal fingerprint"
+                  validate={(value) => value === '' || /^[0-9a-fA-F]{32}$/.test(value)}
+                  onCommit={(fingerprint) =>
+                    updateFilter({ fingerprint: fingerprint.toLowerCase() || undefined })
+                  }
+                />
+              </label>
             </div>
           </details>
           <button
@@ -580,6 +636,7 @@ function EventExplorer() {
                 release: undefined,
                 sessionId: undefined,
                 pageId: undefined,
+                fingerprint: undefined,
                 event: undefined,
               })
             }
@@ -605,6 +662,495 @@ function EventExplorer() {
         </div>
       </main>
     </div>
+  );
+}
+
+function relativeTime(timestamp: number, anchor: number): string {
+  const elapsed = Math.max(0, anchor - timestamp);
+  if (elapsed < 60_000) return 'just now';
+  if (elapsed < 60 * 60_000) return `${Math.floor(elapsed / 60_000)}m ago`;
+  if (elapsed < 24 * 60 * 60_000) return `${Math.floor(elapsed / (60 * 60_000))}h ago`;
+  return `${Math.floor(elapsed / (24 * 60 * 60_000))}d ago`;
+}
+
+function IssuesExplorer() {
+  const search = issuesRoute.useSearch();
+  const navigate = issuesRoute.useNavigate();
+  const [token, setToken] = useState(readSessionToken);
+  const [tokenDraft, setTokenDraft] = useState('');
+  const [connectionOpen, setConnectionOpen] = useState(
+    search.source === 'live' && token.length === 0,
+  );
+  const [credentialVersion, setCredentialVersion] = useState(0);
+  const [queryAnchor, setQueryAnchor] = useState(() => Date.now());
+  const range = TIME_RANGES[search.range];
+
+  const updateSearch = (patch: Partial<IssueSearch>): void => {
+    void navigate({ search: (previous) => ({ ...previous, ...patch }) });
+  };
+  const updateFilter = (patch: Partial<IssueSearch>): void => {
+    updateSearch({ ...patch, issue: undefined });
+  };
+
+  const issuesQuery = useInfiniteQuery({
+    queryKey: [
+      'issues',
+      search.project,
+      search.environment,
+      search.range,
+      search.source,
+      search.name,
+      search.release,
+      queryAnchor,
+      credentialVersion,
+    ],
+    initialPageParam: undefined as string | undefined,
+    queryFn: async ({ pageParam, signal }) => {
+      if (search.source === 'illustrative') {
+        return { data: createIllustrativeIssues(queryAnchor, search) } satisfies IssuePage;
+      }
+      return fetchIssuePage({
+        query: {
+          projectId: search.project,
+          environment: search.environment,
+          from: queryAnchor - range.milliseconds,
+          to: queryAnchor,
+          limit: 50,
+          ...(search.name === undefined ? {} : { name: search.name }),
+          ...(search.release === undefined ? {} : { release: search.release }),
+          ...(pageParam === undefined ? {} : { cursor: pageParam }),
+        },
+        token,
+        signal,
+      });
+    },
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    enabled: search.source === 'illustrative' || token.length > 0,
+  });
+
+  const issues = useMemo(
+    () => issuesQuery.data?.pages.flatMap((page) => page.data) ?? [],
+    [issuesQuery.data],
+  );
+  const selectedIssue = issues.find((issue) => issue.fingerprint === search.issue) ?? issues[0];
+  const occurrenceCount = issues.reduce((total, issue) => total + issue.occurrenceCount, 0);
+  const sessionCount = issues.reduce((total, issue) => total + issue.affectedSessionCount, 0);
+
+  const connect = (event: FormEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+    const nextToken = tokenDraft.trim();
+    if (nextToken.length === 0) return;
+    setToken(nextToken);
+    writeSessionToken(nextToken);
+    setCredentialVersion((value) => value + 1);
+    setConnectionOpen(false);
+    updateSearch({ source: 'live', issue: undefined });
+    setQueryAnchor(Date.now());
+  };
+
+  const disconnect = (): void => {
+    setToken('');
+    setTokenDraft('');
+    writeSessionToken('');
+    setCredentialVersion((value) => value + 1);
+    updateSearch({ source: 'illustrative', issue: undefined });
+  };
+
+  const eventSearch = new URLSearchParams({
+    project: search.project,
+    environment: search.environment,
+    range: search.range,
+    source: search.source,
+  });
+
+  return (
+    <div className="console-shell issues-shell">
+      <header className="console-topbar">
+        <a className="wordmark" href="/" aria-label="Spectro events">
+          <span className="wordmark-mark" aria-hidden="true" />
+          spectro
+        </a>
+        <div className="runtime-state">
+          <span className={`status-light ${search.source}`} aria-hidden="true" />
+          <span>{search.source === 'live' ? 'Local API connected' : 'Illustrative workspace'}</span>
+        </div>
+      </header>
+
+      <aside className="console-rail" aria-label="Primary navigation">
+        <nav>
+          <a className="rail-link" href={`/?${eventSearch.toString()}`}>
+            <Icon name="activity" />
+            <span>Events</span>
+          </a>
+          <a className="rail-link active" href="/issues" aria-current="page">
+            <Icon name="alert" />
+            <span>Issues</span>
+          </a>
+          <span className="rail-link" aria-disabled="true" title="Coming after error issues">
+            <Icon name="pulse" />
+            <span>Live</span>
+          </span>
+          <span className="rail-link" aria-disabled="true" title="Coming after error issues">
+            <Icon name="database" />
+            <span>Schemas</span>
+          </span>
+        </nav>
+        <nav className="rail-secondary" aria-label="Secondary navigation">
+          <span className="rail-link" aria-disabled="true">
+            <Icon name="settings" />
+            <span>Settings</span>
+          </span>
+          <span className="rail-link" aria-disabled="true">
+            <Icon name="book" />
+            <span>API guide</span>
+          </span>
+        </nav>
+      </aside>
+
+      <main className="event-workspace issue-workspace">
+        <section className="command-deck" aria-labelledby="issues-title">
+          <div className="workspace-title">
+            <h1 id="issues-title">Issues</h1>
+            <span>Errors grouped by server fingerprint</span>
+          </div>
+          <label className="control-field project-field" htmlFor="issue-project-id">
+            <span>Project</span>
+            <CommittedInput
+              ariaLabel="Project ID"
+              id="issue-project-id"
+              key={`issue-project-${search.project}`}
+              value={search.project}
+              validate={(value) => /^prj_[A-Za-z0-9_-]{1,120}$/.test(value)}
+              onCommit={(project) => updateFilter({ project })}
+            />
+          </label>
+          <label className="control-field" htmlFor="issue-environment-id">
+            <span>Environment</span>
+            <CommittedInput
+              ariaLabel="Environment"
+              id="issue-environment-id"
+              key={`issue-environment-${search.environment}`}
+              value={search.environment}
+              validate={(value) => value.length > 0 && value.length <= 64}
+              onCommit={(environment) => updateFilter({ environment })}
+            />
+          </label>
+          <label className="control-field select-field">
+            <span>Time range</span>
+            <Icon name="calendar" size={16} />
+            <select
+              aria-label="Time range"
+              value={search.range}
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+                if (isTimeRange(value)) {
+                  updateFilter({ range: value });
+                  setQueryAnchor(Date.now());
+                }
+              }}
+            >
+              {Object.entries(TIME_RANGES).map(([value, option]) => (
+                <option key={value} value={value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <Icon name="chevron" size={16} />
+          </label>
+          <div className="command-actions">
+            <button
+              className="icon-button"
+              type="button"
+              onClick={() => setQueryAnchor(Date.now())}
+              aria-label="Refresh issues"
+            >
+              <Icon name="refresh" />
+            </button>
+            <button
+              className="connection-button"
+              type="button"
+              onClick={() => setConnectionOpen((value) => !value)}
+            >
+              {token.length > 0 ? 'Connection' : 'Connect API'}
+            </button>
+          </div>
+        </section>
+
+        {connectionOpen ? (
+          <section className="connection-panel" aria-labelledby="issue-connection-title">
+            <div>
+              <h2 id="issue-connection-title">Local query connection</h2>
+              <p>The bearer token stays in this browser tab and is sent only as a header.</p>
+            </div>
+            <form onSubmit={connect}>
+              <label>
+                <span>Local bearer token</span>
+                <input
+                  autoComplete="off"
+                  name="token"
+                  type="password"
+                  value={tokenDraft}
+                  onChange={(event) => setTokenDraft(event.currentTarget.value)}
+                />
+              </label>
+              <button
+                className="primary-button"
+                type="submit"
+                disabled={tokenDraft.trim().length === 0}
+              >
+                Query local API
+              </button>
+              {token.length > 0 ? (
+                <button className="text-button" type="button" onClick={disconnect}>
+                  Disconnect
+                </button>
+              ) : null}
+            </form>
+          </section>
+        ) : null}
+
+        {search.source === 'illustrative' ? (
+          <section className="illustrative-banner" aria-live="polite">
+            <span>Illustrative data</span>
+            <p>These grouped errors demonstrate investigation flow, not production telemetry.</p>
+            <button type="button" onClick={() => setConnectionOpen(true)}>
+              Connect ClickHouse query
+            </button>
+          </section>
+        ) : null}
+
+        <section className="issue-summary" aria-label="Loaded issue window summary">
+          <div>
+            <strong>{issues.length}</strong>
+            <span>grouped issues</span>
+          </div>
+          <div>
+            <strong>{occurrenceCount}</strong>
+            <span>occurrences</span>
+          </div>
+          <div>
+            <strong>{sessionCount}</strong>
+            <span>affected sessions</span>
+          </div>
+          <p>Counts reflect the selected {range.label.toLowerCase()} window.</p>
+        </section>
+
+        <section className="issue-filters" aria-label="Issue filters">
+          <label className="search-field" htmlFor="issue-name-filter">
+            <Icon name="search" />
+            <CommittedInput
+              ariaLabel="Exact error event name"
+              id="issue-name-filter"
+              key={`issue-name-${search.name ?? ''}`}
+              pattern="[a-z][a-z0-9_]{0,63}"
+              placeholder="Exact error event name"
+              title="For example, runtime_error"
+              value={search.name ?? ''}
+              validate={(value) => value.length === 0 || isEventName(value)}
+              onCommit={(name) => updateFilter({ name: name || undefined })}
+            />
+          </label>
+          <label className="release-filter" htmlFor="issue-release-filter">
+            <span>Release</span>
+            <CommittedInput
+              ariaLabel="Release"
+              id="issue-release-filter"
+              key={`issue-release-${search.release ?? ''}`}
+              placeholder="All releases"
+              value={search.release ?? ''}
+              validate={(value) => value.length <= 128}
+              onCommit={(release) => updateFilter({ release: release || undefined })}
+            />
+          </label>
+          <button
+            className="clear-button"
+            type="button"
+            onClick={() => updateSearch({ name: undefined, release: undefined, issue: undefined })}
+          >
+            Clear
+          </button>
+        </section>
+
+        <div className="issue-bench">
+          <section className="issue-ledger" aria-labelledby="issue-ledger-title">
+            <header className="panel-heading">
+              <div>
+                <h2 id="issue-ledger-title">Error groups</h2>
+                <span>
+                  {search.source === 'live' ? 'Most recently seen' : 'Illustrative groups'}
+                </span>
+              </div>
+              <output>{issues.length} loaded</output>
+            </header>
+            {issuesQuery.isLoading ? (
+              <output className="ledger-state loading-state">
+                <span className="loading-line" />
+                <span className="loading-line" />
+                <p>Grouping error signals…</p>
+              </output>
+            ) : issuesQuery.error ? (
+              <div className="ledger-state error-state" role="alert">
+                <strong>Issues could not be loaded.</strong>
+                <p>{issuesQuery.error.message} Check the local API and token, then retry.</p>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => void issuesQuery.refetch()}
+                >
+                  Try again
+                </button>
+              </div>
+            ) : issues.length === 0 ? (
+              <div className="ledger-state empty-state">
+                <Icon name="alert" size={24} />
+                <strong>No grouped errors match this view.</strong>
+                <p>Clear a filter or widen the selected time range.</p>
+              </div>
+            ) : (
+              <div className="issue-rows">
+                {issues.map((issue) => {
+                  const selected = issue.fingerprint === selectedIssue?.fingerprint;
+                  return (
+                    <button
+                      className={`issue-row ${selected ? 'selected' : ''}`}
+                      key={issue.fingerprint}
+                      type="button"
+                      aria-label={`Inspect ${issue.name ?? 'error'}: ${issue.message}`}
+                      aria-current={selected ? 'true' : undefined}
+                      onClick={() => updateSearch({ issue: issue.fingerprint })}
+                    >
+                      <span className="issue-signal" aria-hidden="true" />
+                      <span className="issue-copy">
+                        <strong>{issue.name ?? 'Error'}</strong>
+                        <span>{issue.message}</span>
+                        <small>
+                          {issue.latestPagePath ?? 'Page unavailable'} ·{' '}
+                          {issue.latestRelease ?? 'Release unavailable'}
+                        </small>
+                      </span>
+                      <span className="issue-impact">
+                        <strong>{issue.occurrenceCount}</strong>
+                        <span>events</span>
+                        <time dateTime={new Date(issue.lastSeen).toISOString()}>
+                          {relativeTime(issue.lastSeen, queryAnchor)}
+                        </time>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            {!issuesQuery.isLoading && !issuesQuery.error && issues.length > 0 ? (
+              <footer className="ledger-footer">
+                <span>
+                  {issuesQuery.hasNextPage
+                    ? 'More issue groups are available'
+                    : 'End of issue window'}
+                </span>
+                {issuesQuery.hasNextPage ? (
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    disabled={issuesQuery.isFetchingNextPage}
+                    onClick={() => void issuesQuery.fetchNextPage()}
+                  >
+                    {issuesQuery.isFetchingNextPage ? 'Loading…' : 'Load more'}
+                  </button>
+                ) : null}
+              </footer>
+            ) : null}
+          </section>
+
+          <IssueDetail anchor={queryAnchor} issue={selectedIssue} search={search} />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function IssueDetail({
+  anchor,
+  issue,
+  search,
+}: {
+  readonly anchor: number;
+  readonly issue: ErrorIssue | undefined;
+  readonly search: IssueSearch;
+}) {
+  if (!issue) {
+    return (
+      <aside className="issue-detail empty-detail" aria-label="Issue detail">
+        <Icon name="alert" size={26} />
+        <strong>Select an issue to inspect it.</strong>
+        <p>Its impact and latest available context will appear here.</p>
+      </aside>
+    );
+  }
+
+  const occurrences = new URLSearchParams({
+    project: search.project,
+    environment: search.environment,
+    range: search.range,
+    source: search.source,
+    type: 'error',
+    fingerprint: issue.fingerprint,
+    event: issue.latestEventId,
+  });
+
+  return (
+    <aside className="issue-detail" aria-labelledby="selected-issue-name">
+      <header className="issue-detail-heading">
+        <span className="issue-signal" aria-hidden="true" />
+        <div>
+          <h2 id="selected-issue-name">{issue.name ?? 'Error'}</h2>
+          <p>{issue.message}</p>
+        </div>
+      </header>
+      <div className="issue-statline">
+        <div>
+          <strong>{issue.occurrenceCount}</strong>
+          <span>Occurrences</span>
+        </div>
+        <div>
+          <strong>{issue.affectedSessionCount}</strong>
+          <span>Sessions</span>
+        </div>
+        <div>
+          <strong>{issue.affectedUserCount}</strong>
+          <span>Users</span>
+        </div>
+      </div>
+      <dl className="issue-readout">
+        <div>
+          <dt>First seen</dt>
+          <dd>{formatDateTime(issue.firstSeen)}</dd>
+        </div>
+        <div>
+          <dt>Last seen</dt>
+          <dd>{relativeTime(issue.lastSeen, anchor)}</dd>
+        </div>
+        <div>
+          <dt>Latest page</dt>
+          <dd>{issue.latestPagePath ?? 'Not available'}</dd>
+        </div>
+        <div>
+          <dt>Latest release</dt>
+          <dd>{issue.latestRelease ?? 'Not available'}</dd>
+        </div>
+        <div className="fingerprint-readout">
+          <dt>Fingerprint</dt>
+          <dd>{issue.fingerprint}</dd>
+        </div>
+      </dl>
+      <a className="occurrence-link" href={`/?${occurrences.toString()}`}>
+        View matching events
+        <span aria-hidden="true">→</span>
+      </a>
+      <p className="issue-scope-note">
+        Counts are calculated inside this query window; this version does not assign workflow status
+        or ownership.
+      </p>
+    </aside>
   );
 }
 

@@ -139,6 +139,10 @@ function filterClause(query: EventListQuery): {
     conditions.push('page_id = {pageId:String}');
     parameters.pageId = query.pageId;
   }
+  if (query.fingerprint !== undefined) {
+    conditions.push('error_fingerprint = {errorFingerprint:String}');
+    parameters.errorFingerprint = query.fingerprint;
+  }
   if (query.cursor !== undefined) {
     conditions.push(
       '(timestamp_ms < {cursorTimestamp:UInt64} OR (timestamp_ms = {cursorTimestamp:UInt64} AND event_id < {cursorEventId:UUID}))',

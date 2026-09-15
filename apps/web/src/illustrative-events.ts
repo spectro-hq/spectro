@@ -2,12 +2,52 @@ import type { EventType } from '@spectro/protocol';
 
 import type { EventListItem, EventListPage } from './event-query.js';
 
-const sampleEvents = [
+interface SampleEvent {
+  readonly id: string;
+  readonly type: EventType;
+  readonly name: string;
+  readonly offset: number;
+  readonly fingerprint?: string;
+  readonly errorName?: string;
+  readonly errorMessage?: string;
+}
+
+const sampleEvents: readonly SampleEvent[] = [
   {
     id: '01994f36-0188-7450-a24f-7bbed18796a1',
     type: 'error',
     name: 'runtime_error',
     offset: 12_000,
+    fingerprint: '6f87a1e0c93a4b156f87a1e0c93a4b15',
+    errorName: 'TypeError',
+    errorMessage: "Cannot read properties of undefined (reading 'id')",
+  },
+  {
+    id: '01994f36-0186-7450-a24f-7bbed18796a1',
+    type: 'error',
+    name: 'runtime_error',
+    offset: 18 * 60_000,
+    fingerprint: 'a92bd74e198fa340a92bd74e198fa340',
+    errorName: 'PaymentUnavailableError',
+    errorMessage: 'Payment provider rejected the confirmation request',
+  },
+  {
+    id: '01994f36-0184-7450-a24f-7bbed18796a1',
+    type: 'error',
+    name: 'runtime_error',
+    offset: 47 * 60_000,
+    fingerprint: '14e8c21d7a50bc4614e8c21d7a50bc46',
+    errorName: 'ResourceError',
+    errorMessage: 'Script resource failed to load',
+  },
+  {
+    id: '01994f36-0182-7450-a24f-7bbed18796a1',
+    type: 'error',
+    name: 'runtime_error',
+    offset: 93 * 60_000,
+    fingerprint: 'c4d13e9a226be817c4d13e9a226be817',
+    errorName: 'CartStateError',
+    errorMessage: 'Cart state could not be reconciled',
   },
   {
     id: '01994f36-0187-7b85-899b-fc860c547575',
@@ -52,20 +92,18 @@ const sampleEvents = [
     name: 'long_task',
     offset: 312_000,
   },
-] as const satisfies ReadonlyArray<{
-  id: string;
-  type: EventType;
-  name: string;
-  offset: number;
-}>;
+];
 
-function payloadFor(type: EventType): Record<string, unknown> {
+function payloadFor(
+  type: EventType,
+  error?: { readonly name?: string; readonly message?: string },
+): Record<string, unknown> {
   switch (type) {
     case 'error':
       return {
         mechanism: 'runtime',
-        name: 'TypeError',
-        message: "Cannot read properties of undefined (reading 'id')",
+        name: error?.name ?? 'Error',
+        message: error?.message ?? 'An unexpected error occurred',
         handled: false,
         source: { url: 'https://shop.example/checkout', line: 412, column: 21 },
       };
@@ -120,13 +158,21 @@ export function createIllustrativePage(
           trace: { traceId: 'tr_d91e4f2a', spanId: 'sp_7b3c9d1e' },
           tags: { region: 'us-west', surface: 'checkout' },
         },
-        payload: payloadFor(sample.type),
+        payload: payloadFor(
+          sample.type,
+          sample.errorName === undefined && sample.errorMessage === undefined
+            ? undefined
+            : {
+                ...(sample.errorName === undefined ? {} : { name: sample.errorName }),
+                ...(sample.errorMessage === undefined ? {} : { message: sample.errorMessage }),
+              },
+        ),
       },
       processing: {
         version: 1,
         envelopeSentAt: timestamp + 180,
         processedAt: timestamp + 420,
-        ...(sample.type === 'error' ? { errorFingerprint: 'err_6f87a1e0c93a4b15' } : {}),
+        ...(sample.fingerprint === undefined ? {} : { errorFingerprint: sample.fingerprint }),
       },
     };
   });

@@ -1,4 +1,6 @@
 export * from './app.js';
 export * from './auth.js';
 export * from './clickhouse-events.js';
+export * from './clickhouse-issues.js';
 export * from './events.js';
+export * from './issues.js';

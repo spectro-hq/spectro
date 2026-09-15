@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-14T05:18:00Z",
+  "generatedAt": "2026-09-15T13:42:00Z",
   "title": "Design System: Spectro",
   "extensions": {
     "colorMeta": {
@@ -139,6 +139,26 @@
       "display-compact": {
         "displayName": "Compact Display",
         "purpose": "Mobile form of the primary editorial statement."
+      },
+      "page-display": {
+        "displayName": "Page Display",
+        "purpose": "Page-level workspace names and primary window metrics."
+      },
+      "section-title": {
+        "displayName": "Section Title",
+        "purpose": "Focused issue evidence headings and primary metric values."
+      },
+      "panel-title": {
+        "displayName": "Panel Title",
+        "purpose": "Ledger and inspector panel headings."
+      },
+      "row-title": {
+        "displayName": "Row Title",
+        "purpose": "Primary labels in dense operational rows."
+      },
+      "payload-title": {
+        "displayName": "Payload Title",
+        "purpose": "Compact headings above structured event data."
       }
     },
     "shadows": [

@@ -11,24 +11,25 @@ colors:
   instrument-border: '#bfcbd9'
   ultraviolet-signal: '#635bff'
   ultraviolet-wash: '#eeedff'
+  illustrative-border: '#e4e1fa'
   ultraviolet-text: '#463ccf'
   cyan-terminal: '#12a8c4'
   healthy-green: '#087f5b'
   readout-bg: '#f0f4f9'
 typography:
   display:
-    fontFamily: 'Avenir Next, Avenir, Segoe UI, sans-serif'
+    fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
     fontSize: 'clamp(3.2rem, 6.2vw, 6rem)'
     fontWeight: 620
     lineHeight: 0.94
     letterSpacing: '-0.04em'
   body:
-    fontFamily: 'Avenir Next, Avenir, Segoe UI, sans-serif'
+    fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
     fontSize: 'clamp(1rem, 1.4vw, 1.16rem)'
     fontWeight: 400
     lineHeight: 1.72
   label:
-    fontFamily: 'Avenir Next, Avenir, Segoe UI, sans-serif'
+    fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
     fontSize: '0.72rem'
     fontWeight: 700
     letterSpacing: '0.08em'
@@ -37,16 +38,16 @@ typography:
     fontSize: '0.7rem'
     fontWeight: 700
   brand:
-    fontFamily: 'Avenir Next, Avenir, Segoe UI, sans-serif'
+    fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
     fontSize: '1.05rem'
     fontWeight: 700
     letterSpacing: '-0.02em'
   status:
-    fontFamily: 'Avenir Next, Avenir, Segoe UI, sans-serif'
+    fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
     fontSize: '0.78rem'
     fontWeight: 650
   fact:
-    fontFamily: 'Avenir Next, Avenir, Segoe UI, sans-serif'
+    fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
     fontSize: '0.84rem'
     fontWeight: 700
   instrument-title:
@@ -58,15 +59,38 @@ typography:
     fontFamily: 'SFMono-Regular, Consolas, monospace'
     fontSize: '0.62rem'
   node-detail:
-    fontFamily: 'Avenir Next, Avenir, Segoe UI, sans-serif'
+    fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
     fontSize: '0.65rem'
     lineHeight: 1.35
   display-compact:
-    fontFamily: 'Avenir Next, Avenir, Segoe UI, sans-serif'
+    fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
     fontSize: 'clamp(3rem, 15vw, 4.5rem)'
     fontWeight: 620
     lineHeight: 0.94
+  page-display:
+    fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
+    fontSize: '1.75rem'
+    fontWeight: 600
+    lineHeight: 1.2
+    letterSpacing: '-0.035em'
+  section-title:
+    fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
+    fontSize: '1.25rem'
+    fontWeight: 600
+  panel-title:
+    fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
+    fontSize: '1.125rem'
+    fontWeight: 500
+  row-title:
+    fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
+    fontSize: '0.9375rem'
+    fontWeight: 600
+  payload-title:
+    fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
+    fontSize: '0.875rem'
+    fontWeight: 500
 rounded:
+  chart-bar: '4px'
   signal: '999px'
   readout: '12px'
   instrument: '16px'
@@ -143,11 +167,12 @@ The palette combines cool, nearly neutral instrumentation surfaces with a narrow
 
 ## Typography
 
-**Display Font:** Avenir Next with Avenir, Segoe UI, and sans-serif fallbacks  
-**Body Font:** Avenir Next with Avenir, Segoe UI, and sans-serif fallbacks  
+**Display Font:** The native system UI sans-serif stack, led by San Francisco on Apple platforms
+
+**Body Font:** The native system UI sans-serif stack, led by San Francisco on Apple platforms
 **Label/Mono Font:** SFMono-Regular with Consolas and monospace fallbacks
 
-**Character:** Humanist sans-serif typography keeps long analytical sessions calm and approachable. Monospaced type distinguishes protocol names, identifiers, versions, and values without turning the whole product into a developer console.
+**Character:** Native platform typography keeps dense analytical text crisp at small sizes and familiar during long sessions. Monospaced type distinguishes protocol names, identifiers, versions, and values without turning the whole product into a developer console.
 
 ### Hierarchy
 
@@ -155,6 +180,15 @@ The palette combines cool, nearly neutral instrumentation surfaces with a narrow
 - **Body** (400, fluid, 1.72): Explanatory copy with a maximum comfortable line length around 62 characters.
 - **Label** (700, compact tracking, uppercase): Coordinates, system labels, and instrument captions.
 - **Mono** (700, compact): Event names, protocol tags, identifiers, and tabular values.
+
+### Interface Type Scale
+
+- **Page display:** `1.75rem`; reserved for a single page-level metric or statement.
+- **Section title:** `1.25rem`; used for focused detail headings and primary metric values.
+- **Row title:** `0.9375rem`; used for the main label in dense operational rows.
+- **Body:** `0.8125rem`; used for descriptions and supporting prose.
+- **Caption:** `0.75rem`; used for timestamps, metadata, and control labels.
+- **Micro:** `0.7rem`; used sparingly for compact status or secondary numeric context.
 
 ### Named Rules
 
