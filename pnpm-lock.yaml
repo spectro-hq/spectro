@@ -433,6 +433,9 @@ importers:
       '@nats-io/transport-node':
         specifier: 'catalog:'
         version: 3.4.0
+      '@spectro/api':
+        specifier: workspace:*
+        version: link:../../apps/api
       '@spectro/ingest':
         specifier: workspace:*
         version: link:../../apps/ingest
