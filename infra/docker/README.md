@@ -4,6 +4,7 @@ The current production-shaped data-plane and control-plane slice runs NATS JetSt
 
 ```bash
 docker compose -f infra/docker/compose.yaml up -d --wait
+pnpm --filter @spectro/api migrate
 pnpm test:integration
 docker compose -f infra/docker/compose.yaml down
 ```
@@ -19,3 +20,5 @@ Local endpoints:
 The credentials are local-only defaults. Production injects credentials and does not expose database or broker ports publicly.
 
 Named volumes preserve local data across `down`. Run `down --volumes` only when intentionally discarding local event and control-plane data.
+
+Fresh PostgreSQL volumes apply the API's numbered migration files during initialization. Run the migration command explicitly for existing volumes; applied filenames are tracked in `control_plane_migrations`.

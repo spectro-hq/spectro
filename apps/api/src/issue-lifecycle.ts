@@ -13,10 +13,24 @@ export const issueLifecycleBodySchema = z.object({
   status: issueStatusSchema,
 });
 
+export const issueLifecycleHistoryQuerySchema = z.object({
+  environment: z.string().min(1).max(64),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
 export interface IssueLifecycleRecord {
   readonly fingerprint: string;
   readonly status: IssueStatus;
   readonly updatedAt: string;
+}
+
+export interface IssueLifecycleHistoryRecord {
+  readonly id: string;
+  readonly fingerprint: string;
+  readonly previousStatus?: IssueStatus;
+  readonly status: IssueStatus;
+  readonly actorId?: string;
+  readonly changedAt: string;
 }
 
 export interface IssueLifecycleStore {
@@ -30,5 +44,12 @@ export interface IssueLifecycleStore {
     readonly environment: string;
     readonly fingerprint: string;
     readonly status: IssueStatus;
+    readonly actorId?: string;
   }): Promise<IssueLifecycleRecord>;
+  history(input: {
+    readonly projectId: string;
+    readonly environment: string;
+    readonly fingerprint: string;
+    readonly limit: number;
+  }): Promise<readonly IssueLifecycleHistoryRecord[]>;
 }

@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "files": [
-    "dist"
+    "dist",
+    "migrations"
   ],
   "type": "module",
   "exports": {
@@ -16,9 +17,11 @@
     "build": "tsc -b",
     "check": "tsc -b --pretty false && tsc -p tsconfig.check.json --pretty false",
     "dev": "tsx watch src/server.ts",
+    "migrate": "tsx src/migrate.ts",
+    "migrate:production": "node dist/migrate.js",
     "start": "node dist/server.js",
     "test": "vitest run --exclude 'dist/**' --exclude '**/*.integration.test.ts'",
-    "test:integration": "vitest run src/*.integration.test.ts"
+    "test:integration": "pnpm migrate && vitest run src/*.integration.test.ts"
   },
   "dependencies": {
     "@clickhouse/client": "catalog:",

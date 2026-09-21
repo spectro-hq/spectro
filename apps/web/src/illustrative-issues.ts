@@ -69,6 +69,7 @@ export function createIllustrativeIssues(anchor: number, search: IssueSearch): E
   return issues.filter(
     (issue) =>
       (search.name === undefined || search.name === 'runtime_error') &&
-      (search.release === undefined || issue.latestRelease === search.release),
+      (search.release === undefined || issue.latestRelease === search.release) &&
+      (search.status === undefined || issue.status === search.status),
   );
 }

@@ -44,7 +44,7 @@ services:
       - '5432:5432'
     volumes:
       - postgres-data:/var/lib/postgresql
-      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+      - ../../apps/api/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U spectro -d spectro']
       interval: 2s

@@ -47,6 +47,7 @@ Status: accepted unless marked open.
 | ADR-041 | Expose bounded, authorized event queries through the product API using parameterized ClickHouse SQL and stable keyset cursors.                         |
 | ADR-042 | Aggregate error issues by server fingerprint in bounded authorized queries and reuse event queries for occurrence drill-down.                          |
 | ADR-043 | Store issue lifecycle state in PostgreSQL and join it onto ClickHouse-derived issue aggregates in the product API.                                     |
+| ADR-044 | Record lifecycle transitions and manage PostgreSQL control-plane schema with ordered, ledger-backed SQL migrations.                                    |
 
 Detailed records:
 
@@ -60,6 +61,7 @@ Detailed records:
 - [ADR-041: Event query API V1](./ADR-041_EVENT_QUERY_API_V1.md)
 - [ADR-042: Error issues query V1](./ADR-042_ERROR_ISSUES_QUERY_V1.md)
 - [ADR-043: Issue lifecycle control plane](./ADR-043_ISSUE_LIFECYCLE_CONTROL_PLANE.md)
+- [ADR-044: Issue lifecycle history and migrations](./ADR-044_ISSUE_LIFECYCLE_HISTORY_AND_MIGRATIONS.md)
 
 ## Change rule
 

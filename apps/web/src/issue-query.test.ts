@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   buildIssueQueryUrl,
+  fetchIssueHistory,
   fetchIssuePage,
   parseIssueSearch,
   updateIssueStatus,
@@ -18,6 +19,7 @@ describe('parseIssueSearch', () => {
         range: '7d',
         source: 'live',
         name: 'runtime_error',
+        status: 'resolved',
       }),
     ).toEqual({
       project: 'prj_storefront',
@@ -25,6 +27,7 @@ describe('parseIssueSearch', () => {
       range: '7d',
       source: 'live',
       name: 'runtime_error',
+      status: 'resolved',
     });
     expect(parseIssueSearch({ project: '../issues' })).toMatchObject({
       project: 'prj_checkout',
@@ -42,10 +45,11 @@ describe('issue query client', () => {
       from: 100,
       to: 200,
       release: 'web@1.4.2',
+      status: 'ignored',
       limit: 25,
     });
     expect(url).toBe(
-      '/v1/projects/prj_checkout/issues?environment=production&from=100&to=200&limit=25&release=web%401.4.2',
+      '/v1/projects/prj_checkout/issues?environment=production&from=100&to=200&limit=25&release=web%401.4.2&status=ignored',
     );
 
     const page = { data: [] };
@@ -90,6 +94,39 @@ describe('issue query client', () => {
         headers: expect.objectContaining({ authorization: 'Bearer local-secret' }),
         body: JSON.stringify({ environment: 'production', status: 'resolved' }),
       }),
+    );
+  });
+
+  it('loads and validates lifecycle history with authorization outside the URL', async () => {
+    const fingerprint = '6f87a1e0c93a4b156f87a1e0c93a4b15';
+    const history = {
+      data: [
+        {
+          id: '1',
+          fingerprint,
+          previousStatus: 'open',
+          status: 'resolved',
+          changedAt: '2026-09-15T13:00:00.000Z',
+        },
+      ],
+    };
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(JSON.stringify(history), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      fetchIssueHistory({
+        projectId: 'prj_checkout',
+        environment: 'production',
+        fingerprint,
+        token: 'local-secret',
+        limit: 5,
+      }),
+    ).resolves.toEqual(history);
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/v1/projects/prj_checkout/issues/${fingerprint}/history?environment=production&limit=5`,
+      { headers: { authorization: 'Bearer local-secret' } },
     );
   });
 });

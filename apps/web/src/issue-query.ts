@@ -23,9 +23,23 @@ const issuePageSchema = z.object({
   nextCursor: z.string().optional(),
 });
 
+const issueHistorySchema = z.object({
+  data: z.array(
+    z.object({
+      id: z.string(),
+      fingerprint: z.string().regex(/^[0-9a-f]{32}$/),
+      previousStatus: z.enum(['open', 'resolved', 'ignored']).optional(),
+      status: z.enum(['open', 'resolved', 'ignored']),
+      actorId: z.string().optional(),
+      changedAt: z.string().datetime(),
+    }),
+  ),
+});
+
 export type ErrorIssue = z.infer<typeof issueSchema>;
 export type IssuePage = z.infer<typeof issuePageSchema>;
 export type IssueStatus = ErrorIssue['status'];
+export type IssueHistory = z.infer<typeof issueHistorySchema>;
 
 export interface IssueSearch {
   readonly project: string;
@@ -34,6 +48,7 @@ export interface IssueSearch {
   readonly source: DataSource;
   readonly name?: string | undefined;
   readonly release?: string | undefined;
+  readonly status?: IssueStatus | undefined;
   readonly issue?: string | undefined;
 }
 
@@ -54,6 +69,10 @@ export function parseIssueSearch(search: Record<string, unknown>): IssueSearch {
   const name = optionalBoundedString(search.name, 64);
   const release = optionalBoundedString(search.release, 128);
   const issue = optionalBoundedString(search.issue, 32);
+  const status =
+    search.status === 'open' || search.status === 'resolved' || search.status === 'ignored'
+      ? search.status
+      : undefined;
 
   return {
     project,
@@ -62,6 +81,7 @@ export function parseIssueSearch(search: Record<string, unknown>): IssueSearch {
     source: search.source === 'live' ? 'live' : 'illustrative',
     ...(name !== undefined && isEventName(name) ? { name } : {}),
     ...(release === undefined ? {} : { release }),
+    ...(status === undefined ? {} : { status }),
     ...(issue !== undefined && /^[0-9a-f]{32}$/.test(issue) ? { issue } : {}),
   };
 }
@@ -73,6 +93,7 @@ export interface IssueQueryInput {
   readonly to: number;
   readonly name?: string;
   readonly release?: string;
+  readonly status?: IssueStatus;
   readonly cursor?: string;
   readonly limit?: number;
 }
@@ -87,6 +108,7 @@ export function buildIssueQueryUrl(input: IssueQueryInput): string {
   for (const [key, value] of [
     ['name', input.name],
     ['release', input.release],
+    ['status', input.status],
     ['cursor', input.cursor],
   ] as const) {
     if (value !== undefined) parameters.set(key, value);
@@ -149,4 +171,33 @@ export async function updateIssueStatus(input: {
       updatedAt: z.string().datetime(),
     })
     .parse(await response.json());
+}
+
+export async function fetchIssueHistory(input: {
+  readonly projectId: string;
+  readonly environment: string;
+  readonly fingerprint: string;
+  readonly token: string;
+  readonly limit?: number;
+  readonly signal?: AbortSignal;
+}): Promise<IssueHistory> {
+  const parameters = new URLSearchParams({
+    environment: input.environment,
+    limit: String(input.limit ?? 10),
+  });
+  const response = await fetch(
+    `/v1/projects/${encodeURIComponent(input.projectId)}/issues/${input.fingerprint}/history?${parameters.toString()}`,
+    {
+      headers: { authorization: `Bearer ${input.token}` },
+      ...(input.signal === undefined ? {} : { signal: input.signal }),
+    },
+  );
+  if (!response.ok) {
+    let message = `Issue lifecycle history failed with status ${response.status}.`;
+    const body: unknown = await response.json().catch(() => undefined);
+    const errorBody = z.object({ error: z.object({ message: z.string() }) }).safeParse(body);
+    if (errorBody.success) message = errorBody.data.error.message;
+    throw new Error(message);
+  }
+  return issueHistorySchema.parse(await response.json());
 }
