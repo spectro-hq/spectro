@@ -50,6 +50,22 @@ The user supplied dashboard references for finish and texture, explicitly exclud
 - Ground/readouts: `#f7f8fa`; divider: `#e3e7ed`; inspector lift: `0 4px 24px rgb(28 47 78 / 5%)`.
 - Render evidence: `.impeccable/review/refined-desktop.png` (1440px) and `.impeccable/review/refined-mobile.png` (390px). Both have no horizontal page overflow.
 
+## Native workspace refinement · September 21, 2026
+
+The owner approved the KeygenGo application preview as a finish reference for the Console shell, Events, and Issues. Preserve the existing investigation flow while moving to a connected, native-tool workspace.
+
+- Surface-specific neutrals: ink `#24252b`, muted `#61616c`, ground/readout `#f5f5f7`, rail `#ededf0`, divider `#e2e2e7`, surface white. Selection uses `#5850df` with white foreground.
+- Desktop toolbar controls use a 7px radius and 36px minimum height; narrow-screen controls retain a 44px minimum target. Connected working panels use a shared 12px outer radius, one border, and internal separators instead of independent card shadows.
+- The side rail uses a white active item with a violet icon; event and issue selection uses solid violet with white text. Hover and keyboard focus remain distinct.
+- Page headings are 22px, panel headings 14px, normal controls 13px, and metadata 12px. Native system sans remains the UI face; search guidance uses sans and machine-shaped event values retain monospace.
+- Desktop event rows are 40px with quiet alternating backgrounds. Issue rows retain room for error messages and impact; mobile stacks the inspector beneath the list.
+- This surface-specific refinement supersedes the earlier panel lift, detached card spacing, and selection wash guidance above. Product copy, query behavior, and API contracts remain unchanged.
+- Navigation and controls use the authored Spectro Signals IconSet: a 20px grid, 1.5px rounded strokes, and observation/signal geometry. The wordmark and browser favicon use the owner-supplied circular spectrum logo without reinterpretation.
+- Event payloads use the shared read-only machine-data viewer: numbered, selectable code with JSON/YAML switching, horizontal overflow for long values, and copy feedback tied to the visible format.
+- The four authored primary-navigation metaphors are fixed as symmetric waveform (Events), hexagonal alert (Issues), concentric receiver (Live), and stacked data cylinder (Schemas). Secondary Settings and API Guide retain the original sliders and open-book metaphors. Their SVG paths use `currentColor` so default, hover, active, and dark-mode states remain token-controlled.
+- A compact sun/moon control is available in the Events and Issues command bars. The first visit follows the operating-system color preference; an explicit choice persists locally and is applied before React mounts to avoid a theme flash.
+- Dark mode is independently composed from semantic tokens: a blue-black field, distinct rail and work surfaces, restrained borders, and the same ultraviolet/cyan/green meanings as light mode. It is not produced by filter or inversion.
+
 ## Content boundary
 
 The comp’s exact event counts, user initials, dates, SDK versions, paths, errors, and timestamps are illustrative composition content, not product claims. Implementation must derive real values from the API or use clearly labeled synthetic fixtures. No raster from the decision round ships inside the product UI.
