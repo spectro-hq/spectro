@@ -121,6 +121,12 @@ export function PayloadViewer({ value }: { readonly value: unknown }): ReactElem
   const [copied, setCopied] = useState(false);
   const formatted = useMemo(() => formatPayload(value, format), [format, value]);
   const lines = formatted.split('\n');
+  const lineOccurrences = new Map<string, number>();
+  const displayLines = lines.map((line) => {
+    const occurrence = (lineOccurrences.get(line) ?? 0) + 1;
+    lineOccurrences.set(line, occurrence);
+    return { key: `${line}-${occurrence}`, line };
+  });
 
   useEffect(() => {
     if (!copied) return undefined;
@@ -159,8 +165,8 @@ export function PayloadViewer({ value }: { readonly value: unknown }): ReactElem
       </header>
       <div className="payload-code-scroll">
         <ol className="payload-code" aria-label={`Event payload in ${format.toUpperCase()}`}>
-          {lines.map((line, index) => (
-            <li key={`${index}-${line}`}>
+          {displayLines.map(({ key, line }) => (
+            <li key={key}>
               <code>{highlightedLine(line)}</code>
             </li>
           ))}
