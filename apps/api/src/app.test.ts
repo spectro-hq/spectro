@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createApiApp } from './app.js';
 import type { EventListQuery, EventQueryStore, ProjectAuthorizer } from './events.js';
-import type { IssueListQuery } from './issues.js';
+import { encodeIssueCursor, type IssueListQuery } from './issues.js';
 import type { IssueLifecycleStore } from './issue-lifecycle.js';
 
 describe('GET /health', () => {
@@ -131,6 +131,19 @@ describe('GET /v1/projects/:projectId/events', () => {
 const validIssueUrl =
   '/v1/projects/prj_checkout/issues?environment=production&from=1789368000000&to=1789368060000';
 
+function createIssueSummary(fingerprint: string, lastSeen: number) {
+  return {
+    fingerprint,
+    message: 'boom',
+    occurrenceCount: 1,
+    affectedSessionCount: 1,
+    affectedUserCount: 1,
+    firstSeen: 100,
+    lastSeen,
+    latestEventId: `evt_${lastSeen}`,
+  };
+}
+
 describe('GET /v1/projects/:projectId/issues', () => {
   it('authorizes, validates, and forwards a bounded issue query', async () => {
     let received: IssueListQuery | undefined;
@@ -159,7 +172,7 @@ describe('GET /v1/projects/:projectId/issues', () => {
       to: 1_789_368_060_000,
       name: 'runtime_error',
       release: 'web@1.4.2',
-      limit: 25,
+      limit: 100,
     });
   });
 
@@ -194,6 +207,7 @@ describe('GET /v1/projects/:projectId/issues', () => {
         set: async () => {
           throw new Error('not used');
         },
+        history: async () => [],
       },
     });
     const response = await app.inject({
@@ -204,6 +218,91 @@ describe('GET /v1/projects/:projectId/issues', () => {
     await app.close();
     expect(response.json()).toMatchObject({
       data: [{ fingerprint, status: 'resolved', statusUpdatedAt: '2026-09-15T13:00:00.000Z' }],
+    });
+  });
+
+  it('filters lifecycle state after joining the control plane', async () => {
+    const resolved = '6f87a1e0c93a4b156f87a1e0c93a4b15';
+    const open = '7f87a1e0c93a4b156f87a1e0c93a4b15';
+    const app = createApiApp({
+      authorizer: allowProject,
+      issueStore: {
+        list: async () => ({
+          data: [createIssueSummary(resolved, 200), createIssueSummary(open, 100)],
+        }),
+      },
+      issueLifecycleStore: {
+        getMany: async () =>
+          new Map([
+            [
+              resolved,
+              { fingerprint: resolved, status: 'resolved', updatedAt: '2026-09-15T13:00:00.000Z' },
+            ],
+          ]),
+        set: async () => {
+          throw new Error('not used');
+        },
+        history: async () => [],
+      },
+    });
+    const response = await app.inject({
+      method: 'GET',
+      url: `${validIssueUrl}&status=open`,
+      headers: { authorization: 'Bearer local-secret' },
+    });
+    await app.close();
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ data: [{ fingerprint: open, status: 'open' }] });
+  });
+
+  it('continues across event-plane pages to fill a status-filtered result', async () => {
+    const resolved = '6f87a1e0c93a4b156f87a1e0c93a4b15';
+    const open = '7f87a1e0c93a4b156f87a1e0c93a4b15';
+    let calls = 0;
+    const app = createApiApp({
+      authorizer: allowProject,
+      issueStore: {
+        list: async () => {
+          calls += 1;
+          return calls === 1
+            ? {
+                data: [createIssueSummary(resolved, 200)],
+                nextCursor: encodeIssueCursor({ lastSeen: 200, fingerprint: resolved }),
+              }
+            : { data: [createIssueSummary(open, 100)] };
+        },
+      },
+      issueLifecycleStore: {
+        getMany: async ({ fingerprints }) =>
+          new Map(
+            fingerprints.includes(resolved)
+              ? [
+                  [
+                    resolved,
+                    {
+                      fingerprint: resolved,
+                      status: 'resolved' as const,
+                      updatedAt: '2026-09-15T13:00:00.000Z',
+                    },
+                  ],
+                ]
+              : [],
+          ),
+        set: async () => {
+          throw new Error('not used');
+        },
+        history: async () => [],
+      },
+    });
+    const response = await app.inject({
+      method: 'GET',
+      url: `${validIssueUrl}&status=open&limit=1`,
+      headers: { authorization: 'Bearer local-secret' },
+    });
+    await app.close();
+    expect(calls).toBe(2);
+    expect(response.json()).toEqual({
+      data: [{ ...createIssueSummary(open, 100), status: 'open' }],
     });
   });
 
@@ -248,6 +347,7 @@ describe('PATCH /v1/projects/:projectId/issues/:fingerprint', () => {
           received = input;
           return { fingerprint, status: input.status, updatedAt: '2026-09-15T13:00:00.000Z' };
         },
+        history: async () => [],
       },
     });
     const response = await app.inject({
@@ -273,6 +373,7 @@ describe('PATCH /v1/projects/:projectId/issues/:fingerprint', () => {
       issueLifecycleStore: {
         getMany: async () => new Map(),
         set: async () => Promise.reject(new Error('private postgres details')),
+        history: async () => [],
       },
     });
     const invalid = await app.inject({
@@ -297,6 +398,70 @@ describe('PATCH /v1/projects/:projectId/issues/:fingerprint', () => {
         message: 'Issue lifecycle update is temporarily unavailable.',
       },
     });
+    expect(unavailable.body).not.toContain('private postgres details');
+  });
+});
+
+describe('GET /v1/projects/:projectId/issues/:fingerprint/history', () => {
+  it('authorizes and returns bounded lifecycle history', async () => {
+    const fingerprint = '6f87a1e0c93a4b156f87a1e0c93a4b15';
+    let received: Parameters<IssueLifecycleStore['history']>[0] | undefined;
+    const record = {
+      id: '1',
+      fingerprint,
+      status: 'resolved' as const,
+      changedAt: '2026-09-15T13:00:00.000Z',
+    };
+    const app = createApiApp({
+      authorizer: allowProject,
+      issueLifecycleStore: {
+        getMany: async () => new Map(),
+        set: async () => {
+          throw new Error('not used');
+        },
+        history: async (input) => {
+          received = input;
+          return [record];
+        },
+      },
+    });
+    const response = await app.inject({
+      method: 'GET',
+      url: `/v1/projects/prj_checkout/issues/${fingerprint}/history?environment=production&limit=5`,
+      headers: { authorization: 'Bearer local-secret' },
+    });
+    await app.close();
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ data: [record] });
+    expect(received).toEqual({
+      projectId: 'prj_checkout',
+      environment: 'production',
+      fingerprint,
+      limit: 5,
+    });
+  });
+
+  it('requires authentication and hides control-plane failures', async () => {
+    const fingerprint = '6f87a1e0c93a4b156f87a1e0c93a4b15';
+    const app = createApiApp({
+      authorizer: allowProject,
+      issueLifecycleStore: {
+        getMany: async () => new Map(),
+        set: async () => {
+          throw new Error('not used');
+        },
+        history: async () => Promise.reject(new Error('private postgres details')),
+      },
+    });
+    const url = `/v1/projects/prj_checkout/issues/${fingerprint}/history?environment=production`;
+    expect((await app.inject({ method: 'GET', url })).statusCode).toBe(401);
+    const unavailable = await app.inject({
+      method: 'GET',
+      url,
+      headers: { authorization: 'Bearer local-secret' },
+    });
+    await app.close();
+    expect(unavailable.statusCode).toBe(503);
     expect(unavailable.body).not.toContain('private postgres details');
   });
 });

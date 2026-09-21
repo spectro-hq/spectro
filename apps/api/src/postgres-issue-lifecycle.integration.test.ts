@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import postgres from 'postgres';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 
 import { PostgresIssueLifecycleStore } from './postgres-issue-lifecycle.js';
 
@@ -15,20 +15,8 @@ const environment = 'integration';
 const fingerprint = '6f87a1e0c93a4b156f87a1e0c93a4b15';
 
 describe('PostgresIssueLifecycleStore integration', () => {
-  beforeAll(async () => {
-    await sql`
-      CREATE TABLE IF NOT EXISTS issue_lifecycle (
-        project_id varchar(128) NOT NULL,
-        environment varchar(64) NOT NULL,
-        fingerprint char(32) NOT NULL CHECK (fingerprint ~ '^[0-9a-f]{32}$'),
-        status varchar(16) NOT NULL CHECK (status IN ('open', 'resolved', 'ignored')),
-        updated_at timestamptz NOT NULL DEFAULT now(),
-        PRIMARY KEY (project_id, environment, fingerprint)
-      )
-    `;
-  });
-
   afterAll(async () => {
+    await sql`DELETE FROM issue_lifecycle_history WHERE project_id = ${projectId}`;
     await sql`DELETE FROM issue_lifecycle WHERE project_id = ${projectId}`;
     await store.close();
   });
@@ -37,7 +25,14 @@ describe('PostgresIssueLifecycleStore integration', () => {
     const created = await store.set({ projectId, environment, fingerprint, status: 'resolved' });
     expect(created).toMatchObject({ fingerprint, status: 'resolved' });
 
-    await store.set({ projectId, environment, fingerprint, status: 'ignored' });
+    const unchanged = await store.set({
+      projectId,
+      environment,
+      fingerprint,
+      status: 'resolved',
+    });
+    expect(unchanged.updatedAt).toBe(created.updatedAt);
+    await store.set({ projectId, environment, fingerprint, status: 'ignored', actorId: 'usr_1' });
     const records = await store.getMany({ projectId, environment, fingerprints: [fingerprint] });
     expect(records.get(fingerprint)).toMatchObject({ fingerprint, status: 'ignored' });
 
@@ -47,5 +42,16 @@ describe('PostgresIssueLifecycleStore integration', () => {
       fingerprints: [fingerprint],
     });
     expect(otherEnvironment.size).toBe(0);
+
+    const history = await store.history({ projectId, environment, fingerprint, limit: 10 });
+    expect(history).toHaveLength(2);
+    expect(history[0]).toMatchObject({
+      fingerprint,
+      previousStatus: 'resolved',
+      status: 'ignored',
+      actorId: 'usr_1',
+    });
+    expect(history[1]).toMatchObject({ fingerprint, status: 'resolved' });
+    expect(history[1]).not.toHaveProperty('previousStatus');
   });
 });

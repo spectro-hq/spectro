@@ -12,14 +12,18 @@ import {
 } from './events.js';
 import {
   decodeIssueCursor,
+  encodeIssueCursor,
   InvalidIssueCursorError,
   issueListQuerySchema,
   type IssueListQuery,
   type IssueQueryStore,
+  type ErrorIssueSummary,
 } from './issues.js';
 import {
   issueLifecycleBodySchema,
+  issueLifecycleHistoryQuerySchema,
   issueLifecyclePathSchema,
+  type IssueStatus,
   type IssueLifecycleStore,
 } from './issue-lifecycle.js';
 
@@ -37,6 +41,9 @@ const unavailableIssueStore: IssueQueryStore = {
 const defaultLifecycleStore: IssueLifecycleStore = {
   getMany: async () => new Map(),
   set: async () => {
+    throw new Error('Issue lifecycle store is not configured');
+  },
+  history: async () => {
     throw new Error('Issue lifecycle store is not configured');
   },
 };
@@ -239,23 +246,49 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
     }
 
     try {
-      const page = await issueStore.list(issueQuery);
-      const lifecycle = await issueLifecycleStore.getMany({
-        projectId: issueQuery.projectId,
-        environment: issueQuery.environment,
-        fingerprints: page.data.map((issue) => issue.fingerprint),
-      });
-      return {
-        ...page,
-        data: page.data.map((issue) => {
+      const data: Array<ErrorIssueSummary & { status: IssueStatus; statusUpdatedAt?: string }> = [];
+      let cursor = issueQuery.cursor;
+      while (true) {
+        // oxlint-disable-next-line no-await-in-loop -- each keyset cursor depends on the prior page.
+        const page = await issueStore.list({
+          ...issueQuery,
+          limit: 100,
+          ...(cursor ? { cursor } : {}),
+        });
+        // oxlint-disable-next-line no-await-in-loop -- lifecycle keys are determined by this page.
+        const lifecycle = await issueLifecycleStore.getMany({
+          projectId: issueQuery.projectId,
+          environment: issueQuery.environment,
+          fingerprints: page.data.map((issue) => issue.fingerprint),
+        });
+        for (const [index, issue] of page.data.entries()) {
           const record = lifecycle.get(issue.fingerprint);
-          return {
+          const enriched = {
             ...issue,
             status: record?.status ?? 'open',
             ...(record === undefined ? {} : { statusUpdatedAt: record.updatedAt }),
           };
-        }),
-      };
+          if (query.data.status === undefined || enriched.status === query.data.status) {
+            data.push(enriched);
+          }
+          if (data.length === issueQuery.limit) {
+            const hasMore = index < page.data.length - 1 || page.nextCursor !== undefined;
+            return {
+              data,
+              ...(hasMore
+                ? {
+                    nextCursor: encodeIssueCursor({
+                      lastSeen: issue.lastSeen,
+                      fingerprint: issue.fingerprint,
+                    }),
+                  }
+                : {}),
+            };
+          }
+        }
+        if (page.nextCursor === undefined) return { data };
+        cursor = decodeIssueCursor(page.nextCursor);
+      }
     } catch {
       return reply.code(503).send({
         error: {
@@ -322,6 +355,62 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
         error: {
           code: 'control_plane_unavailable',
           message: 'Issue lifecycle update is temporarily unavailable.',
+        },
+      });
+    }
+  });
+
+  app.get('/v1/projects/:projectId/issues/:fingerprint/history', async (request, reply) => {
+    const path = issueLifecyclePathSchema.safeParse(request.params);
+    const query = issueLifecycleHistoryQuerySchema.safeParse(request.query);
+    if (!path.success || !query.success) {
+      const issues = !path.success ? path.error.issues : !query.success ? query.error.issues : [];
+      return reply.code(400).send({
+        error: {
+          code: 'invalid_request',
+          message: 'The lifecycle history request is invalid.',
+          issues: validationIssues(issues),
+        },
+      });
+    }
+    if (request.headers.authorization === undefined) {
+      return reply.code(401).send({
+        error: { code: 'unauthorized', message: 'Authentication is required.' },
+      });
+    }
+    let authorized: boolean;
+    try {
+      authorized = await authorizer.authorize({
+        authorization: request.headers.authorization,
+        projectId: path.data.projectId,
+      });
+    } catch {
+      return reply.code(503).send({
+        error: {
+          code: 'authorization_unavailable',
+          message: 'Authorization is temporarily unavailable.',
+        },
+      });
+    }
+    if (!authorized) {
+      return reply.code(403).send({
+        error: { code: 'forbidden', message: 'Access to this project is denied.' },
+      });
+    }
+    try {
+      return {
+        data: await issueLifecycleStore.history({
+          projectId: path.data.projectId,
+          environment: query.data.environment,
+          fingerprint: path.data.fingerprint,
+          limit: query.data.limit,
+        }),
+      };
+    } catch {
+      return reply.code(503).send({
+        error: {
+          code: 'control_plane_unavailable',
+          message: 'Issue lifecycle history is temporarily unavailable.',
         },
       });
     }

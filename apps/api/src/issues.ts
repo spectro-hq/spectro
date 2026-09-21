@@ -15,10 +15,11 @@ export const issueListQuerySchema = z
     to: integerInputSchema,
     name: z.string().regex(/^[a-z][a-z0-9_]{0,63}$/),
     release: z.string().min(1).max(128),
+    status: z.enum(['open', 'resolved', 'ignored']),
     limit: integerInputSchema.pipe(z.number().min(1).max(100)).default(50),
     cursor: z.string().min(1).max(512),
   })
-  .partial({ name: true, release: true, cursor: true })
+  .partial({ name: true, release: true, status: true, cursor: true })
   .strict()
   .superRefine((value, context) => {
     if (value.from > value.to) {

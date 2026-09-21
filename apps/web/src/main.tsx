@@ -3,6 +3,7 @@ import {
   QueryClientProvider,
   useInfiniteQuery,
   useMutation,
+  useQuery,
 } from '@tanstack/react-query';
 import {
   createRootRoute,
@@ -28,6 +29,7 @@ import {
 import { createIllustrativePage } from './illustrative-events.js';
 import { createIllustrativeIssues } from './illustrative-issues.js';
 import {
+  fetchIssueHistory,
   fetchIssuePage,
   parseIssueSearch,
   updateIssueStatus,
@@ -708,6 +710,7 @@ function IssuesExplorer() {
       search.source,
       search.name,
       search.release,
+      search.status,
       queryAnchor,
       credentialVersion,
     ],
@@ -725,6 +728,7 @@ function IssuesExplorer() {
           limit: 50,
           ...(search.name === undefined ? {} : { name: search.name }),
           ...(search.release === undefined ? {} : { release: search.release }),
+          ...(search.status === undefined ? {} : { status: search.status }),
           ...(pageParam === undefined ? {} : { cursor: pageParam }),
         },
         token,
@@ -969,6 +973,26 @@ function IssuesExplorer() {
               onCommit={(release) => updateFilter({ release: release || undefined })}
             />
           </label>
+          <label className="release-filter">
+            <span>Status</span>
+            <select
+              aria-label="Issue lifecycle status"
+              value={search.status ?? ''}
+              onChange={(event) =>
+                updateFilter({
+                  status:
+                    event.currentTarget.value === ''
+                      ? undefined
+                      : (event.currentTarget.value as IssueStatus),
+                })
+              }
+            >
+              <option value="">All statuses</option>
+              <option value="open">Open</option>
+              <option value="resolved">Resolved</option>
+              <option value="ignored">Ignored</option>
+            </select>
+          </label>
           <button
             className="clear-button"
             type="button"
@@ -1094,6 +1118,20 @@ function IssueDetail({
   readonly search: IssueSearch;
   readonly token: string;
 }) {
+  const history = useQuery({
+    queryKey: ['issue-history', search.project, search.environment, issue?.fingerprint, token],
+    queryFn: ({ signal }) => {
+      if (issue === undefined) throw new Error('Select an issue before loading its history.');
+      return fetchIssueHistory({
+        projectId: search.project,
+        environment: search.environment,
+        fingerprint: issue.fingerprint,
+        token,
+        signal,
+      });
+    },
+    enabled: search.source === 'live' && token.length > 0 && issue !== undefined,
+  });
   const lifecycle = useMutation({
     mutationFn: (status: IssueStatus) => {
       if (issue === undefined) throw new Error('Select an issue before changing its status.');
@@ -1105,7 +1143,10 @@ function IssueDetail({
         token,
       });
     },
-    onSuccess: onUpdated,
+    onSuccess: () => {
+      onUpdated();
+      void history.refetch();
+    },
   });
 
   if (!issue) {
@@ -1172,6 +1213,33 @@ function IssueDetail({
         {search.source !== 'live' ? <p>Connect the API to persist lifecycle changes.</p> : null}
         {lifecycle.isError ? <p role="alert">{lifecycle.error.message}</p> : null}
       </section>
+      {search.source === 'live' ? (
+        <section className="issue-history" aria-labelledby="issue-history-title">
+          <div className="issue-history-heading">
+            <span id="issue-history-title">Recent changes</span>
+            {history.isFetching ? <small>Refreshing…</small> : null}
+          </div>
+          {history.isError ? <p role="alert">{history.error.message}</p> : null}
+          {history.data?.data.length === 0 ? <p>No lifecycle changes recorded yet.</p> : null}
+          {history.data?.data.length ? (
+            <ol>
+              {history.data.data.map((record) => (
+                <li key={record.id}>
+                  <span>
+                    {record.previousStatus === undefined
+                      ? 'Created as'
+                      : `${record.previousStatus} →`}{' '}
+                    <strong>{record.status}</strong>
+                  </span>
+                  <time dateTime={record.changedAt}>
+                    {formatDateTime(Date.parse(record.changedAt))}
+                  </time>
+                </li>
+              ))}
+            </ol>
+          ) : null}
+        </section>
+      ) : null}
       <dl className="issue-readout">
         <div>
           <dt>First seen</dt>
