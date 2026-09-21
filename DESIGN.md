@@ -224,6 +224,30 @@ Spectro combines precise circles for signal nodes with gently rounded instrument
 - **Color:** Pale ultraviolet wash with dark ultraviolet mono text.
 - **Use:** Event type and protocol version; never a generic category chip.
 
+### Status Labels
+
+- **Reference:** [`apps/web/.impeccable/references/status-labels-reference.png`](apps/web/.impeccable/references/status-labels-reference.png) is an owner-supplied finish reference. It informs treatment only; its example state names are not product requirements.
+- **Structure:** Pair a compact authored status icon with an explicit text label inside a full capsule. Never rely on color alone.
+- **Tone:** Use a quiet tinted wash with a darker foreground from the same semantic hue. Keep fills soft enough to sit inside dense operational views without competing with selection.
+- **Semantics:** Orange communicates pending or attention, blue review or informational state, ultraviolet active processing, neutral gray inactivity, red cancellation or failure, and green only verified approval or health.
+- **Use:** Reserve this treatment for finite workflow or lifecycle states. Event types, filters, navigation, and arbitrary categories use their own established patterns.
+
+### Navigation Icons
+
+- **Reference:** [`apps/web/.impeccable/references/navigation-icons-dark-mode-reference.png`](apps/web/.impeccable/references/navigation-icons-dark-mode-reference.png) records the owner-approved direction for navigation icon character and dark-mode contrast.
+- **Construction:** The four primary destinations use a 20px authored SVG grid, 1.5px rounded strokes, `currentColor`, and no baked-in background. Events is a symmetric pulse waveform, Issues a hexagonal alert, Live a concentric receiver, and Schemas a stacked data cylinder. Secondary Settings and API Guide retain their original sliders and open-book metaphors.
+- **States:** Default icons are quiet slate, hover icons use the ultraviolet foreground, and active icons sit in the established selected-navigation treatment. Shape and label must continue to identify the destination without color.
+
+## Color modes
+
+Light and dark modes are two composed observatory environments, not an inversion pair. Both modes retain the same information hierarchy and semantic color roles.
+
+- Follow the operating-system preference on first use; a user toggle becomes the persistent override.
+- Apply the selected mode before React renders so the shell does not flash through the wrong palette.
+- Remap semantic surface, border, ink, muted, selection, code, and telemetry tokens. Components must not introduce mode-specific hardcoded colors.
+- Dark mode uses blue-black page and rail fields with progressively lighter working surfaces. Borders remain visible but subdued; ordinary panels do not gain decorative glow.
+- Ultraviolet continues to mean focus or selection, cyan continues to describe data flow, and green remains reserved for verified health. All text and controls must retain accessible contrast in either mode.
+
 ### Cards / Containers
 
 - **Corner Style:** Gently rounded instrument silhouette.
@@ -236,9 +260,23 @@ Spectro combines precise circles for signal nodes with gently rounded instrument
 
 The foundation top bar is a quiet structural rail: wordmark on the left, truthful runtime state on the right, and one hairline beneath. Future navigation should preserve this low-noise treatment and make active state explicit rather than adding ornamental chrome.
 
+### Spectro Signals IconSet
+
+- **Grid:** Author interface icons on a `20 × 20` grid with a `1.5px` stroke, round caps, and round joins. Optical overshoot is allowed only to keep circles and diagonals equally weighted.
+- **Geometry:** Derive product icons from observation windows, connected signal traces, focus nodes, and spectrum separation. Navigation concepts should remain recognizable without falling back to generic dashboard glyphs.
+- **Color:** Icons inherit `currentColor`. Ultraviolet marks active focus, cyan marks a signal destination, and green remains reserved for verified health. Multicolor treatment belongs to the brand mark, not ordinary controls.
+- **Use:** Render authored SVG components rather than an icon font. Icons are decorative beside visible labels and remain hidden from assistive technology; icon-only buttons require an accessible name.
+- **Brand mark:** Use the owner-supplied circular observatory mark as the sole source of truth. Its three cyan-to-ultraviolet spectrum arcs surround a white focus ring and dark central aperture. Do not redraw or reinterpret it inside product surfaces.
+
 ### Signal Path
 
 The signature sequence uses numbered nodes connected by an ultraviolet-to-cyan line. On narrow screens it rotates into a vertical path without changing semantic order. The terminal node alone takes cyan to make direction legible.
+
+### Machine Data Viewer
+
+- Render structured payloads as selectable, read-only code with persistent line numbers and restrained semantic syntax color.
+- Keep format selection and copy beside the viewer title. Copy always uses the currently visible representation and confirms success in place.
+- Support JSON as the default and YAML as the alternate representation. Long machine values scroll horizontally rather than wrapping into ambiguous lines.
 
 ## Do's and Don'ts
 

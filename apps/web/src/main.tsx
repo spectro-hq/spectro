@@ -12,7 +12,7 @@ import {
   Outlet,
   RouterProvider,
 } from '@tanstack/react-router';
-import { StrictMode, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { StrictMode, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import {
@@ -38,61 +38,9 @@ import {
   type IssueSearch,
   type IssueStatus,
 } from './issue-query.js';
+import { PayloadViewer } from './payload-viewer.js';
+import { SpectroIcon, SpectroMark } from './spectro-icons.js';
 import './styles.css';
-
-type IconName =
-  | 'activity'
-  | 'alert'
-  | 'book'
-  | 'calendar'
-  | 'chevron'
-  | 'database'
-  | 'filter'
-  | 'pulse'
-  | 'refresh'
-  | 'search'
-  | 'settings';
-
-function Icon({ name, size = 18 }: { readonly name: IconName; readonly size?: number }) {
-  const paths: Record<IconName, ReactNode> = {
-    activity: <path d="M3 12h3l2.2-6 3.7 12 2.5-7H21" />,
-    alert: (
-      <path d="M12 8v5m0 3.5v.5M10.3 3.8 2.6 18a2 2 0 0 0 1.8 3h15.2a2 2 0 0 0 1.8-3L13.7 3.8a2 2 0 0 0-3.4 0Z" />
-    ),
-    book: (
-      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v17H6.5A2.5 2.5 0 0 0 4 22Zm16 0A2.5 2.5 0 0 0 17.5 3H13v17h4.5A2.5 2.5 0 0 1 20 22Z" />
-    ),
-    calendar: (
-      <path d="M7 2v3m10-3v3M3 9h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
-    ),
-    chevron: <path d="m8 10 4 4 4-4" />,
-    database: (
-      <path d="M4 6c0-2 3.6-3 8-3s8 1 8 3-3.6 3-8 3-8-1-8-3Zm0 0v6c0 2 3.6 3 8 3s8-1 8-3V6M4 12v6c0 2 3.6 3 8 3s8-1 8-3v-6" />
-    ),
-    filter: <path d="M3 5h18l-7 8v5l-4 2v-7Z" />,
-    pulse: <path d="M4 12a8 8 0 0 1 16 0m-13 0a5 5 0 0 1 10 0m-7 0a2 2 0 1 1 4 0" />,
-    refresh: <path d="M20 6v5h-5M4 18v-5h5m10-3a8 8 0 0 0-13.7-3L4 8m16 8-1.3 1A8 8 0 0 1 5 14" />,
-    search: <path d="m21 21-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" />,
-    settings: (
-      <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7.4-3.5 1.3-1-2-3.5-1.6.7a7 7 0 0 0-1.3-.8L15.6 5h-4l-.2 1.7a7 7 0 0 0-1.5.8l-1.6-.7-2 3.5 1.3 1a7 7 0 0 0 0 1.7l-1.3 1 2 3.5 1.6-.7a7 7 0 0 0 1.5.8l.2 1.7h4l.2-1.7a7 7 0 0 0 1.3-.8l1.6.7 2-3.5-1.3-1a7 7 0 0 0 0-1Z" />
-    ),
-  };
-
-  return (
-    <svg
-      aria-hidden="true"
-      className="icon"
-      fill="none"
-      height={size}
-      viewBox="0 0 24 24"
-      width={size}
-    >
-      <g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7">
-        {paths[name]}
-      </g>
-    </svg>
-  );
-}
 
 function AppFrame() {
   return <Outlet />;
@@ -140,8 +88,50 @@ const eventTypeLabels = {
 } as const;
 
 type DetailTab = 'event' | 'context' | 'raw';
+type ColorTheme = 'light' | 'dark';
 
 const rulerBinIds = Array.from({ length: 40 }, (_, index) => `time-bin-${index + 1}`);
+
+function initialColorTheme(): ColorTheme {
+  const documentTheme = document.documentElement.dataset.theme;
+  if (documentTheme === 'light' || documentTheme === 'dark') return documentTheme;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function ThemeToggle() {
+  const [theme, setTheme] = useState<ColorTheme>(initialColorTheme);
+  const nextTheme = theme === 'dark' ? 'light' : 'dark';
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', theme === 'dark' ? '#0e1420' : '#f5f5f7');
+  }, [theme]);
+
+  const toggleTheme = (): void => {
+    setTheme(nextTheme);
+    try {
+      localStorage.setItem('spectro.color-theme', nextTheme);
+    } catch {
+      // Theme selection still works for this session when storage is unavailable.
+    }
+  };
+
+  return (
+    <button
+      aria-label={`Switch to ${nextTheme} mode`}
+      aria-pressed={theme === 'dark'}
+      className="theme-toggle"
+      title={`Switch to ${nextTheme} mode`}
+      type="button"
+      onClick={toggleTheme}
+    >
+      <SpectroIcon name={theme === 'dark' ? 'sun' : 'moon'} size={17} />
+    </button>
+  );
+}
 
 function CommittedInput({
   ariaLabel,
@@ -207,13 +197,6 @@ function formatDateTime(timestamp: number): string {
     second: '2-digit',
     hour12: false,
   }).format(timestamp);
-}
-
-function formatValue(value: unknown): string {
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  if (value === null) return 'null';
-  return JSON.stringify(value) ?? 'undefined';
 }
 
 function isUnknownRecord(value: unknown): value is Record<string, unknown> {
@@ -363,19 +346,24 @@ function EventExplorer() {
     <div className="console-shell">
       <header className="console-topbar">
         <a className="wordmark" href="/" aria-label="Spectro events">
-          <span className="wordmark-mark" aria-hidden="true" />
+          <SpectroMark />
           spectro
         </a>
-        <div className="runtime-state">
-          <span className={`status-light ${search.source}`} aria-hidden="true" />
-          <span>{search.source === 'live' ? 'Local API connected' : 'Illustrative workspace'}</span>
+        <div className="topbar-actions">
+          <div className="runtime-state">
+            <span className={`status-light ${search.source}`} aria-hidden="true" />
+            <span>
+              {search.source === 'live' ? 'Local API connected' : 'Illustrative workspace'}
+            </span>
+          </div>
+          <ThemeToggle />
         </div>
       </header>
 
       <aside className="console-rail" aria-label="Primary navigation">
         <nav>
           <a className="rail-link active" href="/" aria-current="page">
-            <Icon name="activity" />
+            <SpectroIcon name="events" />
             <span>Events</span>
           </a>
           <a
@@ -387,21 +375,21 @@ function EventExplorer() {
               source: search.source,
             }).toString()}`}
           >
-            <Icon name="alert" />
+            <SpectroIcon name="issues" />
             <span>Issues</span>
           </a>
           <span className="rail-link" aria-disabled="true" title="Coming after the event explorer">
-            <Icon name="pulse" />
+            <SpectroIcon name="live" />
             <span>Live</span>
           </span>
           <span className="rail-link" aria-disabled="true" title="Coming after the event explorer">
-            <Icon name="database" />
+            <SpectroIcon name="schemas" />
             <span>Schemas</span>
           </span>
         </nav>
         <nav className="rail-secondary" aria-label="Secondary navigation">
           <span className="rail-link" aria-disabled="true">
-            <Icon name="settings" />
+            <SpectroIcon name="settings" />
             <span>Settings</span>
           </span>
           <span
@@ -409,7 +397,7 @@ function EventExplorer() {
             aria-disabled="true"
             title="API guide is available in the repository"
           >
-            <Icon name="book" />
+            <SpectroIcon name="book" />
             <span>API guide</span>
           </span>
         </nav>
@@ -448,7 +436,7 @@ function EventExplorer() {
 
           <label className="control-field select-field">
             <span>Time range</span>
-            <Icon name="calendar" size={16} />
+            <SpectroIcon name="calendar" size={16} />
             <select
               aria-label="Time range"
               value={search.range}
@@ -466,7 +454,7 @@ function EventExplorer() {
                 </option>
               ))}
             </select>
-            <Icon name="chevron" size={16} />
+            <SpectroIcon name="chevron" size={16} />
           </label>
 
           <div className="command-actions">
@@ -476,7 +464,7 @@ function EventExplorer() {
               onClick={() => setQueryAnchor(Date.now())}
               aria-label="Refresh events"
             >
-              <Icon name="refresh" />
+              <SpectroIcon name="refresh" />
             </button>
             <button
               className="connection-button"
@@ -543,7 +531,7 @@ function EventExplorer() {
 
         <section className="filter-deck" aria-label="Event filters">
           <label className="search-field" htmlFor="event-name-filter">
-            <Icon name="search" />
+            <SpectroIcon name="search" />
             <CommittedInput
               ariaLabel="Exact event name"
               id="event-name-filter"
@@ -572,11 +560,11 @@ function EventExplorer() {
                 </option>
               ))}
             </select>
-            <Icon name="chevron" size={16} />
+            <SpectroIcon name="chevron" size={16} />
           </label>
           <details className="more-filters">
             <summary>
-              <Icon name="filter" />
+              <SpectroIcon name="filter" />
               More filters
               {[search.release, search.sessionId, search.pageId, search.fingerprint].filter(Boolean)
                 .length > 0 ? (
@@ -778,41 +766,46 @@ function IssuesExplorer() {
     <div className="console-shell issues-shell">
       <header className="console-topbar">
         <a className="wordmark" href="/" aria-label="Spectro events">
-          <span className="wordmark-mark" aria-hidden="true" />
+          <SpectroMark />
           spectro
         </a>
-        <div className="runtime-state">
-          <span className={`status-light ${search.source}`} aria-hidden="true" />
-          <span>{search.source === 'live' ? 'Local API connected' : 'Illustrative workspace'}</span>
+        <div className="topbar-actions">
+          <div className="runtime-state">
+            <span className={`status-light ${search.source}`} aria-hidden="true" />
+            <span>
+              {search.source === 'live' ? 'Local API connected' : 'Illustrative workspace'}
+            </span>
+          </div>
+          <ThemeToggle />
         </div>
       </header>
 
       <aside className="console-rail" aria-label="Primary navigation">
         <nav>
           <a className="rail-link" href={`/?${eventSearch.toString()}`}>
-            <Icon name="activity" />
+            <SpectroIcon name="events" />
             <span>Events</span>
           </a>
           <a className="rail-link active" href="/issues" aria-current="page">
-            <Icon name="alert" />
+            <SpectroIcon name="issues" />
             <span>Issues</span>
           </a>
           <span className="rail-link" aria-disabled="true" title="Coming after error issues">
-            <Icon name="pulse" />
+            <SpectroIcon name="live" />
             <span>Live</span>
           </span>
           <span className="rail-link" aria-disabled="true" title="Coming after error issues">
-            <Icon name="database" />
+            <SpectroIcon name="schemas" />
             <span>Schemas</span>
           </span>
         </nav>
         <nav className="rail-secondary" aria-label="Secondary navigation">
           <span className="rail-link" aria-disabled="true">
-            <Icon name="settings" />
+            <SpectroIcon name="settings" />
             <span>Settings</span>
           </span>
           <span className="rail-link" aria-disabled="true">
-            <Icon name="book" />
+            <SpectroIcon name="book" />
             <span>API guide</span>
           </span>
         </nav>
@@ -848,7 +841,7 @@ function IssuesExplorer() {
           </label>
           <label className="control-field select-field">
             <span>Time range</span>
-            <Icon name="calendar" size={16} />
+            <SpectroIcon name="calendar" size={16} />
             <select
               aria-label="Time range"
               value={search.range}
@@ -866,7 +859,7 @@ function IssuesExplorer() {
                 </option>
               ))}
             </select>
-            <Icon name="chevron" size={16} />
+            <SpectroIcon name="chevron" size={16} />
           </label>
           <div className="command-actions">
             <button
@@ -875,7 +868,7 @@ function IssuesExplorer() {
               onClick={() => setQueryAnchor(Date.now())}
               aria-label="Refresh issues"
             >
-              <Icon name="refresh" />
+              <SpectroIcon name="refresh" />
             </button>
             <button
               className="connection-button"
@@ -948,7 +941,7 @@ function IssuesExplorer() {
 
         <section className="issue-filters" aria-label="Issue filters">
           <label className="search-field" htmlFor="issue-name-filter">
-            <Icon name="search" />
+            <SpectroIcon name="search" />
             <CommittedInput
               ariaLabel="Exact error event name"
               id="issue-name-filter"
@@ -1033,7 +1026,7 @@ function IssuesExplorer() {
               </div>
             ) : issues.length === 0 ? (
               <div className="ledger-state empty-state">
-                <Icon name="alert" size={24} />
+                <SpectroIcon name="issues" size={24} />
                 <strong>No grouped errors match this view.</strong>
                 <p>Clear a filter or widen the selected time range.</p>
               </div>
@@ -1152,7 +1145,7 @@ function IssueDetail({
   if (!issue) {
     return (
       <aside className="issue-detail empty-detail" aria-label="Issue detail">
-        <Icon name="alert" size={26} />
+        <SpectroIcon name="issues" size={26} />
         <strong>Select an issue to inspect it.</strong>
         <p>Its impact and latest available context will appear here.</p>
       </aside>
@@ -1384,7 +1377,7 @@ function EventLedger({
         </div>
       ) : events.length === 0 ? (
         <div className="ledger-state empty-state">
-          <Icon name="filter" size={24} />
+          <SpectroIcon name="filter" size={24} />
           <strong>No events match this view.</strong>
           <p>Clear a filter or widen the selected time range.</p>
         </div>
@@ -1468,7 +1461,7 @@ function EventDetail({
   if (!event) {
     return (
       <aside className="event-detail empty-detail" aria-label="Event detail">
-        <Icon name="activity" size={26} />
+        <SpectroIcon name="events" size={26} />
         <strong>Select an event to inspect it.</strong>
         <p>Its payload and available context will stay aligned with the ledger.</p>
       </aside>
@@ -1561,17 +1554,7 @@ function EventDetail({
                 <dd>{event.processing.errorFingerprint ?? 'Not applicable'}</dd>
               </div>
             </dl>
-            <section className="payload-section">
-              <h3>Event payload</h3>
-              <dl className="payload-readout">
-                {Object.entries(event.event.payload).map(([key, value]) => (
-                  <div key={key}>
-                    <dt>{key}</dt>
-                    <dd>{formatValue(value)}</dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
+            <PayloadViewer value={event.event.payload} />
           </>
         ) : null}
         {tab === 'context' ? (
