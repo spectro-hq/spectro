@@ -254,6 +254,13 @@ Light and dark modes are two composed observatory environments, not an inversion
 - **Background:** White instrument surface above the atmospheric page field.
 - **Shadow Strategy:** Only the primary instrument receives ambient lift.
 - **Border:** One-pixel cool structural line.
+
+### Session Timelines
+
+- Enter a session from contextual identifiers in the Event ledger or detail view; session navigation is evidence drill-down, not a new primary destination.
+- Present signals chronologically from earliest to latest. A quiet hairline connects compact semantic nodes; selection uses the established ultraviolet wash.
+- Keep the timeline and selected event detail in one connected working surface on desktop. On narrow screens, preserve reading order by stacking detail after the timeline.
+- Summary values describe only the loaded query window. Illustrative sessions obey the selected time range and remain labeled as synthetic.
 - **Internal Padding:** Fluid from 22.4px to 40px.
 
 ### Navigation

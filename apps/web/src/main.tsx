@@ -39,6 +39,7 @@ import {
   type IssueStatus,
 } from './issue-query.js';
 import { PayloadViewer } from './payload-viewer.js';
+import { buildSessionHref, parseSessionSearch, type SessionSearch } from './session-query.js';
 import { SpectroIcon, SpectroMark } from './spectro-icons.js';
 import './styles.css';
 
@@ -59,7 +60,13 @@ const issuesRoute = createRoute({
   validateSearch: parseIssueSearch,
   component: IssuesExplorer,
 });
-const routeTree = rootRoute.addChildren([indexRoute, issuesRoute]);
+const sessionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/sessions/$sessionId',
+  validateSearch: parseSessionSearch,
+  component: SessionExplorer,
+});
+const routeTree = rootRoute.addChildren([indexRoute, issuesRoute, sessionRoute]);
 const router = createRouter({ routeTree });
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -188,6 +195,15 @@ function formatTimestamp(timestamp: number): string {
   }).format(timestamp);
 }
 
+function formatTimelineTimestamp(timestamp: number): string {
+  return new Intl.DateTimeFormat('en', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).format(timestamp);
+}
+
 function formatDateTime(timestamp: number): string {
   return new Intl.DateTimeFormat('en', {
     month: 'short',
@@ -222,6 +238,7 @@ function filteredIllustrativePage(search: ExplorerSearch, anchor: number): Event
     data: page.data.filter((item) => {
       const { event } = item;
       return (
+        event.timestamp >= anchor - TIME_RANGES[search.range].milliseconds &&
         (search.type === undefined || event.type === search.type) &&
         (search.name === undefined || event.name === search.name) &&
         (search.release === undefined || event.context.release?.version === search.release) &&
@@ -653,9 +670,389 @@ function EventExplorer() {
             onRetry={() => void eventsQuery.refetch()}
             onSelect={(eventId) => updateSearch({ event: eventId })}
             selectedId={selectedEvent?.event.id}
+            search={search}
             source={search.source}
           />
-          <EventDetail event={selectedEvent} tab={detailTab} onTabChange={setDetailTab} />
+          <EventDetail
+            event={selectedEvent}
+            search={search}
+            tab={detailTab}
+            onTabChange={setDetailTab}
+          />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function formatDuration(milliseconds: number): string {
+  const seconds = Math.max(0, Math.round(milliseconds / 1_000));
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  return remainder === 0 ? `${minutes}m` : `${minutes}m ${remainder}s`;
+}
+
+function orderEventsChronologically(events: readonly EventListItem[]): EventListItem[] {
+  const ordered: EventListItem[] = [];
+  for (const item of events) {
+    const insertionIndex = ordered.findIndex(
+      (candidate) => candidate.event.timestamp > item.event.timestamp,
+    );
+    if (insertionIndex === -1) ordered.push(item);
+    else ordered.splice(insertionIndex, 0, item);
+  }
+  return ordered;
+}
+
+function SessionExplorer() {
+  const { sessionId } = sessionRoute.useParams();
+  const search = sessionRoute.useSearch();
+  const navigate = sessionRoute.useNavigate();
+  const [token, setToken] = useState(readSessionToken);
+  const [tokenDraft, setTokenDraft] = useState('');
+  const [connectionOpen, setConnectionOpen] = useState(
+    search.source === 'live' && token.length === 0,
+  );
+  const [credentialVersion, setCredentialVersion] = useState(0);
+  const [queryAnchor, setQueryAnchor] = useState(() => Date.now());
+  const [detailTab, setDetailTab] = useState<DetailTab>('event');
+  const range = TIME_RANGES[search.range];
+  const validSessionId = sessionId.length > 0 && sessionId.length <= 128;
+
+  const updateSearch = (patch: Partial<SessionSearch>): void => {
+    void navigate({ search: (previous) => ({ ...previous, ...patch }) });
+  };
+
+  const eventsQuery = useInfiniteQuery({
+    queryKey: [
+      'session-events',
+      search.project,
+      search.environment,
+      search.range,
+      search.source,
+      sessionId,
+      queryAnchor,
+      credentialVersion,
+    ],
+    initialPageParam: undefined as string | undefined,
+    queryFn: async ({ pageParam, signal }) => {
+      if (search.source === 'illustrative') {
+        return filteredIllustrativePage({ ...search, sessionId }, queryAnchor);
+      }
+      return fetchEventPage({
+        query: {
+          projectId: search.project,
+          environment: search.environment,
+          from: queryAnchor - range.milliseconds,
+          to: queryAnchor,
+          sessionId,
+          limit: 100,
+          ...(pageParam === undefined ? {} : { cursor: pageParam }),
+        },
+        token,
+        signal,
+      });
+    },
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    enabled: validSessionId && (search.source === 'illustrative' || token.length > 0),
+  });
+
+  const events = useMemo(
+    () => eventsQuery.data?.pages.flatMap((page) => page.data) ?? [],
+    [eventsQuery.data],
+  );
+  const timelineEvents = useMemo(() => orderEventsChronologically(events), [events]);
+  const selectedEvent = events.find((item) => item.event.id === search.event) ?? events[0];
+  const firstEvent = timelineEvents[0];
+  const lastEvent = timelineEvents.at(-1);
+  const pageCount = new Set(
+    events.map((item) => item.event.context.page?.id).filter((id) => id !== undefined),
+  ).size;
+  const errorCount = events.filter((item) => item.event.type === 'error').length;
+  const sessionDuration =
+    firstEvent && lastEvent ? lastEvent.event.timestamp - firstEvent.event.timestamp : 0;
+  const eventSearch = new URLSearchParams({
+    project: search.project,
+    environment: search.environment,
+    range: search.range,
+    source: search.source,
+    sessionId,
+  });
+
+  const connect = (event: FormEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+    const nextToken = tokenDraft.trim();
+    if (nextToken.length === 0) return;
+    setToken(nextToken);
+    writeSessionToken(nextToken);
+    setCredentialVersion((value) => value + 1);
+    setConnectionOpen(false);
+    updateSearch({ source: 'live', event: undefined });
+    setQueryAnchor(Date.now());
+  };
+
+  return (
+    <div className="console-shell session-shell">
+      <header className="console-topbar">
+        <a className="wordmark" href="/" aria-label="Spectro events">
+          <SpectroMark />
+          spectro
+        </a>
+        <div className="topbar-actions">
+          <div className="runtime-state">
+            <span className={`status-light ${search.source}`} aria-hidden="true" />
+            <span>
+              {search.source === 'live' ? 'Local API connected' : 'Illustrative workspace'}
+            </span>
+          </div>
+          <ThemeToggle />
+        </div>
+      </header>
+
+      <aside className="console-rail" aria-label="Primary navigation">
+        <nav>
+          <a className="rail-link active" href={`/?${eventSearch.toString()}`}>
+            <SpectroIcon name="events" />
+            <span>Events</span>
+          </a>
+          <a
+            className="rail-link"
+            href={`/issues?${new URLSearchParams({
+              project: search.project,
+              environment: search.environment,
+              range: search.range,
+              source: search.source,
+            }).toString()}`}
+          >
+            <SpectroIcon name="issues" />
+            <span>Issues</span>
+          </a>
+          <span className="rail-link" aria-disabled="true">
+            <SpectroIcon name="live" />
+            <span>Live</span>
+          </span>
+          <span className="rail-link" aria-disabled="true">
+            <SpectroIcon name="schemas" />
+            <span>Schemas</span>
+          </span>
+        </nav>
+        <nav className="rail-secondary" aria-label="Secondary navigation">
+          <span className="rail-link" aria-disabled="true">
+            <SpectroIcon name="settings" />
+            <span>Settings</span>
+          </span>
+          <span className="rail-link" aria-disabled="true">
+            <SpectroIcon name="book" />
+            <span>API guide</span>
+          </span>
+        </nav>
+      </aside>
+
+      <main className="event-workspace session-workspace">
+        <section className="session-command" aria-labelledby="session-title">
+          <div>
+            <a className="back-link" href={`/?${eventSearch.toString()}`}>
+              <span aria-hidden="true">←</span> Events
+            </a>
+            <h1 id="session-title">Session {sessionId}</h1>
+            <p>Signals ordered as they unfolded across this browser session.</p>
+          </div>
+          <div className="session-actions">
+            <label className="control-field select-field">
+              <span>Time range</span>
+              <SpectroIcon name="calendar" size={16} />
+              <select
+                aria-label="Time range"
+                value={search.range}
+                onChange={(event) => {
+                  const value = event.currentTarget.value;
+                  if (isTimeRange(value)) {
+                    updateSearch({ range: value, event: undefined });
+                    setQueryAnchor(Date.now());
+                  }
+                }}
+              >
+                {Object.entries(TIME_RANGES).map(([value, option]) => (
+                  <option key={value} value={value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <SpectroIcon name="chevron" size={16} />
+            </label>
+            <button
+              className="icon-button"
+              type="button"
+              aria-label="Refresh session"
+              onClick={() => setQueryAnchor(Date.now())}
+            >
+              <SpectroIcon name="refresh" />
+            </button>
+            <button
+              className="connection-button"
+              type="button"
+              onClick={() => setConnectionOpen((value) => !value)}
+            >
+              {token.length > 0 ? 'Connection' : 'Connect API'}
+            </button>
+          </div>
+        </section>
+
+        {connectionOpen ? (
+          <section className="connection-panel" aria-labelledby="session-connection-title">
+            <div>
+              <h2 id="session-connection-title">Local query connection</h2>
+              <p>The bearer token stays in this browser tab and is sent only as a header.</p>
+            </div>
+            <form onSubmit={connect}>
+              <label>
+                <span>Local bearer token</span>
+                <input
+                  autoComplete="off"
+                  name="token"
+                  type="password"
+                  value={tokenDraft}
+                  onChange={(event) => setTokenDraft(event.currentTarget.value)}
+                />
+              </label>
+              <button
+                className="primary-button"
+                type="submit"
+                disabled={tokenDraft.trim().length === 0}
+              >
+                Query local API
+              </button>
+            </form>
+          </section>
+        ) : null}
+
+        {search.source === 'illustrative' ? (
+          <section className="illustrative-banner" aria-live="polite">
+            <span>Illustrative data</span>
+            <p>This session demonstrates investigation flow, not production telemetry.</p>
+            <button type="button" onClick={() => setConnectionOpen(true)}>
+              Connect ClickHouse query
+            </button>
+          </section>
+        ) : null}
+
+        <section className="session-summary" aria-label="Loaded session summary">
+          <div>
+            <strong>{events.length}</strong>
+            <span>Signals</span>
+          </div>
+          <div>
+            <strong>{pageCount}</strong>
+            <span>Pages</span>
+          </div>
+          <div>
+            <strong>{errorCount}</strong>
+            <span>Errors</span>
+          </div>
+          <div>
+            <strong>{formatDuration(sessionDuration)}</strong>
+            <span>Observed span</span>
+          </div>
+          <p>Summary reflects the loaded {range.label.toLowerCase()} query window.</p>
+        </section>
+
+        <div className="session-bench">
+          <section className="session-timeline" aria-labelledby="session-timeline-title">
+            <header className="panel-heading">
+              <div>
+                <h2 id="session-timeline-title">Session timeline</h2>
+                <span>Earliest to latest</span>
+              </div>
+              <output>{events.length} loaded</output>
+            </header>
+            {!validSessionId ? (
+              <div className="ledger-state error-state" role="alert">
+                <strong>This session identifier is invalid.</strong>
+                <p>Return to Events and choose a session from captured context.</p>
+              </div>
+            ) : eventsQuery.isLoading ? (
+              <output className="ledger-state loading-state">
+                <span className="loading-line" />
+                <span className="loading-line" />
+                <p>Reconstructing session timeline…</p>
+              </output>
+            ) : eventsQuery.error ? (
+              <div className="ledger-state error-state" role="alert">
+                <strong>The session could not be loaded.</strong>
+                <p>{eventsQuery.error.message} Check the local API and token, then retry.</p>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => void eventsQuery.refetch()}
+                >
+                  Try again
+                </button>
+              </div>
+            ) : timelineEvents.length === 0 ? (
+              <div className="ledger-state empty-state">
+                <SpectroIcon name="session" size={25} />
+                <strong>No signals were found for this session.</strong>
+                <p>Widen the time range or return to Events to select another session.</p>
+              </div>
+            ) : (
+              <ol className="timeline-list">
+                {timelineEvents.map((item) => {
+                  const selected = item.event.id === selectedEvent?.event.id;
+                  return (
+                    <li key={item.event.id}>
+                      <button
+                        className={`timeline-event ${selected ? 'selected' : ''}`}
+                        type="button"
+                        aria-current={selected ? 'true' : undefined}
+                        onClick={() => updateSearch({ event: item.event.id })}
+                      >
+                        <span className={`timeline-node ${item.event.type}`} aria-hidden="true" />
+                        <time dateTime={new Date(item.event.timestamp).toISOString()}>
+                          {formatTimelineTimestamp(item.event.timestamp)}
+                        </time>
+                        <span className="timeline-copy">
+                          <strong>{item.event.name}</strong>
+                          <small>{eventSummary(item)}</small>
+                        </span>
+                        <span className={`event-type ${item.event.type}`}>
+                          {eventTypeLabels[item.event.type]}
+                        </span>
+                        <span className="timeline-page">
+                          {item.event.context.page?.path ?? 'No page context'}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+            {!eventsQuery.isLoading && !eventsQuery.error && events.length > 0 ? (
+              <footer className="ledger-footer">
+                <span>
+                  {eventsQuery.hasNextPage
+                    ? 'Earlier session signals are available'
+                    : 'Complete loaded session window'}
+                </span>
+                {eventsQuery.hasNextPage ? (
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    disabled={eventsQuery.isFetchingNextPage}
+                    onClick={() => void eventsQuery.fetchNextPage()}
+                  >
+                    {eventsQuery.isFetchingNextPage ? 'Loading…' : 'Load earlier'}
+                  </button>
+                ) : null}
+              </footer>
+            ) : null}
+          </section>
+          <EventDetail
+            event={selectedEvent}
+            search={search}
+            tab={detailTab}
+            onTabChange={setDetailTab}
+          />
         </div>
       </main>
     </div>
@@ -1337,6 +1734,7 @@ function EventLedger({
   onLoadMore,
   onRetry,
   onSelect,
+  search,
   selectedId,
   source,
 }: {
@@ -1348,6 +1746,7 @@ function EventLedger({
   readonly onLoadMore: () => void;
   readonly onRetry: () => void;
   readonly onSelect: (eventId: string) => void;
+  readonly search: ExplorerSearch;
   readonly selectedId: string | undefined;
   readonly source: ExplorerSearch['source'];
 }) {
@@ -1415,7 +1814,22 @@ function EventLedger({
                         {eventTypeLabels[item.event.type]}
                       </span>
                     </td>
-                    <td className="telemetry-cell">{item.event.context.session?.id ?? '—'}</td>
+                    <td className="telemetry-cell">
+                      {item.event.context.session?.id ? (
+                        <a
+                          className="session-link"
+                          href={buildSessionHref(
+                            item.event.context.session.id,
+                            search,
+                            item.event.id,
+                          )}
+                        >
+                          {item.event.context.session.id}
+                        </a>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
                     <td className="telemetry-cell">{item.event.context.page?.path ?? '—'}</td>
                   </tr>
                 );
@@ -1445,10 +1859,12 @@ function EventLedger({
 
 function EventDetail({
   event,
+  search,
   tab,
   onTabChange,
 }: {
   readonly event: EventListItem | undefined;
+  readonly search: ExplorerSearch;
   readonly tab: DetailTab;
   readonly onTabChange: (tab: DetailTab) => void;
 }) {
@@ -1539,7 +1955,18 @@ function EventDetail({
               </div>
               <div>
                 <dt>Session</dt>
-                <dd>{context.session?.id ?? 'Not available'}</dd>
+                <dd>
+                  {context.session?.id ? (
+                    <a
+                      className="session-link"
+                      href={buildSessionHref(context.session.id, search, event.event.id)}
+                    >
+                      {context.session.id}
+                    </a>
+                  ) : (
+                    'Not available'
+                  )}
+                </dd>
               </div>
               <div>
                 <dt>Page</dt>

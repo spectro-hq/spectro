@@ -160,6 +160,7 @@ export function SpectroIcon({
 export function SpectroMark({ size = 22 }: { readonly size?: number }) {
   return (
     <img
+      alt=""
       aria-hidden="true"
       className="spectro-mark"
       height={size}
