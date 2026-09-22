@@ -26,6 +26,13 @@ import {
   type IssueStatus,
   type IssueLifecycleStore,
 } from './issue-lifecycle.js';
+import {
+  decodePerformanceCursor,
+  InvalidPerformanceCursorError,
+  performanceListQuerySchema,
+  type PerformanceListQuery,
+  type PerformanceQueryStore,
+} from './performance.js';
 
 const denyAllProjects: ProjectAuthorizer = { authorize: async () => false };
 const unavailableEventStore: EventQueryStore = {
@@ -36,6 +43,11 @@ const unavailableEventStore: EventQueryStore = {
 const unavailableIssueStore: IssueQueryStore = {
   list: async () => {
     throw new Error('Issue query store is not configured');
+  },
+};
+const unavailablePerformanceStore: PerformanceQueryStore = {
+  list: async () => {
+    throw new Error('Performance query store is not configured');
   },
 };
 const defaultLifecycleStore: IssueLifecycleStore = {
@@ -52,6 +64,7 @@ export interface ApiAppOptions {
   readonly authorizer?: ProjectAuthorizer;
   readonly eventStore?: EventQueryStore;
   readonly issueStore?: IssueQueryStore;
+  readonly performanceStore?: PerformanceQueryStore;
   readonly issueLifecycleStore?: IssueLifecycleStore;
 }
 
@@ -70,6 +83,7 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
   const authorizer = options.authorizer ?? denyAllProjects;
   const eventStore = options.eventStore ?? unavailableEventStore;
   const issueStore = options.issueStore ?? unavailableIssueStore;
+  const performanceStore = options.performanceStore ?? unavailablePerformanceStore;
   const issueLifecycleStore = options.issueLifecycleStore ?? defaultLifecycleStore;
   void app.register(cors, { origin: false });
 
@@ -163,6 +177,90 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
         error: {
           code: 'query_unavailable',
           message: 'Event query is temporarily unavailable.',
+        },
+      });
+    }
+  });
+
+  app.get('/v1/projects/:projectId/performance', async (request, reply) => {
+    const path = eventListPathSchema.safeParse(request.params);
+    if (!path.success) {
+      return reply.code(400).send({
+        error: {
+          code: 'invalid_request',
+          message: 'The request path is invalid.',
+          issues: validationIssues(path.error.issues),
+        },
+      });
+    }
+    if (request.headers.authorization === undefined) {
+      return reply.code(401).send({
+        error: { code: 'unauthorized', message: 'Authentication is required.' },
+      });
+    }
+    let authorized: boolean;
+    try {
+      authorized = await authorizer.authorize({
+        authorization: request.headers.authorization,
+        projectId: path.data.projectId,
+      });
+    } catch {
+      return reply.code(503).send({
+        error: {
+          code: 'authorization_unavailable',
+          message: 'Authorization is temporarily unavailable.',
+        },
+      });
+    }
+    if (!authorized) {
+      return reply.code(403).send({
+        error: { code: 'forbidden', message: 'Access to this project is denied.' },
+      });
+    }
+    const query = performanceListQuerySchema.safeParse(request.query);
+    if (!query.success) {
+      return reply.code(400).send({
+        error: {
+          code: 'invalid_query',
+          message: 'The performance query is invalid.',
+          issues: validationIssues(query.error.issues),
+        },
+      });
+    }
+    let performanceQuery: PerformanceListQuery;
+    try {
+      performanceQuery = {
+        projectId: path.data.projectId,
+        environment: query.data.environment,
+        from: query.data.from,
+        to: query.data.to,
+        limit: query.data.limit,
+        ...(query.data.metric === undefined ? {} : { metric: query.data.metric }),
+        ...(query.data.pagePath === undefined ? {} : { pagePath: query.data.pagePath }),
+        ...(query.data.release === undefined ? {} : { release: query.data.release }),
+        ...(query.data.cursor === undefined
+          ? {}
+          : { cursor: decodePerformanceCursor(query.data.cursor) }),
+      };
+    } catch (error) {
+      if (error instanceof InvalidPerformanceCursorError) {
+        return reply.code(400).send({
+          error: {
+            code: 'invalid_query',
+            message: 'The performance query is invalid.',
+            issues: [{ path: 'cursor', message: 'must be a valid performance cursor' }],
+          },
+        });
+      }
+      throw error;
+    }
+    try {
+      return await performanceStore.list(performanceQuery);
+    } catch {
+      return reply.code(503).send({
+        error: {
+          code: 'query_unavailable',
+          message: 'Performance query is temporarily unavailable.',
         },
       });
     }
