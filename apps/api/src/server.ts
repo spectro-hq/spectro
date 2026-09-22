@@ -4,6 +4,7 @@ import { createApiApp } from './app.js';
 import { createLocalProjectAuthorizer } from './auth.js';
 import { ClickHouseEventQueryStore } from './clickhouse-events.js';
 import { ClickHouseIssueQueryStore } from './clickhouse-issues.js';
+import { ClickHousePerformanceQueryStore } from './clickhouse-performance.js';
 import { createPostgresIssueLifecycleStore } from './postgres-issue-lifecycle.js';
 
 const clickhouse = createClient({
@@ -17,6 +18,7 @@ const app = createApiApp({
   authorizer: createLocalProjectAuthorizer(process.env),
   eventStore: new ClickHouseEventQueryStore(clickhouse),
   issueStore: new ClickHouseIssueQueryStore(clickhouse),
+  performanceStore: new ClickHousePerformanceQueryStore(clickhouse),
   issueLifecycleStore,
 });
 app.addHook('onClose', async () => {

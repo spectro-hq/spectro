@@ -88,6 +88,7 @@ Instrumentation -> Capture -> Context -> Privacy -> beforeSend
 7. Processor service and durable event plane. JetStream admission, processing, ClickHouse storage, replay convergence, and the complete real-boundary integration test are implemented.
 8. Session/page lifecycle, then error, performance, network, and behavior plugins. Browser lifecycle, error capture, performance capture, network capture, and explicit interaction capture are implemented under ADR-036 through ADR-040.
 9. Product API and console data surfaces. The bounded, authorized ClickHouse event-list query and Console event explorer are implemented under ADR-041. Error issue aggregation and occurrence drill-down follow under ADR-042. PostgreSQL-backed issue lifecycle state follows under ADR-043, with lifecycle history, status filtering, and ordered migrations under ADR-044.
+10. Session investigation reuses the bounded event query's exact session filter. Performance overview aggregation follows under ADR-045 and drills back into the same event and session evidence.
 
 ## V1 product scope
 

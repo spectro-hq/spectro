@@ -48,6 +48,7 @@ Status: accepted unless marked open.
 | ADR-042 | Aggregate error issues by server fingerprint in bounded authorized queries and reuse event queries for occurrence drill-down.                          |
 | ADR-043 | Store issue lifecycle state in PostgreSQL and join it onto ClickHouse-derived issue aggregates in the product API.                                     |
 | ADR-044 | Record lifecycle transitions and manage PostgreSQL control-plane schema with ordered, ledger-backed SQL migrations.                                    |
+| ADR-045 | Aggregate bounded performance signals by metric and page through an authorized ClickHouse query with stable keyset pagination.                         |
 
 Detailed records:
 
@@ -62,6 +63,7 @@ Detailed records:
 - [ADR-042: Error issues query V1](./ADR-042_ERROR_ISSUES_QUERY_V1.md)
 - [ADR-043: Issue lifecycle control plane](./ADR-043_ISSUE_LIFECYCLE_CONTROL_PLANE.md)
 - [ADR-044: Issue lifecycle history and migrations](./ADR-044_ISSUE_LIFECYCLE_HISTORY_AND_MIGRATIONS.md)
+- [ADR-045: Performance overview query V1](./ADR-045_PERFORMANCE_OVERVIEW_QUERY_V1.md)
 
 ## Change rule
 

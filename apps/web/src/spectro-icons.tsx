@@ -84,12 +84,11 @@ const iconPaths: Readonly<Record<SpectroIconName, ReactNode>> = {
     </>
   ),
   performance: (
-    <>
-      <path d="M3 14.75a8 8 0 0 1 14 0" />
-      <path d="m10 11 3.75-4.25" />
-      <circle cx="10" cy="11" r="1.25" />
-      <path d="M5.25 12.25 4 11.5m10.75.75L16 11.5M10 5v1.5" />
-    </>
+    <g transform="scale(0.8333333333)">
+      <path d="M4 16a8 8 0 0 1 16 0" />
+      <path d="m12 16 4-4" />
+      <circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none" />
+    </g>
   ),
   refresh: (
     <>
