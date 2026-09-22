@@ -1,3 +1,4 @@
+import { ConsoleShell } from './console-shell.js';
 import {
   QueryClient,
   QueryClientProvider,
@@ -29,12 +30,7 @@ import {
 } from './event-query.js';
 import { createIllustrativePage } from './illustrative-events.js';
 import { createIllustrativeIssues } from './illustrative-issues.js';
-import {
-  CommittedInput,
-  readSessionToken,
-  ThemeToggle,
-  writeSessionToken,
-} from './console-shared.js';
+import { CommittedInput, readSessionToken, writeSessionToken } from './console-shared.js';
 import {
   fetchIssueHistory,
   fetchIssuePage,
@@ -50,7 +46,7 @@ import { parseNetworkSearch } from './network-query.js';
 import { parsePerformanceSearch } from './performance-query.js';
 import { parseReleaseSearch } from './release-query.js';
 import { buildSessionHref, parseSessionSearch, type SessionSearch } from './session-query.js';
-import { SpectroIcon, SpectroMark } from './spectro-icons.js';
+import { SpectroIcon } from './spectro-icons.js';
 import './styles.css';
 
 function AppFrame() {
@@ -290,109 +286,13 @@ function EventExplorer() {
   };
 
   return (
-    <div className="console-shell">
-      <header className="console-topbar">
-        <a className="wordmark" href="/" aria-label="Spectro events">
-          <SpectroMark />
-          spectro
-        </a>
-        <div className="topbar-actions">
-          <div className="runtime-state">
-            <span className={`status-light ${search.source}`} aria-hidden="true" />
-            <span>
-              {search.source === 'live' ? 'Local API connected' : 'Illustrative workspace'}
-            </span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </header>
-
-      <aside className="console-rail" aria-label="Primary navigation">
-        <nav>
-          <a className="rail-link active" href="/" aria-current="page">
-            <SpectroIcon name="events" />
-            <span>Events</span>
-          </a>
-          <a
-            className="rail-link"
-            href={`/issues?${new URLSearchParams({
-              project: search.project,
-              environment: search.environment,
-              range: search.range,
-              source: search.source,
-            }).toString()}`}
-          >
-            <SpectroIcon name="issues" />
-            <span>Issues</span>
-          </a>
-          <a
-            className="rail-link"
-            href={`/releases?${new URLSearchParams({
-              project: search.project,
-              environment: search.environment,
-              range: search.range,
-              source: search.source,
-            }).toString()}`}
-          >
-            <SpectroIcon name="release" />
-            <span>Releases</span>
-          </a>
-          <a
-            className="rail-link"
-            href={`/performance?${new URLSearchParams({
-              project: search.project,
-              environment: search.environment,
-              range: search.range,
-              source: search.source,
-            }).toString()}`}
-          >
-            <SpectroIcon name="performance" />
-            <span>Performance</span>
-          </a>
-          <a
-            className="rail-link"
-            href={`/network?${new URLSearchParams({
-              project: search.project,
-              environment: search.environment,
-              range: search.range,
-              source: search.source,
-            }).toString()}`}
-          >
-            <SpectroIcon name="network" />
-            <span>Network</span>
-          </a>
-          <span className="rail-link" aria-disabled="true" title="Coming after the event explorer">
-            <SpectroIcon name="live" />
-            <span>Live</span>
-          </span>
-          <span className="rail-link" aria-disabled="true" title="Coming after the event explorer">
-            <SpectroIcon name="schemas" />
-            <span>Schemas</span>
-          </span>
-        </nav>
-        <nav className="rail-secondary" aria-label="Secondary navigation">
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="settings" />
-            <span>Settings</span>
-          </span>
-          <span
-            className="rail-link"
-            aria-disabled="true"
-            title="API guide is available in the repository"
-          >
-            <SpectroIcon name="book" />
-            <span>API guide</span>
-          </span>
-        </nav>
-      </aside>
-
+    <ConsoleShell title="Events" search={search}>
       <main className="event-workspace">
         <section className="command-deck" aria-labelledby="events-title">
           <div className="workspace-title">
             <h1 id="events-title">Events</h1>
             <span>{search.source === 'live' ? 'ClickHouse query' : 'Illustrative data'}</span>
           </div>
-
           <label className="control-field project-field" htmlFor="project-id">
             <span>Project</span>
             <CommittedInput
@@ -647,7 +547,7 @@ function EventExplorer() {
           />
         </div>
       </main>
-    </div>
+    </ConsoleShell>
   );
 }
 
@@ -759,98 +659,7 @@ function SessionExplorer() {
   };
 
   return (
-    <div className="console-shell session-shell">
-      <header className="console-topbar">
-        <a className="wordmark" href="/" aria-label="Spectro events">
-          <SpectroMark />
-          spectro
-        </a>
-        <div className="topbar-actions">
-          <div className="runtime-state">
-            <span className={`status-light ${search.source}`} aria-hidden="true" />
-            <span>
-              {search.source === 'live' ? 'Local API connected' : 'Illustrative workspace'}
-            </span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </header>
-
-      <aside className="console-rail" aria-label="Primary navigation">
-        <nav>
-          <a className="rail-link active" href={`/?${eventSearch.toString()}`}>
-            <SpectroIcon name="events" />
-            <span>Events</span>
-          </a>
-          <a
-            className="rail-link"
-            href={`/issues?${new URLSearchParams({
-              project: search.project,
-              environment: search.environment,
-              range: search.range,
-              source: search.source,
-            }).toString()}`}
-          >
-            <SpectroIcon name="issues" />
-            <span>Issues</span>
-          </a>
-          <a
-            className="rail-link"
-            href={`/releases?${new URLSearchParams({
-              project: search.project,
-              environment: search.environment,
-              range: search.range,
-              source: search.source,
-            }).toString()}`}
-          >
-            <SpectroIcon name="release" />
-            <span>Releases</span>
-          </a>
-          <a
-            className="rail-link"
-            href={`/performance?${new URLSearchParams({
-              project: search.project,
-              environment: search.environment,
-              range: search.range,
-              source: search.source,
-            }).toString()}`}
-          >
-            <SpectroIcon name="performance" />
-            <span>Performance</span>
-          </a>
-          <a
-            className="rail-link"
-            href={`/network?${new URLSearchParams({
-              project: search.project,
-              environment: search.environment,
-              range: search.range,
-              source: search.source,
-            }).toString()}`}
-          >
-            <SpectroIcon name="network" />
-            <span>Network</span>
-          </a>
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="live" />
-            <span>Live</span>
-          </span>
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="schemas" />
-            <span>Schemas</span>
-          </span>
-        </nav>
-        <nav className="rail-secondary" aria-label="Secondary navigation">
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="settings" />
-            <span>Settings</span>
-          </span>
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="book" />
-            <span>API guide</span>
-          </span>
-        </nav>
-      </aside>
-
+    <ConsoleShell title={`Session ${sessionId}`} search={search}>
       <main className="event-workspace session-workspace">
         <section className="session-command" aria-labelledby="session-title">
           <div>
@@ -1057,7 +866,7 @@ function SessionExplorer() {
           />
         </div>
       </main>
-    </div>
+    </ConsoleShell>
   );
 }
 
@@ -1154,90 +963,8 @@ function IssuesExplorer() {
     updateSearch({ source: 'illustrative', issue: undefined });
   };
 
-  const eventSearch = new URLSearchParams({
-    project: search.project,
-    environment: search.environment,
-    range: search.range,
-    source: search.source,
-  });
-
   return (
-    <div className="console-shell issues-shell">
-      <header className="console-topbar">
-        <a className="wordmark" href="/" aria-label="Spectro events">
-          <SpectroMark />
-          spectro
-        </a>
-        <div className="topbar-actions">
-          <div className="runtime-state">
-            <span className={`status-light ${search.source}`} aria-hidden="true" />
-            <span>
-              {search.source === 'live' ? 'Local API connected' : 'Illustrative workspace'}
-            </span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </header>
-
-      <aside className="console-rail" aria-label="Primary navigation">
-        <nav>
-          <a className="rail-link" href={`/?${eventSearch.toString()}`}>
-            <SpectroIcon name="events" />
-            <span>Events</span>
-          </a>
-          <a className="rail-link active" href="/issues" aria-current="page">
-            <SpectroIcon name="issues" />
-            <span>Issues</span>
-          </a>
-          <a className="rail-link" href={`/releases?${eventSearch.toString()}`}>
-            <SpectroIcon name="release" />
-            <span>Releases</span>
-          </a>
-          <a
-            className="rail-link"
-            href={`/performance?${new URLSearchParams({
-              project: search.project,
-              environment: search.environment,
-              range: search.range,
-              source: search.source,
-            }).toString()}`}
-          >
-            <SpectroIcon name="performance" />
-            <span>Performance</span>
-          </a>
-          <a
-            className="rail-link"
-            href={`/network?${new URLSearchParams({
-              project: search.project,
-              environment: search.environment,
-              range: search.range,
-              source: search.source,
-            }).toString()}`}
-          >
-            <SpectroIcon name="network" />
-            <span>Network</span>
-          </a>
-          <span className="rail-link" aria-disabled="true" title="Coming after error issues">
-            <SpectroIcon name="live" />
-            <span>Live</span>
-          </span>
-          <span className="rail-link" aria-disabled="true" title="Coming after error issues">
-            <SpectroIcon name="schemas" />
-            <span>Schemas</span>
-          </span>
-        </nav>
-        <nav className="rail-secondary" aria-label="Secondary navigation">
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="settings" />
-            <span>Settings</span>
-          </span>
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="book" />
-            <span>API guide</span>
-          </span>
-        </nav>
-      </aside>
-
+    <ConsoleShell title="Issues" search={search}>
       <main className="event-workspace issue-workspace">
         <section className="command-deck" aria-labelledby="issues-title">
           <div className="workspace-title">
@@ -1521,7 +1248,7 @@ function IssuesExplorer() {
           />
         </div>
       </main>
-    </div>
+    </ConsoleShell>
   );
 }
 

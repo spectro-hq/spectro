@@ -1,13 +1,9 @@
+import { ConsoleShell } from './console-shell.js';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useMemo, useState, type FormEvent } from 'react';
 
-import {
-  CommittedInput,
-  readSessionToken,
-  ThemeToggle,
-  writeSessionToken,
-} from './console-shared.js';
+import { CommittedInput, readSessionToken, writeSessionToken } from './console-shared.js';
 import { isTimeRange, TIME_RANGES } from './event-query.js';
 import { createIllustrativeNetwork } from './illustrative-network.js';
 import {
@@ -18,7 +14,7 @@ import {
   type NetworkPage,
   type NetworkSearch,
 } from './network-query.js';
-import { SpectroIcon, SpectroMark } from './spectro-icons.js';
+import { SpectroIcon } from './spectro-icons.js';
 
 function networkGroupKey(group: NetworkGroup): string {
   return `${group.initiator}:${group.method}:${group.url}:${group.pagePath ?? ''}`;
@@ -112,68 +108,7 @@ export function NetworkExplorer() {
   };
 
   return (
-    <div className="console-shell network-shell">
-      <header className="console-topbar">
-        <a className="wordmark" href="/" aria-label="Spectro events">
-          <SpectroMark />
-          spectro
-        </a>
-        <div className="topbar-actions">
-          <div className="runtime-state">
-            <span className={`status-light ${search.source}`} aria-hidden="true" />
-            <span>
-              {search.source === 'live' ? 'Local API connected' : 'Illustrative workspace'}
-            </span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </header>
-      <aside className="console-rail" aria-label="Primary navigation">
-        <nav>
-          <a className="rail-link" href={`/?${new URLSearchParams(baseSearch).toString()}`}>
-            <SpectroIcon name="events" />
-            <span>Events</span>
-          </a>
-          <a className="rail-link" href={`/issues?${new URLSearchParams(baseSearch).toString()}`}>
-            <SpectroIcon name="issues" />
-            <span>Issues</span>
-          </a>
-          <a className="rail-link" href={`/releases?${new URLSearchParams(baseSearch).toString()}`}>
-            <SpectroIcon name="release" />
-            <span>Releases</span>
-          </a>
-          <a
-            className="rail-link"
-            href={`/performance?${new URLSearchParams(baseSearch).toString()}`}
-          >
-            <SpectroIcon name="performance" />
-            <span>Performance</span>
-          </a>
-          <a className="rail-link active" href="/network" aria-current="page">
-            <SpectroIcon name="network" />
-            <span>Network</span>
-          </a>
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="live" />
-            <span>Live</span>
-          </span>
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="schemas" />
-            <span>Schemas</span>
-          </span>
-        </nav>
-        <nav className="rail-secondary" aria-label="Secondary navigation">
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="settings" />
-            <span>Settings</span>
-          </span>
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="book" />
-            <span>API guide</span>
-          </span>
-        </nav>
-      </aside>
-
+    <ConsoleShell title="Network" search={search}>
       <main className="event-workspace performance-workspace">
         <section className="command-deck" aria-labelledby="network-title">
           <div className="workspace-title">
@@ -520,6 +455,6 @@ export function NetworkExplorer() {
           )}
         </div>
       </main>
-    </div>
+    </ConsoleShell>
   );
 }

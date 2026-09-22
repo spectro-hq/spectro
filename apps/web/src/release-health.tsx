@@ -1,13 +1,9 @@
+import { ConsoleShell } from './console-shell.js';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useMemo, useState, type FormEvent } from 'react';
 
-import {
-  CommittedInput,
-  readSessionToken,
-  ThemeToggle,
-  writeSessionToken,
-} from './console-shared.js';
+import { CommittedInput, readSessionToken, writeSessionToken } from './console-shared.js';
 import { isTimeRange, TIME_RANGES } from './event-query.js';
 import { createIllustrativeReleases } from './illustrative-releases.js';
 import {
@@ -16,7 +12,7 @@ import {
   type ReleasePage,
   type ReleaseSearch,
 } from './release-query.js';
-import { SpectroIcon, SpectroMark } from './spectro-icons.js';
+import { SpectroIcon } from './spectro-icons.js';
 
 function rate(count: number, total: number): string {
   return total === 0 ? '0%' : `${((count / total) * 100).toFixed(count / total < 0.01 ? 2 : 1)}%`;
@@ -116,72 +112,9 @@ export function ReleaseHealthExplorer() {
     range: search.range,
     source: search.source,
   };
-  const baseParameters = new URLSearchParams(baseSearch).toString();
 
   return (
-    <div className="console-shell release-shell">
-      <header className="console-topbar">
-        <a className="wordmark" href="/" aria-label="Spectro events">
-          <SpectroMark />
-          spectro
-        </a>
-        <div className="topbar-actions">
-          <div className="runtime-state">
-            <span className={`status-light ${search.source}`} aria-hidden="true" />
-            <span>
-              {search.source === 'live'
-                ? token
-                  ? 'Local API connected'
-                  : 'API credentials required'
-                : 'Illustrative workspace'}
-            </span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </header>
-      <aside className="console-rail" aria-label="Primary navigation">
-        <nav>
-          <a className="rail-link" href={`/?${baseParameters}`}>
-            <SpectroIcon name="events" />
-            <span>Events</span>
-          </a>
-          <a className="rail-link" href={`/issues?${baseParameters}`}>
-            <SpectroIcon name="issues" />
-            <span>Issues</span>
-          </a>
-          <a className="rail-link active" href="/releases" aria-current="page">
-            <SpectroIcon name="release" />
-            <span>Releases</span>
-          </a>
-          <a className="rail-link" href={`/performance?${baseParameters}`}>
-            <SpectroIcon name="performance" />
-            <span>Performance</span>
-          </a>
-          <a className="rail-link" href={`/network?${baseParameters}`}>
-            <SpectroIcon name="network" />
-            <span>Network</span>
-          </a>
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="live" />
-            <span>Live</span>
-          </span>
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="schemas" />
-            <span>Schemas</span>
-          </span>
-        </nav>
-        <nav className="rail-secondary" aria-label="Secondary navigation">
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="settings" />
-            <span>Settings</span>
-          </span>
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="book" />
-            <span>API guide</span>
-          </span>
-        </nav>
-      </aside>
-
+    <ConsoleShell title="Releases" search={search}>
       <main className="event-workspace performance-workspace release-workspace">
         <section className="command-deck" aria-labelledby="release-title">
           <div className="workspace-title">
@@ -489,6 +422,6 @@ export function ReleaseHealthExplorer() {
           )}
         </div>
       </main>
-    </div>
+    </ConsoleShell>
   );
 }

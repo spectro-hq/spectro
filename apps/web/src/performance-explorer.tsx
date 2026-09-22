@@ -1,13 +1,9 @@
+import { ConsoleShell } from './console-shell.js';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useMemo, useState, type FormEvent } from 'react';
 
-import {
-  CommittedInput,
-  readSessionToken,
-  ThemeToggle,
-  writeSessionToken,
-} from './console-shared.js';
+import { CommittedInput, readSessionToken, writeSessionToken } from './console-shared.js';
 import { isTimeRange, TIME_RANGES } from './event-query.js';
 import { createIllustrativePerformance } from './illustrative-performance.js';
 import {
@@ -17,7 +13,7 @@ import {
   type PerformancePage,
   type PerformanceSearch,
 } from './performance-query.js';
-import { SpectroIcon, SpectroMark } from './spectro-icons.js';
+import { SpectroIcon } from './spectro-icons.js';
 
 function formatMetricValue(value: number, unit: 'ms' | 'score'): string {
   if (unit === 'score') return value.toFixed(2);
@@ -127,65 +123,7 @@ export function PerformanceExplorer() {
   };
 
   return (
-    <div className="console-shell performance-shell">
-      <header className="console-topbar">
-        <a className="wordmark" href="/" aria-label="Spectro events">
-          <SpectroMark />
-          spectro
-        </a>
-        <div className="topbar-actions">
-          <div className="runtime-state">
-            <span className={`status-light ${search.source}`} aria-hidden="true" />
-            <span>
-              {search.source === 'live' ? 'Local API connected' : 'Illustrative workspace'}
-            </span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </header>
-      <aside className="console-rail" aria-label="Primary navigation">
-        <nav>
-          <a className="rail-link" href={`/?${new URLSearchParams(baseSearch).toString()}`}>
-            <SpectroIcon name="events" />
-            <span>Events</span>
-          </a>
-          <a className="rail-link" href={`/issues?${new URLSearchParams(baseSearch).toString()}`}>
-            <SpectroIcon name="issues" />
-            <span>Issues</span>
-          </a>
-          <a className="rail-link" href={`/releases?${new URLSearchParams(baseSearch).toString()}`}>
-            <SpectroIcon name="release" />
-            <span>Releases</span>
-          </a>
-          <a className="rail-link active" href="/performance" aria-current="page">
-            <SpectroIcon name="performance" />
-            <span>Performance</span>
-          </a>
-          <a className="rail-link" href={`/network?${new URLSearchParams(baseSearch).toString()}`}>
-            <SpectroIcon name="network" />
-            <span>Network</span>
-          </a>
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="live" />
-            <span>Live</span>
-          </span>
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="schemas" />
-            <span>Schemas</span>
-          </span>
-        </nav>
-        <nav className="rail-secondary" aria-label="Secondary navigation">
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="settings" />
-            <span>Settings</span>
-          </span>
-          <span className="rail-link" aria-disabled="true">
-            <SpectroIcon name="book" />
-            <span>API guide</span>
-          </span>
-        </nav>
-      </aside>
-
+    <ConsoleShell title="Performance" search={search}>
       <main className="event-workspace performance-workspace">
         <section className="command-deck" aria-labelledby="performance-title">
           <div className="workspace-title">
@@ -502,6 +440,6 @@ export function PerformanceExplorer() {
           )}
         </div>
       </main>
-    </div>
+    </ConsoleShell>
   );
 }

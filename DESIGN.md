@@ -196,6 +196,8 @@ The palette combines cool, nearly neutral instrumentation surfaces with a narrow
 
 ## Layout
 
+The console uses a shared full-height sidebar and a content-wide page header. Desktop navigation can collapse to icons and remembers the preference locally. Page titles live in the header with connection status and theme control; filters occupy the first content row. Primary navigation order is Events, Issues, Performance, Network, Releases, Live, Schemas, matching keyboard order. At 760px and below navigation opens in a modal drawer with Escape dismissal and focus containment.
+
 Desktop views use an editorial split: context and intent on the left, the operational instrument on the right. Containers breathe generously and align to a small, repeatable spacing rhythm. At widths below 980px the split becomes a single reading column; below 640px fact grids stack, horizontal process diagrams become vertical, and page gutters settle at 16px. The minimum supported viewport is 320px, with no horizontal scrolling.
 
 ## Elevation & Depth

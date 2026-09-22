@@ -254,22 +254,6 @@ select {
   gap: 3px;
 }
 
-.console-rail nav:first-child > .rail-link[href*='/performance'] {
-  order: 2;
-}
-
-.console-rail nav:first-child > .rail-link[href*='/network'] {
-  order: 3;
-}
-
-.console-rail nav:first-child > .rail-link[href*='/releases'] {
-  order: 4;
-}
-
-.console-rail nav:first-child > .rail-link[aria-disabled='true'] {
-  order: 5;
-}
-
 .rail-link {
   display: flex;
   min-height: 36px;
@@ -3221,5 +3205,230 @@ tr.selected .session-link {
 
   .release-row .metric-health {
     grid-column: 2 / -1;
+  }
+}
+
+.shared-shell {
+  display: grid;
+  grid-template-columns: 184px minmax(0, 1fr);
+  grid-template-rows: 64px minmax(calc(100dvh - 64px), auto);
+}
+
+.shared-shell.rail-collapsed {
+  grid-template-columns: 64px minmax(0, 1fr);
+}
+.shared-shell .shared-rail {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  top: 0;
+  height: 100dvh;
+  padding: 0 10px 18px;
+  justify-content: flex-start;
+  gap: 20px;
+}
+.rail-brand {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin: 0 -10px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--hairline);
+}
+.shared-rail .rail-secondary {
+  margin-top: auto;
+}
+
+.shared-shell .rail-link > span {
+  display: inline;
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+}
+.shared-shell .rail-link {
+  justify-content: flex-start;
+  padding-inline: 12px;
+}
+.shared-shell .mobile-navigation .rail-secondary {
+  display: grid !important;
+}
+.sidebar-toggle {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--control-radius);
+  cursor: pointer;
+}
+.sidebar-toggle:hover {
+  background: var(--surface);
+  border-color: var(--hairline);
+  color: var(--ink);
+}
+.sidebar-toggle:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 24%, transparent);
+  outline-offset: 1px;
+}
+.shared-shell .shared-topbar {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  padding: 0 20px;
+  border-radius: 0;
+}
+.shell-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.shell-breadcrumbs {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 550;
+}
+.shell-breadcrumbs a {
+  overflow: hidden;
+  max-width: 22ch;
+  color: inherit;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.shell-breadcrumbs a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.shell-breadcrumbs .icon {
+  rotate: -90deg;
+  color: var(--muted);
+}
+.shell-breadcrumbs [aria-current='page'] {
+  overflow: hidden;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.shared-shell > main {
+  grid-column: 2;
+  grid-row: 2;
+}
+.shared-shell .command-deck {
+  grid-template-columns:
+    minmax(118px, 0.62fr) minmax(155px, 1fr) minmax(140px, 0.82fr) minmax(175px, 0.9fr)
+    auto;
+}
+.rail-collapsed .shared-rail .rail-link {
+  justify-content: center;
+  padding: 0;
+}
+.rail-collapsed .shared-rail .rail-link > span,
+.rail-collapsed .shared-rail .wordmark > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.mobile-menu {
+  display: none;
+}
+.mobile-navigation {
+  max-width: none;
+  max-height: none;
+  width: min(280px, 85vw);
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--ink);
+  background: var(--rail);
+}
+.mobile-navigation::backdrop {
+  background: color-mix(in srgb, var(--ink) 35%, transparent);
+}
+.mobile-navigation-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100%;
+  padding: 0 16px 24px;
+}
+.mobile-navigation .rail-brand {
+  margin-inline: -16px;
+  padding-inline: 16px;
+}
+.mobile-navigation-body nav {
+  display: grid;
+  gap: 4px;
+}
+.mobile-navigation-body .rail-secondary {
+  margin-top: auto;
+}
+@media (max-width: 1100px) {
+  .shared-shell .performance-bench {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .shared-shell .performance-detail {
+    border-left: 0;
+    border-top: 1px solid var(--hairline);
+  }
+  .shared-shell .command-deck {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .shared-shell .workspace-title {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 760px) {
+  .shared-shell,
+  .shared-shell.rail-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 64px auto;
+  }
+  .shared-shell .shared-rail {
+    display: none;
+  }
+  .shared-shell .shared-topbar {
+    grid-column: 1;
+    padding: 0 12px;
+    border-radius: 0;
+  }
+  .shared-shell > main {
+    grid-column: 1;
+  }
+  .mobile-menu {
+    display: inline-grid;
+  }
+  .desktop-collapse {
+    display: none;
+  }
+  .shared-topbar .runtime-state > span:last-child {
+    display: none;
+  }
+  .sidebar-toggle,
+  .mobile-navigation .rail-link {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .shared-shell .command-deck {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
