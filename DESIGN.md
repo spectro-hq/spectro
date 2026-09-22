@@ -235,7 +235,7 @@ Spectro combines precise circles for signal nodes with gently rounded instrument
 ### Navigation Icons
 
 - **Reference:** [`apps/web/.impeccable/references/navigation-icons-dark-mode-reference.png`](apps/web/.impeccable/references/navigation-icons-dark-mode-reference.png) records the owner-approved direction for navigation icon character and dark-mode contrast.
-- **Construction:** The five primary destinations use a 20px authored SVG grid, 1.5px rounded strokes, `currentColor`, and no baked-in background. Events is a symmetric pulse waveform, Issues a hexagonal alert, Performance a semicircular gauge with one needle and focal hub, Live a concentric receiver, and Schemas a stacked data cylinder. Secondary Settings and API Guide retain their original sliders and open-book metaphors.
+- **Construction:** The six primary destinations use a 20px authored SVG grid, 1.5px rounded strokes, `currentColor`, and no baked-in background. Events is a symmetric pulse waveform, Issues a hexagonal alert, Performance a semicircular gauge with one needle and focal hub, Network a connected signal graph, Live a concentric receiver, and Schemas a stacked data cylinder. Secondary Settings and API Guide retain their original sliders and open-book metaphors.
 - **States:** Default icons are quiet slate, hover icons use the ultraviolet foreground, and active icons sit in the established selected-navigation treatment. Shape and label must continue to identify the destination without color.
 
 ## Color modes
@@ -264,6 +264,12 @@ Light and dark modes are two composed observatory environments, not an inversion
 - Group field performance by metric and page path so the first question stays “where is the experience degrading?” rather than “which raw sample is largest?”
 - Use p75 as the primary comparative value, preserve each metric's native unit, and pair it with explicit good / needs improvement / poor counts. Never collapse heterogeneous metrics into one synthetic score.
 - Treat the group ledger and selected readout as one connected instrument. The detail concludes with a contextual route back to the contributing Events evidence rather than duplicating the raw-event explorer.
+
+### Network Investigations
+
+- Group sanitized requests by initiator, method, target, and page; lead with p75 duration and failure share rather than raw request volume alone.
+- Keep response classes and transport failures explicit. Do not imply access to request queries, credentials, headers, cookies, or bodies.
+- Reuse the connected Issues / Performance workbench and return to Events for individual request evidence.
 - Present signals chronologically from earliest to latest. A quiet hairline connects compact semantic nodes; selection uses the established ultraviolet wash.
 - Keep the timeline and selected event detail in one connected working surface on desktop. On narrow screens, preserve reading order by stacking detail after the timeline.
 - Summary values describe only the loaded query window. Illustrative sessions obey the selected time range and remain labeled as synthetic.

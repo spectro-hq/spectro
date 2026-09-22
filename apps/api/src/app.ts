@@ -33,6 +33,13 @@ import {
   type PerformanceListQuery,
   type PerformanceQueryStore,
 } from './performance.js';
+import {
+  decodeNetworkCursor,
+  InvalidNetworkCursorError,
+  networkListQuerySchema,
+  type NetworkListQuery,
+  type NetworkQueryStore,
+} from './network.js';
 
 const denyAllProjects: ProjectAuthorizer = { authorize: async () => false };
 const unavailableEventStore: EventQueryStore = {
@@ -50,6 +57,11 @@ const unavailablePerformanceStore: PerformanceQueryStore = {
     throw new Error('Performance query store is not configured');
   },
 };
+const unavailableNetworkStore: NetworkQueryStore = {
+  list: async () => {
+    throw new Error('Network query store is not configured');
+  },
+};
 const defaultLifecycleStore: IssueLifecycleStore = {
   getMany: async () => new Map(),
   set: async () => {
@@ -65,6 +77,7 @@ export interface ApiAppOptions {
   readonly eventStore?: EventQueryStore;
   readonly issueStore?: IssueQueryStore;
   readonly performanceStore?: PerformanceQueryStore;
+  readonly networkStore?: NetworkQueryStore;
   readonly issueLifecycleStore?: IssueLifecycleStore;
 }
 
@@ -84,6 +97,7 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
   const eventStore = options.eventStore ?? unavailableEventStore;
   const issueStore = options.issueStore ?? unavailableIssueStore;
   const performanceStore = options.performanceStore ?? unavailablePerformanceStore;
+  const networkStore = options.networkStore ?? unavailableNetworkStore;
   const issueLifecycleStore = options.issueLifecycleStore ?? defaultLifecycleStore;
   void app.register(cors, { origin: false });
 
@@ -261,6 +275,92 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
         error: {
           code: 'query_unavailable',
           message: 'Performance query is temporarily unavailable.',
+        },
+      });
+    }
+  });
+
+  app.get('/v1/projects/:projectId/network', async (request, reply) => {
+    const path = eventListPathSchema.safeParse(request.params);
+    if (!path.success) {
+      return reply.code(400).send({
+        error: {
+          code: 'invalid_request',
+          message: 'The request path is invalid.',
+          issues: validationIssues(path.error.issues),
+        },
+      });
+    }
+    if (request.headers.authorization === undefined) {
+      return reply.code(401).send({
+        error: { code: 'unauthorized', message: 'Authentication is required.' },
+      });
+    }
+    let authorized: boolean;
+    try {
+      authorized = await authorizer.authorize({
+        authorization: request.headers.authorization,
+        projectId: path.data.projectId,
+      });
+    } catch {
+      return reply.code(503).send({
+        error: {
+          code: 'authorization_unavailable',
+          message: 'Authorization is temporarily unavailable.',
+        },
+      });
+    }
+    if (!authorized) {
+      return reply.code(403).send({
+        error: { code: 'forbidden', message: 'Access to this project is denied.' },
+      });
+    }
+    const query = networkListQuerySchema.safeParse(request.query);
+    if (!query.success) {
+      return reply.code(400).send({
+        error: {
+          code: 'invalid_query',
+          message: 'The network query is invalid.',
+          issues: validationIssues(query.error.issues),
+        },
+      });
+    }
+    let networkQuery: NetworkListQuery;
+    try {
+      networkQuery = {
+        projectId: path.data.projectId,
+        environment: query.data.environment,
+        from: query.data.from,
+        to: query.data.to,
+        limit: query.data.limit,
+        ...(query.data.initiator === undefined ? {} : { initiator: query.data.initiator }),
+        ...(query.data.method === undefined ? {} : { method: query.data.method }),
+        ...(query.data.success === undefined ? {} : { success: query.data.success }),
+        ...(query.data.pagePath === undefined ? {} : { pagePath: query.data.pagePath }),
+        ...(query.data.release === undefined ? {} : { release: query.data.release }),
+        ...(query.data.cursor === undefined
+          ? {}
+          : { cursor: decodeNetworkCursor(query.data.cursor) }),
+      };
+    } catch (error) {
+      if (error instanceof InvalidNetworkCursorError) {
+        return reply.code(400).send({
+          error: {
+            code: 'invalid_query',
+            message: 'The network query is invalid.',
+            issues: [{ path: 'cursor', message: 'must be a valid network cursor' }],
+          },
+        });
+      }
+      throw error;
+    }
+    try {
+      return await networkStore.list(networkQuery);
+    } catch {
+      return reply.code(503).send({
+        error: {
+          code: 'query_unavailable',
+          message: 'Network query is temporarily unavailable.',
         },
       });
     }

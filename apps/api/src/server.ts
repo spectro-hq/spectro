@@ -4,6 +4,7 @@ import { createApiApp } from './app.js';
 import { createLocalProjectAuthorizer } from './auth.js';
 import { ClickHouseEventQueryStore } from './clickhouse-events.js';
 import { ClickHouseIssueQueryStore } from './clickhouse-issues.js';
+import { ClickHouseNetworkQueryStore } from './clickhouse-network.js';
 import { ClickHousePerformanceQueryStore } from './clickhouse-performance.js';
 import { createPostgresIssueLifecycleStore } from './postgres-issue-lifecycle.js';
 
@@ -18,6 +19,7 @@ const app = createApiApp({
   authorizer: createLocalProjectAuthorizer(process.env),
   eventStore: new ClickHouseEventQueryStore(clickhouse),
   issueStore: new ClickHouseIssueQueryStore(clickhouse),
+  networkStore: new ClickHouseNetworkQueryStore(clickhouse),
   performanceStore: new ClickHousePerformanceQueryStore(clickhouse),
   issueLifecycleStore,
 });
