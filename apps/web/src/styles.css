@@ -1986,6 +1986,13 @@ tbody tr:not(.selected):hover {
   margin-block: 16px;
 }
 
+.network-filters {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.55fr) minmax(190px, 0.55fr) minmax(210px, 0.7fr) auto;
+  gap: 10px;
+  margin-block: 16px;
+}
+
 .performance-bench {
   display: grid;
   grid-template-columns: minmax(520px, 1.35fr) minmax(360px, 1fr);
@@ -2084,6 +2091,11 @@ tbody tr:not(.selected):hover {
 .metric-health small {
   color: var(--muted);
   font-size: 0.75rem;
+}
+
+.network-copy strong {
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.8125rem;
 }
 
 .metric-value,
@@ -2836,6 +2848,10 @@ tr.selected .session-link {
     grid-template-columns: 1fr 1fr;
   }
 
+  .network-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  }
+
   .performance-filters .search-field {
     grid-column: 1 / -1;
   }
@@ -2871,6 +2887,10 @@ tr.selected .session-link {
   }
 
   .performance-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .network-filters {
     grid-template-columns: 1fr;
   }
 
