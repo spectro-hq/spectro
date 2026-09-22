@@ -275,6 +275,16 @@ Light and dark modes are two composed observatory environments, not an inversion
 - Summary values describe only the loaded query window. Illustrative sessions obey the selected time range and remain labeled as synthetic.
 - **Internal Padding:** Fluid from 22.4px to 40px.
 
+### Release Health
+
+- Treat a release as an evidence index over existing contextual signals, never as a synthetic health score. Keep errors, poor-rated performance samples, and failed network requests visibly separate.
+- Lead with the bounded query window and the latest observed releases. The connected ledger and detail readout reuse the Performance / Network workbench so version impact feels like part of one investigative system.
+- Summary values describe captured evidence only. Never sum per-release distinct-session counts into a cross-release unique-session claim; sessions may appear under more than one version.
+- The selected release links into Events, Issues, Performance, and Network with the exact release filter and shared project, environment, range, and source context.
+- Use neutral observation-window language unless a real deployment or comparison window exists. First observation is not a deployment timestamp.
+- Missing credentials, loading, query failure, empty evidence, populated evidence, selection, and pagination each receive explicit truthful states. Do not render zero totals while data is unavailable.
+- On narrow screens preserve the operational reading order: controls, release overview, release ledger, then selected evidence detail.
+
 ### Navigation
 
 The foundation top bar is a quiet structural rail: wordmark on the left, truthful runtime state on the right, and one hairline beneath. Future navigation should preserve this low-noise treatment and make active state explicit rather than adding ornamental chrome.

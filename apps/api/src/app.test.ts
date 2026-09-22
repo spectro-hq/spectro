@@ -6,6 +6,7 @@ import { encodeIssueCursor, type IssueListQuery } from './issues.js';
 import type { IssueLifecycleStore } from './issue-lifecycle.js';
 import type { NetworkListQuery } from './network.js';
 import type { PerformanceListQuery } from './performance.js';
+import type { ReleaseListQuery } from './releases.js';
 
 describe('GET /health', () => {
   it('reports the product API boundary', async () => {
@@ -221,6 +222,51 @@ describe('GET /v1/projects/:projectId/network', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/v1/projects/prj_checkout/network?environment=production&from=100&to=200',
+    });
+    await app.close();
+    expect(response.statusCode).toBe(401);
+    expect(queried).toBe(false);
+  });
+});
+
+describe('GET /v1/projects/:projectId/releases', () => {
+  it('authorizes, validates, and forwards a bounded release query', async () => {
+    let received: ReleaseListQuery | undefined;
+    const app = createApiApp({
+      authorizer: allowProject,
+      releaseStore: {
+        list: async (query) => {
+          received = query;
+          return { data: [] };
+        },
+      },
+    });
+    const response = await app.inject({
+      method: 'GET',
+      url: '/v1/projects/prj_checkout/releases?environment=production&from=100&to=200&limit=12',
+      headers: { authorization: 'Bearer local-secret' },
+    });
+    await app.close();
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ data: [] });
+    expect(received).toEqual({
+      projectId: 'prj_checkout',
+      environment: 'production',
+      from: 100,
+      to: 200,
+      limit: 12,
+    });
+  });
+
+  it('fails closed before querying without authentication', async () => {
+    let queried = false;
+    const app = createApiApp({
+      authorizer: allowProject,
+      releaseStore: { list: async () => ((queried = true), { data: [] }) },
+    });
+    const response = await app.inject({
+      method: 'GET',
+      url: '/v1/projects/prj_checkout/releases?environment=production&from=100&to=200',
     });
     await app.close();
     expect(response.statusCode).toBe(401);

@@ -40,6 +40,13 @@ import {
   type NetworkListQuery,
   type NetworkQueryStore,
 } from './network.js';
+import {
+  decodeReleaseCursor,
+  InvalidReleaseCursorError,
+  releaseListQuerySchema,
+  type ReleaseListQuery,
+  type ReleaseQueryStore,
+} from './releases.js';
 
 const denyAllProjects: ProjectAuthorizer = { authorize: async () => false };
 const unavailableEventStore: EventQueryStore = {
@@ -62,6 +69,11 @@ const unavailableNetworkStore: NetworkQueryStore = {
     throw new Error('Network query store is not configured');
   },
 };
+const unavailableReleaseStore: ReleaseQueryStore = {
+  list: async () => {
+    throw new Error('Release query store is not configured');
+  },
+};
 const defaultLifecycleStore: IssueLifecycleStore = {
   getMany: async () => new Map(),
   set: async () => {
@@ -78,6 +90,7 @@ export interface ApiAppOptions {
   readonly issueStore?: IssueQueryStore;
   readonly performanceStore?: PerformanceQueryStore;
   readonly networkStore?: NetworkQueryStore;
+  readonly releaseStore?: ReleaseQueryStore;
   readonly issueLifecycleStore?: IssueLifecycleStore;
 }
 
@@ -98,6 +111,7 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
   const issueStore = options.issueStore ?? unavailableIssueStore;
   const performanceStore = options.performanceStore ?? unavailablePerformanceStore;
   const networkStore = options.networkStore ?? unavailableNetworkStore;
+  const releaseStore = options.releaseStore ?? unavailableReleaseStore;
   const issueLifecycleStore = options.issueLifecycleStore ?? defaultLifecycleStore;
   void app.register(cors, { origin: false });
 
@@ -361,6 +375,87 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
         error: {
           code: 'query_unavailable',
           message: 'Network query is temporarily unavailable.',
+        },
+      });
+    }
+  });
+
+  app.get('/v1/projects/:projectId/releases', async (request, reply) => {
+    const path = eventListPathSchema.safeParse(request.params);
+    if (!path.success) {
+      return reply.code(400).send({
+        error: {
+          code: 'invalid_request',
+          message: 'The request path is invalid.',
+          issues: validationIssues(path.error.issues),
+        },
+      });
+    }
+    if (request.headers.authorization === undefined) {
+      return reply.code(401).send({
+        error: { code: 'unauthorized', message: 'Authentication is required.' },
+      });
+    }
+    let authorized: boolean;
+    try {
+      authorized = await authorizer.authorize({
+        authorization: request.headers.authorization,
+        projectId: path.data.projectId,
+      });
+    } catch {
+      return reply.code(503).send({
+        error: {
+          code: 'authorization_unavailable',
+          message: 'Authorization is temporarily unavailable.',
+        },
+      });
+    }
+    if (!authorized) {
+      return reply.code(403).send({
+        error: { code: 'forbidden', message: 'Access to this project is denied.' },
+      });
+    }
+    const query = releaseListQuerySchema.safeParse(request.query);
+    if (!query.success) {
+      return reply.code(400).send({
+        error: {
+          code: 'invalid_query',
+          message: 'The release query is invalid.',
+          issues: validationIssues(query.error.issues),
+        },
+      });
+    }
+    let releaseQuery: ReleaseListQuery;
+    try {
+      releaseQuery = {
+        projectId: path.data.projectId,
+        environment: query.data.environment,
+        from: query.data.from,
+        to: query.data.to,
+        limit: query.data.limit,
+        ...(query.data.cursor === undefined
+          ? {}
+          : { cursor: decodeReleaseCursor(query.data.cursor) }),
+      };
+    } catch (error) {
+      if (error instanceof InvalidReleaseCursorError) {
+        return reply.code(400).send({
+          error: {
+            code: 'invalid_query',
+            message: 'The release query is invalid.',
+            issues: [{ path: 'cursor', message: 'must be a valid release cursor' }],
+          },
+        });
+      }
+      throw error;
+    }
+    try {
+      return await releaseStore.list(releaseQuery);
+    } catch {
+      return reply.code(503).send({
+        error: {
+          code: 'query_unavailable',
+          message: 'Release query is temporarily unavailable.',
         },
       });
     }

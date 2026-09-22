@@ -6,6 +6,7 @@ import { ClickHouseEventQueryStore } from './clickhouse-events.js';
 import { ClickHouseIssueQueryStore } from './clickhouse-issues.js';
 import { ClickHouseNetworkQueryStore } from './clickhouse-network.js';
 import { ClickHousePerformanceQueryStore } from './clickhouse-performance.js';
+import { ClickHouseReleaseQueryStore } from './clickhouse-releases.js';
 import { createPostgresIssueLifecycleStore } from './postgres-issue-lifecycle.js';
 
 const clickhouse = createClient({
@@ -21,6 +22,7 @@ const app = createApiApp({
   issueStore: new ClickHouseIssueQueryStore(clickhouse),
   networkStore: new ClickHouseNetworkQueryStore(clickhouse),
   performanceStore: new ClickHousePerformanceQueryStore(clickhouse),
+  releaseStore: new ClickHouseReleaseQueryStore(clickhouse),
   issueLifecycleStore,
 });
 app.addHook('onClose', async () => {

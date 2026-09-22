@@ -48,6 +48,7 @@ import {
 import { PayloadViewer } from './payload-viewer.js';
 import { parseNetworkSearch } from './network-query.js';
 import { parsePerformanceSearch } from './performance-query.js';
+import { parseReleaseSearch } from './release-query.js';
 import { buildSessionHref, parseSessionSearch, type SessionSearch } from './session-query.js';
 import { SpectroIcon, SpectroMark } from './spectro-icons.js';
 import './styles.css';
@@ -87,12 +88,19 @@ const networkRoute = createRoute({
   validateSearch: parseNetworkSearch,
   component: lazyRouteComponent(() => import('./network-explorer.js'), 'NetworkExplorer'),
 });
+const releaseRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/releases',
+  validateSearch: parseReleaseSearch,
+  component: lazyRouteComponent(() => import('./release-health.js'), 'ReleaseHealthExplorer'),
+});
 const routeTree = rootRoute.addChildren([
   indexRoute,
   issuesRoute,
   sessionRoute,
   performanceRoute,
   networkRoute,
+  releaseRoute,
 ]);
 const router = createRouter({ routeTree });
 const queryClient = new QueryClient({
@@ -316,6 +324,18 @@ function EventExplorer() {
           >
             <SpectroIcon name="issues" />
             <span>Issues</span>
+          </a>
+          <a
+            className="rail-link"
+            href={`/releases?${new URLSearchParams({
+              project: search.project,
+              environment: search.environment,
+              range: search.range,
+              source: search.source,
+            }).toString()}`}
+          >
+            <SpectroIcon name="release" />
+            <span>Releases</span>
           </a>
           <a
             className="rail-link"
@@ -776,6 +796,18 @@ function SessionExplorer() {
           </a>
           <a
             className="rail-link"
+            href={`/releases?${new URLSearchParams({
+              project: search.project,
+              environment: search.environment,
+              range: search.range,
+              source: search.source,
+            }).toString()}`}
+          >
+            <SpectroIcon name="release" />
+            <span>Releases</span>
+          </a>
+          <a
+            className="rail-link"
             href={`/performance?${new URLSearchParams({
               project: search.project,
               environment: search.environment,
@@ -1156,6 +1188,10 @@ function IssuesExplorer() {
           <a className="rail-link active" href="/issues" aria-current="page">
             <SpectroIcon name="issues" />
             <span>Issues</span>
+          </a>
+          <a className="rail-link" href={`/releases?${eventSearch.toString()}`}>
+            <SpectroIcon name="release" />
+            <span>Releases</span>
           </a>
           <a
             className="rail-link"

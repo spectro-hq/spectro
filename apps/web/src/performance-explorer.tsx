@@ -153,6 +153,10 @@ export function PerformanceExplorer() {
             <SpectroIcon name="issues" />
             <span>Issues</span>
           </a>
+          <a className="rail-link" href={`/releases?${new URLSearchParams(baseSearch).toString()}`}>
+            <SpectroIcon name="release" />
+            <span>Releases</span>
+          </a>
           <a className="rail-link active" href="/performance" aria-current="page">
             <SpectroIcon name="performance" />
             <span>Performance</span>

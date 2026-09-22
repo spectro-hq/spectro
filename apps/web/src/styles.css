@@ -254,6 +254,22 @@ select {
   gap: 3px;
 }
 
+.console-rail nav:first-child > .rail-link[href*='/performance'] {
+  order: 2;
+}
+
+.console-rail nav:first-child > .rail-link[href*='/network'] {
+  order: 3;
+}
+
+.console-rail nav:first-child > .rail-link[href*='/releases'] {
+  order: 4;
+}
+
+.console-rail nav:first-child > .rail-link[aria-disabled='true'] {
+  order: 5;
+}
+
 .rail-link {
   display: flex;
   min-height: 36px;
@@ -2162,6 +2178,10 @@ tbody tr:not(.selected):hover {
   padding-right: 18px;
 }
 
+.performance-readout div:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
 .performance-readout dt {
   color: var(--muted);
   font-size: 0.7rem;
@@ -3029,5 +3049,177 @@ tr.selected .session-link {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+}
+
+.release-overview {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.7fr);
+  border: 1px solid var(--hairline);
+  border-radius: var(--panel-radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.release-overview + .release-bench {
+  margin-top: 14px;
+}
+
+.release-overview-lead {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  padding: 22px 24px;
+  border-right: 1px solid var(--hairline);
+  background: var(--surface-subtle);
+}
+
+.release-overview-lead > span,
+.release-overview dt {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.release-overview-lead strong {
+  font-size: 2rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+}
+
+.release-overview-lead p {
+  max-width: 34ch;
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.release-overview dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0;
+}
+
+.release-overview-state {
+  grid-column: 1 / -1;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  min-height: 112px;
+  padding: 22px 24px;
+  background: var(--surface-subtle);
+}
+
+.release-overview-state strong {
+  font-size: 0.88rem;
+}
+
+.release-overview-state span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.release-overview dl > div {
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  min-height: 112px;
+  padding: 20px 24px;
+}
+
+.release-overview dl > div + div {
+  border-left: 1px solid var(--hairline);
+}
+
+.release-overview dd {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.025em;
+}
+
+.release-glyph {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: var(--panel-radius);
+  color: var(--violet-dark);
+  background: var(--violet-wash);
+}
+
+.release-row {
+  grid-template-columns: 36px minmax(0, 1fr) minmax(74px, auto) minmax(88px, auto);
+}
+
+.release-signal-stack {
+  display: grid;
+  border-block: 1px solid var(--hairline);
+}
+
+.release-signal-stack a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+  padding: 14px 20px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.release-signal-stack a + a {
+  border-top: 1px solid var(--hairline);
+}
+
+.release-signal-stack a:hover span {
+  color: var(--violet-dark);
+}
+
+.release-signal-stack span,
+.release-signal-stack strong {
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.release-signal-stack strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.release-signal-stack small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+@media (max-width: 760px) {
+  .release-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .release-overview-lead {
+    border-right: 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .release-overview dl {
+    grid-template-columns: 1fr;
+  }
+
+  .release-overview dl > div {
+    min-height: auto;
+    padding: 14px 20px;
+  }
+
+  .release-overview dl > div + div {
+    border-top: 1px solid var(--hairline);
+    border-left: 0;
+  }
+
+  .release-row {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+  }
+
+  .release-row .metric-health {
+    grid-column: 2 / -1;
   }
 }

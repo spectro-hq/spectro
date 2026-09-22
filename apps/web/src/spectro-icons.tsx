@@ -15,6 +15,7 @@ export type SpectroIconName =
   | 'page'
   | 'performance'
   | 'refresh'
+  | 'release'
   | 'schemas'
   | 'search'
   | 'session'
@@ -94,6 +95,12 @@ const iconPaths: Readonly<Record<SpectroIconName, ReactNode>> = {
     <>
       <path d="M16.75 6.5V3.25H13.5M3.25 13.5v3.25H6.5" />
       <path d="M15.8 8A6.25 6.25 0 0 0 5.1 5.75L3.25 7.5m13.5 5-1.85 1.75A6.25 6.25 0 0 1 4.2 12" />
+    </>
+  ),
+  release: (
+    <>
+      <path d="M10 2.92 16.25 6.46v7.08L10 17.08l-6.25-3.54V6.46Z" />
+      <path d="M6.25 10h1.67l1-2.08 1.91 4.16L12 10h1.75" />
     </>
   ),
   schemas: (
