@@ -218,9 +218,36 @@ describe('NetworkInstrumentationBridge', () => {
         start: 7,
         duration: 5,
         initiator: 'fetch',
+        failureKind: 'network',
         success: false,
       },
     ]);
+    cleanup();
+  });
+
+  it('classifies Fetch aborts and timeouts without changing the rejected promise', async () => {
+    const failure = new DOMException('aborted', 'AbortError');
+    const timeout = new DOMException('timed out', 'TimeoutError');
+    const originalFetch = vi
+      .fn<typeof fetch>()
+      .mockRejectedValueOnce(failure)
+      .mockRejectedValueOnce(timeout);
+    vi.stubGlobal('window', { location: { href: 'https://app.example/start' } });
+    vi.stubGlobal('performance', { now: () => 5 });
+    vi.stubGlobal('fetch', originalFetch);
+    const bridge = new NetworkInstrumentationBridge();
+    const observations: BrowserNetworkObservation[] = [];
+    const cleanup = subscribe(bridge, observations);
+
+    const returned = globalThis.fetch('/cancelled');
+    await expect(returned).rejects.toBe(failure);
+    await Promise.resolve();
+    const timedOut = globalThis.fetch('/timed-out');
+    await expect(timedOut).rejects.toBe(timeout);
+    await Promise.resolve();
+
+    expect(observations[0]).toMatchObject({ failureKind: 'aborted', success: false });
+    expect(observations[1]).toMatchObject({ failureKind: 'timeout', success: false });
     cleanup();
   });
 

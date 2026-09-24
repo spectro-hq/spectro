@@ -5,7 +5,7 @@ Date: 2026-09-14
 
 ## Context
 
-Session and page IDs are first-class event context. Browser SDK instrumentation must establish them before automatic or custom events are captured, survive reloads without conflating independent tabs, and create a new page lifecycle when a single-page application changes routes. Browser unload delivery is not yet reliable because the ordinary envelope limit is larger than browser keepalive quotas.
+Session and page IDs are first-class event context. Browser SDK instrumentation must establish them before automatic or custom events are captured, survive reloads without conflating independent tabs, and create a new page lifecycle when a single-page application changes routes. Session and page lifecycle events need periodic batch delivery and best-effort page-exit drainage; bounded keepalive delivery is specified separately in ADR-048.
 
 URLs can contain query strings, fragments, credentials, or tokens, so lifecycle capture must not copy a raw location into event context.
 
@@ -20,7 +20,7 @@ URLs can contain query strings, fragments, credentials, or tokens, so lifecycle 
 - Every observed `pushState`, `replaceState`, `popstate`, or hash route that changes the sanitized URL creates a new page ID and emits `page_route_change` with action `route_change` and bounded `from`/`to` values.
 - Query strings, credentials, and arbitrary fragments are removed. A fragment beginning with `#/` is retained as a sanitized hash-router path with its query portion removed.
 - Reinitialization and `destroy()` restore patched History methods and remove listeners. Failures remain contained and are reported through the configured `onError` hook.
-- V1 does not emit `session_end` or `page_leave` during unload. Those actions remain protocol-valid for a future explicit end API or a separately bounded unload transport. Server-side query processing may infer inactive session boundaries but does not rewrite the captured session ID.
+- V1 does not emit `session_end` or `page_leave` during unload. Server-side query processing may infer inactive session boundaries but does not rewrite the captured session ID. Queued captured events use the independent bounded keepalive delivery policy in ADR-048.
 
 ## Alternatives considered
 
@@ -38,7 +38,7 @@ Rejected because it adds cross-request state, consent and domain concerns, and u
 
 ### Emit end/leave with ordinary fetch on unload
 
-Rejected because browsers may cancel it, and enabling `keepalive` for the existing 1 MiB envelope policy would exceed smaller browser quotas.
+Rejected because browsers may cancel it, and enabling `keepalive` for the existing 1 MiB envelope policy would exceed smaller browser quotas. ADR-048 adds a separate bounded event delivery path without introducing end/leave events.
 
 ## Compatibility and consequences
 

@@ -53,7 +53,12 @@ Every event includes SDK identity, project identity, and environment. Optional n
 ```ts
 interface SpectroClient {
   track(name: string, properties?: JSONObject): string | undefined;
-  flush(): Promise<FlushResult>;
+  flush(options?: FlushOptions): Promise<FlushResult>;
+}
+
+interface FlushOptions {
+  keepalive?: boolean;
+  priority?: 'immediate' | 'batch';
 }
 
 interface BrowserClient extends SpectroClient {
@@ -62,15 +67,17 @@ interface BrowserClient extends SpectroClient {
 }
 
 interface Transport {
-  send(envelope: Envelope): Promise<TransportResult>;
+  send(envelope: Envelope, options?: FlushOptions): Promise<TransportResult>;
 }
 ```
 
-`track()` produces a custom event through the same builder and context path future instrumentation uses. It returns `undefined` after reporting invalid input through the optional `onError` hook; SDK failures never escape into the host application. `flush()` wraps queued events in an envelope and sends them through an injected transport. Transport failures are reported through `onError`, the drained events are restored, and the resolved result reports zero sent with the remaining queue count.
+`track()` produces a custom event through the same builder and context path future instrumentation uses. It returns `undefined` after reporting invalid input through the optional `onError` hook; SDK failures never escape into the host application. Browser clients send unhandled runtime errors, unhandled promise rejections, unhandled manual errors, timeouts, HTTP 408, and 5xx network failures after a short coalescing window. They send routine events every five seconds and start a batch early at 50 queued events. An urgent send includes up to eight recent earlier events from the same session and page when available. When the document becomes hidden or receives `pagehide`, clients make a best-effort keepalive flush limited to 60 KiB and 100 events; events that do not fit remain queued for a later flush. `flush({ keepalive: true })` requests the same bounded transport policy; `flush({ priority: 'immediate' })` sends the urgent lane. Transport failures are reported through `onError`, drained events are restored with bounded exponential retry, and the resolved result reports zero sent with the remaining queue count.
+
+The in-memory browser queue is limited to 500 events and 4 MiB. Browser clients persist urgent events in IndexedDB by default so they can retry them after a reload or reconnect. The outbox is scoped by project and environment, retains at most 100 events and 1 MiB for 24 hours, and gives up after eight failed attempts. Set `persistence: false` to disable it. Only validated, privacy-filtered event records are stored, never API keys. If IndexedDB is unavailable, the SDK uses memory only; storage failures are reported through `onError` and delivery continues from memory when possible. Delivery across ambiguous failures is at-least-once, so a retry may be observed more than once.
 
 `init()` follows the same containment rule: malformed runtime options or missing platform capabilities are reported through `onError` when available and return `undefined` rather than throwing into the host application.
 
-Browser fetch transport does not set `keepalive` for ordinary envelopes because browser keepalive quotas are smaller than the protocol's 1 MiB envelope limit. Unload delivery will use a separately bounded transport policy when that lifecycle is introduced.
+Browser fetch transport does not set `keepalive` for ordinary envelopes because browser keepalive quotas are smaller than the protocol's 1 MiB envelope limit. The bounded keepalive policy is specified in [ADR-048](../adr/ADR-048_BROWSER_BATCH_DELIVERY.md).
 
 ## Browser session and page lifecycle
 
@@ -80,7 +87,7 @@ The inactivity timeout can be set with `lifecycle.sessionTimeoutMs`; `lifecycle:
 
 Every initialization creates a page ID and emits `page_view`. A `pushState`, `replaceState`, `popstate`, or hash route that changes the sanitized URL creates a new page ID and emits `page_route_change`; later events receive that new page context. Query strings, credentials, and arbitrary fragments are excluded from captured URLs. Hash-router paths beginning with `#/` are retained without their query portion.
 
-`destroy()` removes lifecycle listeners and restores owned History wrappers. It does not implicitly flush or emit unreliable unload end events.
+`destroy()` removes lifecycle listeners, the automatic flush timer, and restores owned History wrappers. It does not implicitly flush or emit unreliable unload end events.
 
 ## Browser error capture
 

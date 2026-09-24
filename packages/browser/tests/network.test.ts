@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { CaptureInput } from '@spectro/types';
+import type { CaptureInput, CaptureOptions } from '@spectro/types';
 
 import { BrowserNetworkCapture } from '../src/network.js';
 import type {
@@ -59,11 +59,13 @@ function createHarness(
     input: CaptureInput<'network'>;
     navigationUrl?: string;
   }> = [];
+  const captureOptions: Array<CaptureOptions | undefined> = [];
   const errors: unknown[] = [];
   const plugin = new BrowserNetworkCapture(
     {
-      capture(input, navigationUrl) {
+      capture(input, navigationUrl, captureConfig) {
         captured.push({ input, ...(navigationUrl === undefined ? {} : { navigationUrl }) });
+        captureOptions.push(captureConfig);
         return `event_${captured.length}`;
       },
       report: (error) => errors.push(error),
@@ -72,7 +74,7 @@ function createHarness(
     endpoint,
     options,
   );
-  return { captured, errors, plugin, runtime };
+  return { captureOptions, captured, errors, plugin, runtime };
 }
 
 describe('BrowserNetworkCapture', () => {
@@ -101,6 +103,26 @@ describe('BrowserNetworkCapture', () => {
     expect(serialized).not.toContain('password');
     expect(serialized).not.toContain('token');
     expect(serialized).not.toContain('private');
+  });
+
+  it('prioritizes failed network signals but batches aborts and ordinary client errors', () => {
+    const harness = createHarness();
+    harness.plugin.start();
+    harness.runtime.emit(observation({ failureKind: 'network', success: false }));
+    harness.runtime.emit(observation({ failureKind: 'timeout', success: false }));
+    const aborted = observation({ failureKind: 'aborted', success: false });
+    delete aborted.status;
+    harness.runtime.emit(aborted);
+    harness.runtime.emit(observation({ status: 429, success: false }));
+    harness.runtime.emit(observation({ status: 500, success: false }));
+
+    expect(harness.captureOptions).toEqual([
+      { priority: 'immediate' },
+      { priority: 'immediate' },
+      undefined,
+      undefined,
+      { priority: 'immediate' },
+    ]);
   });
 
   it('excludes the Spectro ingestion URL and malformed observations', () => {

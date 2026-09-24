@@ -6,8 +6,25 @@ import { captureException, destroy, FetchTransport, flush, init, track } from '.
 
 afterEach(() => {
   destroy();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
+
+function installBrowserEvents(): { windowEvents: EventTarget; documentEvents: EventTarget } {
+  const windowEvents = new EventTarget();
+  const documentEvents = new EventTarget();
+  vi.stubGlobal('window', {
+    location: { href: 'https://app.example/checkout' },
+    addEventListener: windowEvents.addEventListener.bind(windowEvents),
+    removeEventListener: windowEvents.removeEventListener.bind(windowEvents),
+  });
+  vi.stubGlobal('document', {
+    visibilityState: 'visible',
+    addEventListener: documentEvents.addEventListener.bind(documentEvents),
+    removeEventListener: documentEvents.removeEventListener.bind(documentEvents),
+  });
+  return { windowEvents, documentEvents };
+}
 
 const envelope: Envelope = {
   version: ENVELOPE_VERSION,
@@ -63,6 +80,89 @@ describe('FetchTransport', () => {
     expect(track('early_event')).toBeUndefined();
   });
 
+  it('automatically flushes queued events every five seconds', async () => {
+    vi.useFakeTimers();
+    installBrowserEvents();
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(JSON.stringify({ accepted: 1 }), { status: 202 }));
+    const initialized = init({
+      projectId: 'prj_test',
+      environment: 'test',
+      endpoint: 'https://ingest.example',
+      apiKey: 'sp_test',
+      fetch: fetchMock,
+      lifecycle: false,
+      errors: false,
+      interactions: false,
+      network: false,
+      performance: false,
+    });
+
+    initialized?.track('automatic_flush');
+    await vi.advanceTimersByTimeAsync(4_999);
+    expect(fetchMock).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0]?.[1]).not.toHaveProperty('keepalive');
+  });
+
+  it('flushes a bounded keepalive envelope when the page is hidden', async () => {
+    const { documentEvents } = installBrowserEvents();
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(JSON.stringify({ accepted: 1 }), { status: 202 }));
+    const initialized = init({
+      projectId: 'prj_test',
+      environment: 'test',
+      endpoint: 'https://ingest.example',
+      apiKey: 'sp_test',
+      fetch: fetchMock,
+      lifecycle: false,
+      errors: false,
+      interactions: false,
+      network: false,
+      performance: false,
+    });
+    initialized?.track('hidden_page_flush');
+
+    vi.stubGlobal('document', {
+      visibilityState: 'hidden',
+      addEventListener: documentEvents.addEventListener.bind(documentEvents),
+      removeEventListener: documentEvents.removeEventListener.bind(documentEvents),
+    });
+    documentEvents.dispatchEvent(new Event('visibilitychange'));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+
+    expect(fetchMock.mock.calls[0]?.[1]).toHaveProperty('keepalive', true);
+  });
+
+  it('uses pagehide to request keepalive delivery', async () => {
+    const { windowEvents } = installBrowserEvents();
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(JSON.stringify({ accepted: 1 }), { status: 202 }));
+    const initialized = init({
+      projectId: 'prj_test',
+      environment: 'test',
+      endpoint: 'https://ingest.example',
+      apiKey: 'sp_test',
+      fetch: fetchMock,
+      lifecycle: false,
+      errors: false,
+      interactions: false,
+      network: false,
+      performance: false,
+    });
+    initialized?.track('pagehide_flush');
+
+    windowEvents.dispatchEvent(new Event('pagehide'));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+
+    expect(fetchMock.mock.calls[0]?.[1]).toHaveProperty('keepalive', true);
+  });
+
   it('contains initialization failures and reports them through onError', () => {
     const errors: Error[] = [];
 
@@ -91,6 +191,8 @@ describe('FetchTransport', () => {
     });
     vi.stubGlobal('window', {
       location: { href: 'https://app.example/checkout?cart=private' },
+      addEventListener: vi.fn<() => void>(),
+      removeEventListener: vi.fn<() => void>(),
     });
     vi.stubGlobal('fetch', originalFetch);
 

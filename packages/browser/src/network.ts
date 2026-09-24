@@ -1,5 +1,5 @@
 import type { NetworkPayload } from '@spectro/protocol';
-import type { CaptureInput } from '@spectro/types';
+import type { CaptureInput, CaptureOptions } from '@spectro/types';
 
 import { sanitizePageUrl } from './lifecycle.js';
 import type { BrowserNetworkObservation, BrowserNetworkRuntime } from './network-runtime.js';
@@ -12,7 +12,11 @@ export interface BrowserNetworkOptions {
 }
 
 export interface NetworkCaptureHost {
-  capture(input: CaptureInput<'network'>, navigationUrl?: string): string | undefined;
+  capture(
+    input: CaptureInput<'network'>,
+    navigationUrl?: string,
+    options?: CaptureOptions,
+  ): string | undefined;
   report(error: unknown): void;
 }
 
@@ -84,6 +88,11 @@ export class BrowserNetworkCapture {
     const duration = normalizedTiming(observation.duration);
     if (method === undefined || start === undefined || duration === undefined) return;
     const status = normalizedStatus(observation.status);
+    const immediate =
+      observation.failureKind === 'network' ||
+      observation.failureKind === 'timeout' ||
+      status === 408 ||
+      (status !== undefined && status >= 500);
 
     this.#host.capture(
       {
@@ -98,6 +107,7 @@ export class BrowserNetworkCapture {
         },
       },
       navigationUrl,
+      immediate ? { priority: 'immediate' } : undefined,
     );
   }
 

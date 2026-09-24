@@ -1927,10 +1927,15 @@ tbody tr:not(.selected):hover {
 }
 
 .session-link {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
   color: inherit;
   text-decoration-color: var(--border);
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
+  text-overflow: ellipsis;
+  vertical-align: middle;
 }
 
 .session-link:hover {

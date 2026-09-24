@@ -101,7 +101,7 @@ export function PerformanceExplorer() {
   const selected = groups.find((group) => performanceGroupKey(group) === selectedKey) ?? groups[0];
   const totalSamples = groups.reduce((total, group) => total + group.sampleCount, 0);
   const totalPoor = groups.reduce((total, group) => total + group.poorCount, 0);
-  const affectedSessions = groups.reduce((total, group) => total + group.affectedSessionCount, 0);
+  const groupSessions = groups.reduce((total, group) => total + group.affectedSessionCount, 0);
 
   const connect = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -241,8 +241,8 @@ export function PerformanceExplorer() {
             <span>samples</span>
           </div>
           <div>
-            <strong>{affectedSessions}</strong>
-            <span>affected sessions</span>
+            <strong>{groupSessions}</strong>
+            <span>sessions across groups</span>
           </div>
           <div>
             <strong>{totalPoor}</strong>

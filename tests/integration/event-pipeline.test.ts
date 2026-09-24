@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { v7 as uuidv7 } from 'uuid';
 
 import { createClient } from '@clickhouse/client';
@@ -207,13 +207,12 @@ describeIntegration('durable event pipeline', () => {
       const source = await JetStreamAdmissionSource.create(connection);
       const writer = new ClickHouseProcessedEventWriter(clickhouse);
       const worker = new ProcessorWorker(source, new EventProcessor(writer));
-      await expect(worker.runOnce(2_000)).resolves.toMatchObject({
-        status: 'processed',
-        processed: 5,
-      });
-
-      const result = await clickhouse.query({
-        query: `
+      await vi.waitFor(
+        async () => {
+          // A concurrently running processor may consume this durable message first.
+          await worker.runOnce(1_000);
+          const result = await clickhouse.query({
+            query: `
           SELECT
             count() AS count,
             countIf(event_name = 'runtime_error' AND error_fingerprint != '') AS fingerprinted,
@@ -223,32 +222,35 @@ describeIntegration('durable event pipeline', () => {
           FROM spectro.events_v1 FINAL
           WHERE event_id IN ({customEventId:UUID}, {errorEventId:UUID}, {performanceEventId:UUID}, {networkEventId:UUID}, {interactionEventId:UUID})
         `,
-        query_params: {
-          customEventId,
-          errorEventId,
-          performanceEventId,
-          networkEventId,
-          interactionEventId,
+            query_params: {
+              customEventId,
+              errorEventId,
+              performanceEventId,
+              networkEventId,
+              interactionEventId,
+            },
+            format: 'JSONEachRow',
+          });
+          await expect(
+            result.json<{
+              count: number;
+              fingerprinted: number;
+              performance_count: number;
+              network_count: number;
+              interaction_count: number;
+            }>(),
+          ).resolves.toEqual([
+            {
+              count: 5,
+              fingerprinted: 1,
+              performance_count: 1,
+              network_count: 1,
+              interaction_count: 1,
+            },
+          ]);
         },
-        format: 'JSONEachRow',
-      });
-      await expect(
-        result.json<{
-          count: number;
-          fingerprinted: number;
-          performance_count: number;
-          network_count: number;
-          interaction_count: number;
-        }>(),
-      ).resolves.toEqual([
-        {
-          count: 5,
-          fingerprinted: 1,
-          performance_count: 1,
-          network_count: 1,
-          interaction_count: 1,
-        },
-      ]);
+        { interval: 100, timeout: 8_000 },
+      );
 
       const baseQuery = `/v1/projects/${projectId}/events?environment=test&from=1789368123455&to=1789368123461&limit=2`;
       const firstPageResponse = await apiApp.inject({
@@ -327,5 +329,5 @@ describeIntegration('durable event pipeline', () => {
       await connection.drain();
       await clickhouse.close();
     }
-  });
+  }, 12_000);
 });

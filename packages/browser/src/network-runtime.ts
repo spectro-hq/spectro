@@ -12,6 +12,7 @@ export interface BrowserNetworkObservation {
   initiator: NetworkPayload['initiator'];
   status?: number;
   success: boolean;
+  failureKind?: 'network' | 'timeout' | 'aborted';
 }
 
 export interface BrowserNetworkSubscriptionOptions {
@@ -45,6 +46,17 @@ interface PendingXhr extends OpenXhr {
   navigationUrl?: string;
   start: number;
   subscribers: ReadonlySet<Subscriber>;
+  failureKind?: 'network' | 'timeout' | 'aborted';
+  onAbort: () => void;
+  onError: () => void;
+  onTimeout: () => void;
+}
+
+function failureKindFromError(error: unknown): 'network' | 'timeout' | 'aborted' {
+  const name = typeof error === 'object' && error !== null ? readString(error, 'name') : undefined;
+  if (name === 'AbortError') return 'aborted';
+  if (name === 'TimeoutError') return 'timeout';
+  return 'network';
 }
 
 function readProperty(value: object, key: string): unknown {
@@ -240,7 +252,7 @@ export class NetworkInstrumentationBridge implements BrowserNetworkRuntime {
                 this.#report(error, subscribers);
               }
             },
-            () => {
+            (error: unknown) => {
               this.#dispatch(
                 {
                   ...details,
@@ -249,6 +261,7 @@ export class NetworkInstrumentationBridge implements BrowserNetworkRuntime {
                   duration: Math.max(0, now() - start),
                   initiator: 'fetch',
                   success: false,
+                  failureKind: failureKindFromError(error),
                 },
                 subscribers,
               );
@@ -303,12 +316,28 @@ export class NetworkInstrumentationBridge implements BrowserNetworkRuntime {
         ...(navigationUrl === undefined ? {} : { navigationUrl }),
         start: now(),
         subscribers: new Set(this.#subscribers),
+        onAbort: () => {
+          pending.failureKind = 'aborted';
+        },
+        onError: () => {
+          pending.failureKind = 'network';
+        },
+        onTimeout: () => {
+          pending.failureKind = 'timeout';
+        },
       };
       this.#pendingXhrs.set(request, pending);
       const complete = () => this.#completeXhr(request);
       try {
         request.addEventListener('loadend', complete, { once: true });
+        request.addEventListener('abort', pending.onAbort, { once: true });
+        request.addEventListener('error', pending.onError, { once: true });
+        request.addEventListener('timeout', pending.onTimeout, { once: true });
       } catch (error) {
+        request.removeEventListener('loadend', complete);
+        request.removeEventListener('abort', pending.onAbort);
+        request.removeEventListener('error', pending.onError);
+        request.removeEventListener('timeout', pending.onTimeout);
         this.#pendingXhrs.delete(request);
         this.#report(error, pending.subscribers);
         originalSend.call(request, body ?? null);
@@ -318,6 +347,9 @@ export class NetworkInstrumentationBridge implements BrowserNetworkRuntime {
         originalSend.call(request, body ?? null);
       } catch (error) {
         request.removeEventListener('loadend', complete);
+        request.removeEventListener('abort', pending.onAbort);
+        request.removeEventListener('error', pending.onError);
+        request.removeEventListener('timeout', pending.onTimeout);
         this.#pendingXhrs.delete(request);
         throw error;
       }
@@ -359,6 +391,9 @@ export class NetworkInstrumentationBridge implements BrowserNetworkRuntime {
     const pending = this.#pendingXhrs.get(request);
     this.#pendingXhrs.delete(request);
     if (pending === undefined) return;
+    request.removeEventListener('abort', pending.onAbort);
+    request.removeEventListener('error', pending.onError);
+    request.removeEventListener('timeout', pending.onTimeout);
     try {
       const status = boundedStatus(request.status);
       this.#dispatch(
@@ -371,6 +406,7 @@ export class NetworkInstrumentationBridge implements BrowserNetworkRuntime {
           initiator: 'xhr',
           ...(status === undefined ? {} : { status }),
           success: status !== undefined && status >= 200 && status < 300,
+          ...(pending.failureKind === undefined ? {} : { failureKind: pending.failureKind }),
         },
         pending.subscribers,
       );

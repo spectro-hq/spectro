@@ -46,6 +46,7 @@ import { parseNetworkSearch } from './network-query.js';
 import { parsePerformanceSearch } from './performance-query.js';
 import { parseReleaseSearch } from './release-query.js';
 import { buildSessionHref, parseSessionSearch, type SessionSearch } from './session-query.js';
+import { formatSessionMetric, orderEventsChronologically } from './session-timeline.js';
 import { SpectroIcon } from './spectro-icons.js';
 import './styles.css';
 
@@ -166,7 +167,7 @@ function eventSummary(item: EventListItem): string {
   const payload = item.event.payload;
   if (item.event.type === 'error' && typeof payload.message === 'string') return payload.message;
   if (item.event.type === 'performance' && typeof payload.value === 'number') {
-    return `${payload.value} ${typeof payload.unit === 'string' ? payload.unit : ''}`.trim();
+    return formatSessionMetric(payload.value, payload.unit);
   }
   if (item.event.type === 'network' && isUnknownRecord(payload.request)) {
     const request = payload.request;
@@ -557,18 +558,6 @@ function formatDuration(milliseconds: number): string {
   const minutes = Math.floor(seconds / 60);
   const remainder = seconds % 60;
   return remainder === 0 ? `${minutes}m` : `${minutes}m ${remainder}s`;
-}
-
-function orderEventsChronologically(events: readonly EventListItem[]): EventListItem[] {
-  const ordered: EventListItem[] = [];
-  for (const item of events) {
-    const insertionIndex = ordered.findIndex(
-      (candidate) => candidate.event.timestamp > item.event.timestamp,
-    );
-    if (insertionIndex === -1) ordered.push(item);
-    else ordered.splice(insertionIndex, 0, item);
-  }
-  return ordered;
 }
 
 function SessionExplorer() {

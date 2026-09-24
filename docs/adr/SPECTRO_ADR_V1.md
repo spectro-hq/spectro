@@ -51,6 +51,8 @@ Status: accepted unless marked open.
 | ADR-045 | Aggregate bounded performance signals by metric and page through an authorized ClickHouse query with stable keyset pagination.                         |
 | ADR-046 | Aggregate privacy-bounded network signals by request target and page through an authorized ClickHouse query with stable keyset pagination.             |
 | ADR-047 | Aggregate release health from existing contextual signals through an authorized bounded ClickHouse query with evidence-first drill-down.               |
+| ADR-048 | Automatically flush browser event batches and best-effort drain a bounded keepalive batch on page exit.                                                |
+| ADR-049 | Send high-priority failures promptly, batch routine telemetry, and recover a bounded urgent-event outbox from IndexedDB.                               |
 
 Detailed records:
 
@@ -68,6 +70,8 @@ Detailed records:
 - [ADR-045: Performance overview query V1](./ADR-045_PERFORMANCE_OVERVIEW_QUERY_V1.md)
 - [ADR-046: Network overview query V1](./ADR-046_NETWORK_OVERVIEW_QUERY_V1.md)
 - [ADR-047: Release health query V1](./ADR-047_RELEASE_HEALTH_QUERY_V1.md)
+- [ADR-048: Browser batch delivery](./ADR-048_BROWSER_BATCH_DELIVERY.md)
+- [ADR-049: Browser delivery priority and recovery](./ADR-049_BROWSER_DELIVERY_PRIORITY_AND_RECOVERY.md)
 
 ## Change rule
 

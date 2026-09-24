@@ -1,5 +1,9 @@
 import { MAX_ENVELOPE_BYTES, serializedByteLength, type Envelope } from '@spectro/protocol';
-import type { TransportResult } from '@spectro/types';
+import {
+  MAX_KEEPALIVE_ENVELOPE_BYTES,
+  type FlushOptions,
+  type TransportResult,
+} from '@spectro/types';
 import type { Transport } from '@spectro/core';
 
 import { SpectroTransportError } from '@spectro/core';
@@ -21,9 +25,15 @@ export class FetchTransport implements Transport {
     this.#fetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   }
 
-  async send(envelope: Envelope): Promise<TransportResult> {
-    if (serializedByteLength(envelope) > MAX_ENVELOPE_BYTES) {
+  async send(envelope: Envelope, options: FlushOptions = {}): Promise<TransportResult> {
+    const envelopeBytes = serializedByteLength(envelope);
+    if (envelopeBytes > MAX_ENVELOPE_BYTES) {
       throw new SpectroTransportError(`Envelope exceeds the ${MAX_ENVELOPE_BYTES}-byte limit`);
+    }
+    if (options.keepalive && envelopeBytes > MAX_KEEPALIVE_ENVELOPE_BYTES) {
+      throw new SpectroTransportError(
+        `Keepalive envelope exceeds the ${MAX_KEEPALIVE_ENVELOPE_BYTES}-byte limit`,
+      );
     }
 
     let response: Response;
@@ -35,6 +45,7 @@ export class FetchTransport implements Transport {
           'x-spectro-key': this.#apiKey,
         },
         body: JSON.stringify(envelope),
+        ...(options.keepalive ? { keepalive: true } : {}),
       });
     } catch (error) {
       throw new SpectroTransportError(

@@ -1,6 +1,13 @@
 import { SpectroClient } from '@spectro/core';
 import type { EventContext, JSONObject } from '@spectro/protocol';
-import type { FlushResult, SpectroClientOptions, SpectroClientPublic } from '@spectro/types';
+import type {
+  CaptureOptions,
+  FlushOptions,
+  FlushResult,
+  SpectroClientOptions,
+  SpectroClientPublic,
+} from '@spectro/types';
+import { IndexedDbEventOutbox, type IndexedDbOutboxOptions } from './outbox.js';
 
 import {
   BrowserErrorCapture,
@@ -29,7 +36,10 @@ export interface BrowserClientOptions extends SpectroClientOptions {
   lifecycle?: false | BrowserLifecycleOptions;
   network?: false | BrowserNetworkOptions;
   performance?: false | BrowserPerformanceOptions;
+  persistence?: false | IndexedDbOutboxOptions;
 }
+
+const DEFAULT_FLUSH_INTERVAL_MS = 5_000;
 
 export interface BrowserClientPublic extends SpectroClientPublic {
   captureException(value: unknown, options?: CaptureExceptionOptions): string | undefined;
@@ -49,15 +59,47 @@ function reportSafely(onError: ((error: Error) => void) | undefined, error: unkn
 
 class BrowserClient implements BrowserClientPublic {
   readonly #core: SpectroClient;
+  readonly #onError: ((error: Error) => void) | undefined;
   readonly #errorCapture: BrowserErrorCapture;
   readonly #interactionCapture: BrowserInteractionCapture;
   readonly #lifecycle: SessionPageLifecycle | undefined;
   readonly #networkCapture: BrowserNetworkCapture;
   readonly #performanceCapture: BrowserPerformanceCapture;
   #destroyed = false;
+  #flushTimer: ReturnType<typeof globalThis.setInterval> | undefined;
+  #urgentFlushTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
+  #batchFlushTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
+  #retryTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
+  #retryDelayMs = 1_000;
+  #nextRetryAt = 0;
+  readonly #pageHideListener = (): void => {
+    void this.#flushSafely({ keepalive: true });
+  };
+  readonly #visibilityChangeListener = (): void => {
+    if (document.visibilityState === 'hidden') this.#flushSafely({ keepalive: true });
+  };
+  readonly #onlineListener = (): void => {
+    this.#clearTimer('retry');
+    this.#retryDelayMs = 1_000;
+    this.#nextRetryAt = 0;
+    void this.#flushSafely({ priority: 'immediate' }).then((result) => {
+      if (result.remaining > 0) return this.#flushSafely();
+      return undefined;
+    });
+  };
 
   constructor(options: BrowserClientOptions) {
-    this.#core = new SpectroClient(options, new FetchTransport(options));
+    this.#onError = options.onError;
+    const durableQueue =
+      options.persistence === false || typeof indexedDB === 'undefined'
+        ? undefined
+        : new IndexedDbEventOutbox(options.persistence);
+    this.#core = new SpectroClient(options, new FetchTransport(options), {
+      ...(durableQueue === undefined ? {} : { durableQueue }),
+      onImmediateEvent: () => this.#scheduleUrgentFlush(),
+      onBatchReady: () => this.#scheduleBatchFlush(),
+      onTransportFailure: (_error, flushOptions) => this.#scheduleRetry(flushOptions),
+    });
     const lifecycleRuntime = createBrowserLifecycleRuntime();
     let lifecycle: SessionPageLifecycle | undefined;
     if (lifecycleRuntime !== undefined && options.lifecycle !== false) {
@@ -124,7 +166,7 @@ class BrowserClient implements BrowserClientPublic {
     const networkOptions = options.network === false ? {} : (options.network ?? {});
     this.#networkCapture = new BrowserNetworkCapture(
       {
-        capture: (input, navigationUrl) => {
+        capture: (input, navigationUrl, captureOptions?: CaptureOptions) => {
           const context = this.#lifecycle?.contextForNavigationUrl(navigationUrl);
           if (
             navigationUrl !== undefined &&
@@ -133,10 +175,13 @@ class BrowserClient implements BrowserClientPublic {
           ) {
             return undefined;
           }
-          return this.#core.capture({
-            ...input,
-            ...(context === undefined ? {} : { context }),
-          });
+          return this.#core.capture(
+            {
+              ...input,
+              ...(context === undefined ? {} : { context }),
+            },
+            captureOptions,
+          );
         },
         report: (error) => reportSafely(options.onError, error),
       },
@@ -151,6 +196,7 @@ class BrowserClient implements BrowserClientPublic {
       this.#interactionCapture.start();
       this.#performanceCapture.start();
       this.#networkCapture.start();
+      this.#startAutomaticFlush();
     } catch (error) {
       this.#networkCapture.stop();
       this.#performanceCapture.stop();
@@ -167,9 +213,9 @@ class BrowserClient implements BrowserClientPublic {
     return this.#core.track(name, properties);
   }
 
-  flush(): Promise<FlushResult> {
+  flush(options?: FlushOptions): Promise<FlushResult> {
     if (this.#destroyed) return Promise.resolve({ sent: 0, remaining: 0 });
-    return this.#core.flush();
+    return this.#core.flush(options);
   }
 
   captureException(value: unknown, options?: CaptureExceptionOptions): string | undefined {
@@ -184,12 +230,104 @@ class BrowserClient implements BrowserClientPublic {
   destroy(): void {
     if (this.#destroyed) return;
     this.#destroyed = true;
+    this.#clearTimer('interval');
+    this.#clearTimer('urgent');
+    this.#clearTimer('batch');
+    this.#clearTimer('retry');
+    if (typeof window !== 'undefined')
+      window.removeEventListener('pagehide', this.#pageHideListener);
+    if (typeof window !== 'undefined') window.removeEventListener('online', this.#onlineListener);
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.#visibilityChangeListener);
+    }
     this.#networkCapture.stop();
     this.#performanceCapture.stop();
     this.#interactionCapture.stop();
     this.#errorCapture.stop();
     this.#lifecycle?.stop();
     if (client === this) client = undefined;
+  }
+
+  #startAutomaticFlush(): void {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    this.#flushTimer = globalThis.setInterval(() => this.#flushSafely(), DEFAULT_FLUSH_INTERVAL_MS);
+    window.addEventListener('pagehide', this.#pageHideListener);
+    window.addEventListener('online', this.#onlineListener);
+    document.addEventListener('visibilitychange', this.#visibilityChangeListener);
+  }
+
+  #flushSafely(options?: FlushOptions): Promise<FlushResult> {
+    if (this.#destroyed) return Promise.resolve({ sent: 0, remaining: 0 });
+    if (options?.keepalive !== true && !this.#isOnline()) {
+      return Promise.resolve({ sent: 0, remaining: 0 });
+    }
+    if (options?.keepalive !== true && Date.now() < this.#nextRetryAt) {
+      return Promise.resolve({ sent: 0, remaining: 0 });
+    }
+    return this.flush(options)
+      .then((result) => {
+        if (result.sent > 0) this.#resetRetry();
+        return result;
+      })
+      .catch((error: unknown) => {
+        reportSafely(this.#onError, error);
+        return { sent: 0, remaining: 0 };
+      });
+  }
+
+  #scheduleUrgentFlush(): void {
+    if (this.#urgentFlushTimer !== undefined || this.#destroyed) return;
+    this.#urgentFlushTimer = globalThis.setTimeout(() => {
+      this.#urgentFlushTimer = undefined;
+      void this.#flushSafely({ priority: 'immediate' });
+    }, 100);
+  }
+
+  #scheduleBatchFlush(): void {
+    if (this.#batchFlushTimer !== undefined || this.#destroyed) return;
+    this.#batchFlushTimer = globalThis.setTimeout(() => {
+      this.#batchFlushTimer = undefined;
+      void this.#flushSafely({ priority: 'batch' });
+    }, 100);
+  }
+
+  #scheduleRetry(options: FlushOptions): void {
+    if (this.#destroyed || !this.#isOnline()) return;
+    this.#clearTimer('retry');
+    const delay = this.#retryDelayMs;
+    this.#retryDelayMs = Math.min(this.#retryDelayMs * 2, 60_000);
+    this.#nextRetryAt = Date.now() + delay;
+    this.#retryTimer = globalThis.setTimeout(() => {
+      this.#retryTimer = undefined;
+      this.#nextRetryAt = 0;
+      void this.#flushSafely(options);
+    }, delay);
+  }
+
+  #resetRetry(): void {
+    this.#clearTimer('retry');
+    this.#retryDelayMs = 1_000;
+    this.#nextRetryAt = 0;
+  }
+
+  #isOnline(): boolean {
+    return typeof navigator === 'undefined' || navigator.onLine !== false;
+  }
+
+  #clearTimer(kind: 'interval' | 'urgent' | 'batch' | 'retry'): void {
+    if (kind === 'interval' && this.#flushTimer !== undefined) {
+      globalThis.clearInterval(this.#flushTimer);
+      this.#flushTimer = undefined;
+    } else if (kind === 'urgent' && this.#urgentFlushTimer !== undefined) {
+      globalThis.clearTimeout(this.#urgentFlushTimer);
+      this.#urgentFlushTimer = undefined;
+    } else if (kind === 'batch' && this.#batchFlushTimer !== undefined) {
+      globalThis.clearTimeout(this.#batchFlushTimer);
+      this.#batchFlushTimer = undefined;
+    } else if (kind === 'retry' && this.#retryTimer !== undefined) {
+      globalThis.clearTimeout(this.#retryTimer);
+      this.#retryTimer = undefined;
+    }
   }
 }
 
@@ -219,11 +357,11 @@ export function captureException(
   return client?.captureException(value, options);
 }
 
-export async function flush(): Promise<FlushResult> {
+export async function flush(options?: FlushOptions): Promise<FlushResult> {
   if (!client) {
     return { sent: 0, remaining: 0 };
   }
-  return client.flush();
+  return client.flush(options);
 }
 
 export function destroy(): void {
@@ -231,7 +369,11 @@ export function destroy(): void {
 }
 
 export { FetchTransport } from './transport.js';
+export { IndexedDbEventOutbox } from './outbox.js';
 export { DEFAULT_SESSION_TIMEOUT_MS } from './lifecycle.js';
+export type { CaptureOptions, DeliveryPriority, DurableEventQueue } from '@spectro/types';
+export type { IndexedDbOutboxOptions } from './outbox.js';
+export type { FlushOptions } from '@spectro/types';
 export type { BrowserErrorOptions, CaptureExceptionOptions } from './error.js';
 export type { BrowserInteractionOptions } from './interaction.js';
 export type { BrowserPerformanceOptions } from './performance.js';

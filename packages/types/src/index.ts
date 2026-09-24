@@ -53,12 +53,42 @@ export interface FlushResult {
   remaining: number;
 }
 
+export type DeliveryPriority = 'immediate' | 'batch';
+
+export interface CaptureOptions {
+  priority?: DeliveryPriority;
+}
+
+export interface QueuedEventRecord {
+  event: import('@spectro/protocol').SpectroEvent;
+  priority: DeliveryPriority;
+  attempts: number;
+}
+
+export interface EventQueueScope {
+  projectId: string;
+  environment: string;
+}
+
+export interface DurableEventQueue {
+  load(scope: EventQueueScope): Promise<readonly QueuedEventRecord[]>;
+  save(scope: EventQueueScope, records: readonly QueuedEventRecord[]): Promise<number>;
+  remove(scope: EventQueueScope, eventIds: readonly string[]): Promise<void>;
+}
+
+export const MAX_KEEPALIVE_ENVELOPE_BYTES = 60 * 1_024;
+
+export interface FlushOptions {
+  keepalive?: boolean;
+  priority?: DeliveryPriority;
+}
+
 export interface TransportResult {
   accepted: number;
 }
 
 export interface SpectroClientPublic {
   track(name: string, properties?: JSONObject): string | undefined;
-  flush(): Promise<FlushResult>;
+  flush(options?: FlushOptions): Promise<FlushResult>;
   getContext(): EventContext;
 }

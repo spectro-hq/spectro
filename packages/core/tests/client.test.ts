@@ -1,15 +1,47 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Envelope } from '@spectro/protocol';
+import type {
+  DurableEventQueue,
+  EventQueueScope,
+  FlushOptions,
+  QueuedEventRecord,
+} from '@spectro/types';
 
 import { SpectroClient, SpectroValidationError, type Transport } from '../src/index.js';
 
 class MemoryTransport implements Transport {
   envelopes: Envelope[] = [];
+  options: FlushOptions[] = [];
 
-  async send(envelope: Envelope): Promise<{ accepted: number }> {
+  async send(envelope: Envelope, options: FlushOptions = {}): Promise<{ accepted: number }> {
     this.envelopes.push(envelope);
+    this.options.push(options);
     return { accepted: envelope.items.length };
+  }
+}
+
+class MemoryDurableQueue implements DurableEventQueue {
+  records: QueuedEventRecord[] = [];
+  scopes: EventQueueScope[] = [];
+
+  async load(scope: EventQueueScope): Promise<readonly QueuedEventRecord[]> {
+    this.scopes.push(scope);
+    return this.records;
+  }
+
+  async save(scope: EventQueueScope, records: readonly QueuedEventRecord[]): Promise<number> {
+    this.scopes.push(scope);
+    for (const record of records) {
+      this.records = this.records.filter(({ event }) => event.id !== record.event.id);
+      this.records.push(record);
+    }
+    return 0;
+  }
+
+  async remove(scope: EventQueueScope, eventIds: readonly string[]): Promise<void> {
+    this.scopes.push(scope);
+    this.records = this.records.filter(({ event }) => !eventIds.includes(event.id));
   }
 }
 
@@ -69,6 +101,84 @@ describe('SpectroClient', () => {
     await expect(client.flush()).resolves.toEqual({ sent: 0, remaining: 1 });
     expect(errors[0]?.message).toBe('offline');
     await expect(client.flush()).resolves.toEqual({ sent: 1, remaining: 0 });
+  });
+
+  it('persists unhandled errors before immediate delivery and removes them after acceptance', async () => {
+    const transport = new MemoryTransport();
+    const durableQueue = new MemoryDurableQueue();
+    let immediateRequests = 0;
+    const client = new SpectroClient(
+      {
+        projectId: 'prj_checkout',
+        apiKey: 'sp_local_dev',
+        environment: 'production',
+        endpoint: 'http://localhost:4401',
+        session: { id: 'ses_01' },
+      },
+      transport,
+      { durableQueue, onImmediateEvent: () => immediateRequests++ },
+    );
+
+    const id = client.capture({
+      type: 'error',
+      name: 'runtime_error',
+      payload: { mechanism: 'runtime', message: 'checkout failed', handled: false },
+    });
+
+    expect(id).toBeDefined();
+    expect(immediateRequests).toBe(1);
+    await expect(client.flush({ priority: 'immediate' })).resolves.toEqual({
+      sent: 1,
+      remaining: 0,
+    });
+    expect(transport.options[0]).toEqual({ priority: 'immediate' });
+    expect(durableQueue.records).toEqual([]);
+    expect(durableQueue.scopes).toContainEqual({
+      projectId: 'prj_checkout',
+      environment: 'production',
+    });
+  });
+
+  it('keeps handled/resource errors in the batch lane unless explicitly overridden', async () => {
+    const transport = new MemoryTransport();
+    const client = createClient(transport);
+
+    client.capture({
+      type: 'error',
+      name: 'resource_error',
+      payload: { mechanism: 'resource', message: 'script failed', handled: true },
+    });
+    client.capture(
+      {
+        type: 'error',
+        name: 'handled_error',
+        payload: { mechanism: 'manual', message: 'handled error', handled: true },
+      },
+      { priority: 'immediate' },
+    );
+
+    await client.flush({ priority: 'immediate' });
+    expect(transport.envelopes[0]?.items).toHaveLength(1);
+    expect(transport.envelopes[0]?.items[0]?.payload.name).toBe('handled_error');
+    await client.flush();
+    expect(transport.envelopes[1]?.items[0]?.payload.name).toBe('resource_error');
+  });
+
+  it('bounds keepalive flushes and leaves the rest queued for a later flush', async () => {
+    const transport = new MemoryTransport();
+    const client = createClient(transport);
+    for (let index = 0; index < 40; index += 1) {
+      client.track('batch_event', { value: `${index}${'x'.repeat(2_047)}` });
+    }
+
+    const firstFlush = await client.flush({ keepalive: true });
+    expect(firstFlush.sent).toBeGreaterThan(0);
+    expect(firstFlush.remaining).toBeGreaterThan(0);
+    expect(transport.envelopes[0]?.items.length).toBe(firstFlush.sent);
+    const laterFlush = await client.flush();
+    expect(laterFlush.sent + firstFlush.sent).toBe(40);
+    expect(laterFlush.remaining).toBe(0);
+    expect(transport.envelopes).toHaveLength(2);
   });
 
   it('reports and drops invalid event names without throwing into the host', () => {
