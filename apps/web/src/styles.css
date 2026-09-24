@@ -2343,10 +2343,24 @@ tr.selected .session-link {
 }
 
 .timeline-list {
+  position: relative;
   display: grid;
   margin: 0;
   padding: 10px 0;
   list-style: none;
+}
+
+.timeline-list::before {
+  position: absolute;
+  top: 39px;
+  bottom: 39px;
+  left: 37px;
+  z-index: 1;
+  width: 1px;
+  background: var(--divider);
+  content: '';
+  pointer-events: none;
+  transform: translateX(-50%);
 }
 
 .timeline-list li {
@@ -2354,19 +2368,8 @@ tr.selected .session-link {
   padding-inline: 18px;
 }
 
-.timeline-list li:not(:last-child)::after {
-  position: absolute;
-  top: 31px;
-  bottom: -11px;
-  left: 37px;
-  width: 1px;
-  background: var(--divider);
-  content: '';
-}
-
 .timeline-event {
   position: relative;
-  z-index: 1;
   display: grid;
   width: 100%;
   min-height: 58px;
@@ -2401,6 +2404,8 @@ tr.selected .session-link {
 }
 
 .timeline-node {
+  position: relative;
+  z-index: 2;
   width: 9px;
   height: 9px;
   justify-self: center;
@@ -2499,6 +2504,10 @@ tr.selected .session-link {
 
   .timeline-event {
     grid-template-columns: 16px 58px minmax(140px, 1fr) 72px;
+  }
+
+  .timeline-list::before {
+    left: 36px;
   }
 
   .timeline-page {
@@ -2844,8 +2853,8 @@ tr.selected .session-link {
     padding-inline: 8px;
   }
 
-  .timeline-list li:not(:last-child)::after {
-    left: 27px;
+  .timeline-list::before {
+    left: 26px;
   }
 
   .performance-filters {
@@ -2935,8 +2944,8 @@ tr.selected .session-link {
     justify-self: end;
   }
 
-  .timeline-list li:not(:last-child)::after {
-    left: 25px;
+  .timeline-list::before {
+    left: 26px;
   }
 
   .issue-summary p {
