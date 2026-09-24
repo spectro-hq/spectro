@@ -1,8 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 
-import { ENVELOPE_VERSION, EVENT_VERSION, type Envelope } from '@spectro/protocol';
+import {
+  ENVELOPE_VERSION,
+  EVENT_VERSION,
+  validateEnvelope,
+  type Envelope,
+} from '@spectro/protocol';
 
 import { captureException, destroy, FetchTransport, flush, init, track } from '../src/index.js';
+import { IndexedDbEventOutbox } from '../src/outbox.js';
 
 afterEach(() => {
   destroy();
@@ -24,6 +31,13 @@ function installBrowserEvents(): { windowEvents: EventTarget; documentEvents: Ev
     removeEventListener: documentEvents.removeEventListener.bind(documentEvents),
   });
   return { windowEvents, documentEvents };
+}
+
+function parseEnvelope(body: BodyInit | null | undefined): Envelope | undefined {
+  if (typeof body !== 'string') return undefined;
+  const parsed: unknown = JSON.parse(body);
+  const result = validateEnvelope(parsed);
+  return result.success ? result.data : undefined;
 }
 
 const envelope: Envelope = {
@@ -161,6 +175,57 @@ describe('FetchTransport', () => {
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
 
     expect(fetchMock.mock.calls[0]?.[1]).toHaveProperty('keepalive', true);
+  });
+
+  it('recovers an unhandled runtime error from IndexedDB after SDK reinitialization', async () => {
+    const { windowEvents } = installBrowserEvents();
+    vi.stubGlobal('indexedDB', new IDBFactory());
+    vi.stubGlobal('IDBKeyRange', IDBKeyRange);
+    const options = {
+      projectId: 'prj_test',
+      environment: 'production',
+      endpoint: 'https://ingest.example',
+      apiKey: 'sp_test',
+      lifecycle: false as const,
+      interactions: false as const,
+      network: false as const,
+      performance: false as const,
+    };
+    const failingFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response('{}', { status: 503 }));
+    const firstClient = init({ ...options, fetch: failingFetch });
+    const runtimeError = new Event('error');
+    Object.defineProperties(runtimeError, {
+      message: { value: 'payment failed' },
+      error: { value: new Error('payment failed') },
+    });
+    windowEvents.dispatchEvent(runtimeError);
+
+    await expect(flush({ priority: 'immediate' })).resolves.toEqual({ sent: 0, remaining: 1 });
+    const failedEnvelope = parseEnvelope(failingFetch.mock.calls[0]?.[1]?.body);
+    const failedEventId = failedEnvelope?.items[0]?.payload.id;
+    expect(failedEventId).toBeDefined();
+    firstClient?.destroy();
+
+    const acceptingFetch = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ accepted: 1 }), {
+        status: 202,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    const secondClient = init({ ...options, fetch: acceptingFetch });
+    await expect(flush({ priority: 'immediate' })).resolves.toEqual({ sent: 1, remaining: 0 });
+
+    const acceptedEnvelope = parseEnvelope(acceptingFetch.mock.calls[0]?.[1]?.body);
+    expect(acceptedEnvelope?.items[0]?.payload).toMatchObject({
+      id: failedEventId,
+      name: 'runtime_error',
+    });
+    await expect(
+      new IndexedDbEventOutbox().load({ projectId: 'prj_test', environment: 'production' }),
+    ).resolves.toEqual([]);
+    secondClient?.destroy();
   });
 
   it('contains initialization failures and reports them through onError', () => {

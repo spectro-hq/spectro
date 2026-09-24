@@ -25,6 +25,7 @@
     "web-vitals": "catalog:"
   },
   "devDependencies": {
+    "fake-indexeddb": "6.2.5",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spectro Browser Outbox Smoke Test</title>
+  </head>
+  <body>
+    <main>
+      <h1>Spectro Browser Outbox Smoke Test</h1>
+      <p>
+        Real browser IndexedDB; the Fetch transport is switched between simulated offline and online
+        modes.
+      </p>
+      <p>Mode: <span class="mode" id="mode"></span></p>
+      <div>
+        <button id="capture">Capture unhandled runtime error</button>
+        <button id="flush">Flush urgent events</button>
+        <button id="reload-online">Switch online + reload</button>
+      </div>
+      <pre id="status" aria-live="polite">Starting…</pre>
+    </main>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>
