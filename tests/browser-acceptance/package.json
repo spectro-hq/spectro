@@ -1,0 +1,16 @@
+{
+  "name": "@spectro/browser-acceptance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc -p tsconfig.json --pretty false"
+  },
+  "dependencies": {
+    "@spectro/browser": "workspace:*",
+    "@spectro/protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

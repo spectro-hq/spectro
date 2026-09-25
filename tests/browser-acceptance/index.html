@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spectro Browser Acceptance</title>
+  </head>
+  <body>
+    <main>
+      <h1>Spectro Browser Acceptance</h1>
+      <p>The browser SDK sends signals to the local ingestion service.</p>
+      <p>Mode: <span id="mode"></span></p>
+      <p>Session: <span id="session"></span></p>
+      <button id="capture-error" type="button">Capture runtime error</button>
+      <button id="capture-network" type="button">Capture failed request</button>
+      <button id="capture-interaction" data-spectro-monitor-id="acceptance-action" type="button">
+        Capture interaction
+      </button>
+      <button id="flush" type="button">Flush signals</button>
+      <button id="reload" type="button">Reload with transport restored</button>
+      <pre id="status" aria-live="polite">Starting…</pre>
+    </main>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>

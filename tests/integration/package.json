@@ -11,6 +11,7 @@
     "@clickhouse/client": "catalog:",
     "@nats-io/transport-node": "catalog:",
     "@spectro/api": "workspace:*",
+    "@spectro/browser": "workspace:*",
     "@spectro/ingest": "workspace:*",
     "@spectro/pipeline": "workspace:*",
     "@spectro/processor": "workspace:*",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "fake-indexeddb": "6.2.5",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

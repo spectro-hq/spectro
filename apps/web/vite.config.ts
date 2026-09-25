@@ -5,10 +5,10 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    port: 5174,
+    port: Number(process.env.SPECTRO_WEB_PORT ?? 5174),
     strictPort: true,
     proxy: {
-      '/v1': 'http://127.0.0.1:4400',
+      '/v1': process.env.SPECTRO_WEB_API_TARGET ?? 'http://127.0.0.1:4400',
     },
   },
 });
