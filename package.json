@@ -16,7 +16,8 @@
     "infra:up": "docker compose -f infra/docker/compose.yaml up -d --wait",
     "infra:down": "docker compose -f infra/docker/compose.yaml down",
     "pipeline:status": "node services/processor/dist/status.js",
-    "test:integration": "SPECTRO_INTEGRATION=1 pnpm --filter @spectro/integration-tests test && pnpm --filter @spectro/api test:integration"
+    "test:integration": "SPECTRO_INTEGRATION=1 pnpm --filter @spectro/integration-tests test && pnpm --filter @spectro/api test:integration && pnpm test:ops",
+    "test:ops": "node --test tests/operations/*.test.mjs"
   },
   "devDependencies": {
     "oxfmt": "catalog:",
