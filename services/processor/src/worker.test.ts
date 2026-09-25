@@ -8,7 +8,7 @@ import {
 } from '@spectro/pipeline';
 
 import { EventProcessor, type ProcessedEventWriter } from './processor.js';
-import { ProcessorWorker } from './worker.js';
+import { ProcessorWorker, type ProcessorRetryNotice } from './worker.js';
 
 const envelope: Envelope = {
   version: ENVELOPE_VERSION,
@@ -67,11 +67,16 @@ describe('ProcessorWorker', () => {
     const source: AdmissionSource = {
       next: vi.fn<AdmissionSource['next']>().mockResolvedValue(item),
     };
-    const worker = new ProcessorWorker(source, new EventProcessor(writer), 2_500);
+    const onRetry = vi.fn<(notice: ProcessorRetryNotice) => void>();
+    const worker = new ProcessorWorker(source, new EventProcessor(writer), 2_500, onRetry);
 
     await expect(worker.runOnce()).rejects.toBe(failure);
     expect(item.acknowledge).not.toHaveBeenCalled();
     expect(item.retry).toHaveBeenCalledWith(2_500);
+    expect(onRetry).toHaveBeenCalledWith({
+      envelopeId: item.admitted.envelopeId,
+      retryDelayMs: 2_500,
+    });
   });
 
   it('reports an idle poll without acknowledging anything', async () => {
@@ -82,5 +87,26 @@ describe('ProcessorWorker', () => {
     const worker = new ProcessorWorker(source, new EventProcessor(writer));
 
     await expect(worker.runOnce(10)).resolves.toEqual({ status: 'idle' });
+  });
+
+  it('keeps the processing failure when the diagnostic hook also fails', async () => {
+    const item = delivery();
+    const failure = new Error('event plane unavailable');
+    const source: AdmissionSource = { next: async () => item };
+    const worker = new ProcessorWorker(
+      source,
+      new EventProcessor({
+        append: async () => {
+          throw failure;
+        },
+      }),
+      1_000,
+      () => {
+        throw new Error('logging failed');
+      },
+    );
+
+    await expect(worker.runOnce()).rejects.toBe(failure);
+    expect(item.retry).toHaveBeenCalledWith(1_000);
   });
 });

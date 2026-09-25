@@ -66,6 +66,46 @@ describe('POST /v1/envelope', () => {
     expect(response.body).not.toContain('sp_test');
   });
 
+  it('returns a stable retryable error when durable admission fails', async () => {
+    const app = createIngestApp({
+      apiKey: 'sp_test',
+      store: {
+        async append() {
+          throw new Error('nats://operator:private-secret@localhost:4222');
+        },
+      },
+    });
+    apps.push(app);
+    const event = {
+      id: '01994f34-b106-79a3-9865-d835ac0347a9',
+      type: 'custom',
+      name: 'admission_test',
+      version: 1,
+      timestamp: Date.now(),
+      context: {
+        sdk: { name: '@spectro/browser', version: '0.1.0' },
+        project: { id: 'prj_test' },
+        environment: 'production',
+      },
+      payload: { properties: {} },
+    };
+    const response = await app.inject({
+      method: 'POST',
+      url: '/v1/envelope',
+      headers: { 'x-spectro-key': 'sp_test' },
+      payload: { version: 1, sentAt: Date.now(), items: [{ type: 'event', payload: event }] },
+    });
+
+    expect(response.statusCode).toBe(503);
+    expect(response.json()).toEqual({
+      error: {
+        code: 'admission_unavailable',
+        message: 'Durable event admission is temporarily unavailable.',
+      },
+    });
+    expect(response.body).not.toContain('private-secret');
+  });
+
   it('rejects malformed envelopes atomically', async () => {
     const store = new InMemoryEventStore();
     const app = createIngestApp({ apiKey: 'sp_test', store });

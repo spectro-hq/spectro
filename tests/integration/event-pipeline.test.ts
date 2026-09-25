@@ -16,6 +16,7 @@ import {
   JetStreamAdmissionSink,
   JetStreamAdmissionSource,
   ensureJetStreamPipeline,
+  readAdmissionPipelineSnapshot,
 } from '@spectro/pipeline';
 import {
   ClickHouseProcessedEventWriter,
@@ -45,6 +46,9 @@ describeIntegration('durable event pipeline', () => {
     });
     const projectId = `prj_pipeline_${uuidv7().replaceAll('-', '')}`;
     await ensureJetStreamPipeline(connection);
+    const operations = await readAdmissionPipelineSnapshot(connection);
+    expect(operations.streamMaxBytes).toBeGreaterThan(0);
+    expect(operations.consumerMaxDeliver).toBe(10);
     const ingestApp = createIngestApp({
       apiKey: 'sp_integration',
       store: new JetStreamAdmissionSink(connection, () => 1_789_368_124_000),

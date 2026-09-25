@@ -6,15 +6,27 @@ export type ProcessorWorkResult =
   | { status: 'idle' }
   | ({ status: 'processed'; envelopeId: string } & ProcessEnvelopeResult);
 
+export interface ProcessorRetryNotice {
+  envelopeId: string;
+  retryDelayMs: number;
+}
+
 export class ProcessorWorker {
   readonly #source: AdmissionSource;
   readonly #processor: EventProcessor;
   readonly #retryDelayMs: number;
+  readonly #onRetry: ((notice: ProcessorRetryNotice) => void) | undefined;
 
-  constructor(source: AdmissionSource, processor: EventProcessor, retryDelayMs: number = 1_000) {
+  constructor(
+    source: AdmissionSource,
+    processor: EventProcessor,
+    retryDelayMs: number = 1_000,
+    onRetry?: (notice: ProcessorRetryNotice) => void,
+  ) {
     this.#source = source;
     this.#processor = processor;
     this.#retryDelayMs = retryDelayMs;
+    this.#onRetry = onRetry;
   }
 
   async runOnce(expiresMs?: number): Promise<ProcessorWorkResult> {
@@ -33,6 +45,14 @@ export class ProcessorWorker {
       };
     } catch (error) {
       delivery.retry(this.#retryDelayMs);
+      try {
+        this.#onRetry?.({
+          envelopeId: delivery.admitted.envelopeId,
+          retryDelayMs: this.#retryDelayMs,
+        });
+      } catch {
+        // A diagnostic hook must not replace the processing error or change delivery.
+      }
       throw error;
     }
   }

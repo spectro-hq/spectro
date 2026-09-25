@@ -17,6 +17,7 @@
     "check": "tsc -b --pretty false && tsc -p tsconfig.check.json --pretty false",
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
+    "status": "node dist/status.js",
     "test": "vitest run --exclude 'dist/**' --exclude '**/*.integration.test.ts'",
     "test:integration": "vitest run src/clickhouse.integration.test.ts"
   },

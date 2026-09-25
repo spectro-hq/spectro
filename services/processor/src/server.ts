@@ -1,7 +1,11 @@
 import { createClient } from '@clickhouse/client';
 import { connect } from '@nats-io/transport-node';
 
-import { JetStreamAdmissionSource, ensureJetStreamPipeline } from '@spectro/pipeline';
+import {
+  JetStreamAdmissionSource,
+  ensureJetStreamPipeline,
+  observeAdmissionFailureAdvisories,
+} from '@spectro/pipeline';
 
 import { ClickHouseProcessedEventWriter } from './clickhouse.js';
 import { EventProcessor } from './processor.js';
@@ -25,7 +29,22 @@ try {
   await ensureJetStreamPipeline(connection);
   const source = await JetStreamAdmissionSource.create(connection);
   const processor = new EventProcessor(new ClickHouseProcessedEventWriter(clickhouse));
-  const worker = new ProcessorWorker(source, processor);
+  const worker = new ProcessorWorker(source, processor, 1_000, (notice) => {
+    process.stderr.write(
+      `${JSON.stringify({ service: 'spectro-processor', code: 'processing_retry_scheduled', ...notice })}\n`,
+    );
+  });
+  void observeAdmissionFailureAdvisories(connection, (advisory) => {
+    process.stderr.write(
+      `${JSON.stringify({ service: 'spectro-processor', code: 'admission_delivery_failed', ...advisory })}\n`,
+    );
+  }).catch(() => {
+    if (!abortController.signal.aborted) {
+      process.stderr.write(
+        `${JSON.stringify({ service: 'spectro-processor', code: 'advisory_monitor_unavailable' })}\n`,
+      );
+    }
+  });
 
   while (!abortController.signal.aborted) {
     try {
@@ -33,7 +52,7 @@ try {
       await worker.runOnce(1_000);
     } catch {
       process.stderr.write(
-        'spectro-processor could not persist an admitted envelope; retry scheduled\n',
+        `${JSON.stringify({ service: 'spectro-processor', code: 'processor_iteration_failed' })}\n`,
       );
     }
   }

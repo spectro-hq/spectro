@@ -16,6 +16,7 @@ pnpm install
 pnpm verify
 pnpm infra:up
 pnpm test:integration
+pnpm pipeline:status
 pnpm dev
 ```
 

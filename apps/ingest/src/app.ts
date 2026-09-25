@@ -86,7 +86,17 @@ export function createIngestApp(options: IngestAppOptions = {}): FastifyInstance
         });
       }
 
-      await store.append(validation.data);
+      try {
+        await store.append(validation.data);
+      } catch {
+        request.log.error({ code: 'admission_unavailable' }, 'durable admission failed');
+        return reply.code(503).send({
+          error: {
+            code: 'admission_unavailable',
+            message: 'Durable event admission is temporarily unavailable.',
+          },
+        });
+      }
       return reply.code(202).send({ accepted: validation.data.items.length });
     },
   );
