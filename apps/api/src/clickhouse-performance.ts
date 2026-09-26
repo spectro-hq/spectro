@@ -8,50 +8,32 @@ import {
   type PerformanceListQuery,
   type PerformanceQueryStore,
 } from './performance.js';
-
-const CLICKHOUSE_EVENTS_TABLE = 'spectro.events_v1';
-const unsignedInteger = z.union([z.string(), z.number()]).transform((value, context) => {
-  const parsed = Number(value);
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    context.addIssue({ code: 'custom', message: 'must be a safe unsigned integer' });
-    return z.NEVER;
-  }
-  return parsed;
-});
-const finiteNumber = z.union([z.string(), z.number()]).transform((value, context) => {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    context.addIssue({ code: 'custom', message: 'must be a non-negative finite number' });
-    return z.NEVER;
-  }
-  return parsed;
-});
+import {
+  CLICKHOUSE_EVENTS_TABLE,
+  nonNegativeFiniteNumberSchema,
+  nonNegativeSafeIntegerSchema,
+  type ClickHouseJsonEachRowClient,
+} from './clickhouse-shared.js';
 
 const rowSchema = z.object({
   metric: performanceMetricSchema,
   unit: z.enum(['ms', 'score']),
   page_path: z.string().max(2_048),
-  sample_count: unsignedInteger,
-  affected_session_count: unsignedInteger,
-  average_value: finiteNumber,
-  p75_value: finiteNumber,
-  p95_value: finiteNumber,
-  good_count: unsignedInteger,
-  needs_improvement_count: unsignedInteger,
-  poor_count: unsignedInteger,
-  first_seen_ms: unsignedInteger,
-  last_seen_ms: unsignedInteger,
+  sample_count: nonNegativeSafeIntegerSchema,
+  affected_session_count: nonNegativeSafeIntegerSchema,
+  average_value: nonNegativeFiniteNumberSchema,
+  p75_value: nonNegativeFiniteNumberSchema,
+  p95_value: nonNegativeFiniteNumberSchema,
+  good_count: nonNegativeSafeIntegerSchema,
+  needs_improvement_count: nonNegativeSafeIntegerSchema,
+  poor_count: nonNegativeSafeIntegerSchema,
+  first_seen_ms: nonNegativeSafeIntegerSchema,
+  last_seen_ms: nonNegativeSafeIntegerSchema,
   latest_event_id: z.string(),
   latest_release: z.string().max(128),
 });
 
-export interface ClickHousePerformanceQueryClient {
-  query(request: {
-    readonly query: string;
-    readonly query_params: Record<string, unknown>;
-    readonly format: 'JSONEachRow';
-  }): Promise<{ json(): Promise<unknown> }>;
-}
+export type ClickHousePerformanceQueryClient = ClickHouseJsonEachRowClient;
 
 function toGroup(row: z.infer<typeof rowSchema>): PerformanceGroup {
   return {

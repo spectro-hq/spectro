@@ -41,18 +41,21 @@ export function ConsoleShell({
   const navigation = (
     <>
       <nav aria-label="Primary navigation">
-        {destinations.map(({ title: label, path, icon }) => (
-          <a
-            key={path}
-            className={`rail-link${title === label || (title.startsWith('Session ') && path === '/') ? ' active' : ''}`}
-            href={`${path}?${parameters}`}
-            aria-current={title === label ? 'page' : undefined}
-            title={label}
-          >
-            <SpectroIcon name={icon} />
-            <span>{label}</span>
-          </a>
-        ))}
+        {destinations.map(({ title: label, path, icon }) => {
+          const active = title === label || (title.startsWith('Session ') && path === '/');
+          return (
+            <a
+              key={path}
+              className={`rail-link${active ? ' active' : ''}`}
+              href={`${path}?${parameters}`}
+              aria-current={active ? 'page' : undefined}
+              title={label}
+            >
+              <SpectroIcon name={icon} />
+              <span>{label}</span>
+            </a>
+          );
+        })}
         {(['live', 'schemas'] as const).map((icon) => (
           <span
             key={icon}

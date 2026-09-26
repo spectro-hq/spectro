@@ -8,55 +8,37 @@ import {
   type NetworkListQuery,
   type NetworkQueryStore,
 } from './network.js';
-
-const CLICKHOUSE_EVENTS_TABLE = 'spectro.events_v1';
-const unsignedInteger = z.union([z.string(), z.number()]).transform((value, context) => {
-  const parsed = Number(value);
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    context.addIssue({ code: 'custom', message: 'must be a safe unsigned integer' });
-    return z.NEVER;
-  }
-  return parsed;
-});
-const finiteNumber = z.union([z.string(), z.number()]).transform((value, context) => {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    context.addIssue({ code: 'custom', message: 'must be a non-negative finite number' });
-    return z.NEVER;
-  }
-  return parsed;
-});
+import {
+  CLICKHOUSE_EVENTS_TABLE,
+  nonNegativeFiniteNumberSchema,
+  nonNegativeSafeIntegerSchema,
+  type ClickHouseJsonEachRowClient,
+} from './clickhouse-shared.js';
 
 const rowSchema = z.object({
   initiator: networkInitiatorSchema,
   method: z.string().regex(/^[A-Z]{1,16}$/),
   request_url: z.string().min(1).max(2_048),
   page_path: z.string().max(2_048),
-  request_count: unsignedInteger,
-  failure_count: unsignedInteger,
-  affected_session_count: unsignedInteger,
-  average_duration: finiteNumber,
-  p75_duration: finiteNumber,
-  p95_duration: finiteNumber,
-  status_2xx_count: unsignedInteger,
-  status_3xx_count: unsignedInteger,
-  status_4xx_count: unsignedInteger,
-  status_5xx_count: unsignedInteger,
-  transport_failure_count: unsignedInteger,
-  first_seen_ms: unsignedInteger,
-  last_seen_ms: unsignedInteger,
+  request_count: nonNegativeSafeIntegerSchema,
+  failure_count: nonNegativeSafeIntegerSchema,
+  affected_session_count: nonNegativeSafeIntegerSchema,
+  average_duration: nonNegativeFiniteNumberSchema,
+  p75_duration: nonNegativeFiniteNumberSchema,
+  p95_duration: nonNegativeFiniteNumberSchema,
+  status_2xx_count: nonNegativeSafeIntegerSchema,
+  status_3xx_count: nonNegativeSafeIntegerSchema,
+  status_4xx_count: nonNegativeSafeIntegerSchema,
+  status_5xx_count: nonNegativeSafeIntegerSchema,
+  transport_failure_count: nonNegativeSafeIntegerSchema,
+  first_seen_ms: nonNegativeSafeIntegerSchema,
+  last_seen_ms: nonNegativeSafeIntegerSchema,
   latest_event_id: z.string(),
-  latest_status: unsignedInteger,
+  latest_status: nonNegativeSafeIntegerSchema,
   latest_release: z.string().max(128),
 });
 
-export interface ClickHouseNetworkQueryClient {
-  query(request: {
-    readonly query: string;
-    readonly query_params: Record<string, unknown>;
-    readonly format: 'JSONEachRow';
-  }): Promise<{ json(): Promise<unknown> }>;
-}
+export type ClickHouseNetworkQueryClient = ClickHouseJsonEachRowClient;
 
 function toGroup(row: z.infer<typeof rowSchema>): NetworkGroup {
   return {

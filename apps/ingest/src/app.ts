@@ -13,18 +13,18 @@ import {
 import { InMemoryEventStore, type EventStore } from './store.js';
 
 export interface IngestAppOptions {
-  apiKey?: string;
+  apiKey: string;
   allowedOrigins?: string[];
   logger?: boolean;
   store?: EventStore;
 }
 
-export function createIngestApp(options: IngestAppOptions = {}): FastifyInstance {
+export function createIngestApp(options: IngestAppOptions): FastifyInstance {
   const app = Fastify({
     bodyLimit: MAX_ENVELOPE_BYTES,
     logger: options.logger ?? false,
   });
-  const apiKey = options.apiKey ?? 'sp_local_dev';
+  const { apiKey } = options;
   const allowedOrigins = new Set(options.allowedOrigins ?? ['http://localhost:5173']);
   const store = options.store ?? new InMemoryEventStore();
 

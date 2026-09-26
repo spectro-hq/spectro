@@ -9,8 +9,7 @@ import {
   type EventListQuery,
   type EventQueryStore,
 } from './events.js';
-
-const CLICKHOUSE_EVENTS_TABLE = 'spectro.events_v1';
+import { CLICKHOUSE_EVENTS_TABLE, type ClickHouseJsonEachRowClient } from './clickhouse-shared.js';
 
 const clickHouseEventQueryRowSchema = z
   .object({
@@ -32,13 +31,7 @@ const clickHouseEventQueryRowSchema = z
 
 type ClickHouseEventQueryRow = z.infer<typeof clickHouseEventQueryRowSchema>;
 
-export interface ClickHouseQueryClient {
-  query(request: {
-    readonly query: string;
-    readonly query_params: Record<string, unknown>;
-    readonly format: 'JSONEachRow';
-  }): Promise<{ json(): Promise<unknown> }>;
-}
+export type ClickHouseQueryClient = ClickHouseJsonEachRowClient;
 
 export class StoredEventValidationError extends Error {
   constructor() {

@@ -7,41 +7,29 @@ import {
   type IssueListQuery,
   type IssueQueryStore,
 } from './issues.js';
-
-const CLICKHOUSE_EVENTS_TABLE = 'spectro.events_v1';
-
-const integerSchema = z.union([z.string(), z.number()]).transform((value, context) => {
-  const parsed = typeof value === 'number' ? value : Number(value);
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    context.addIssue({ code: 'custom', message: 'must be a safe unsigned integer' });
-    return z.NEVER;
-  }
-  return parsed;
-});
+import {
+  CLICKHOUSE_EVENTS_TABLE,
+  nonNegativeSafeIntegerSchema,
+  type ClickHouseJsonEachRowClient,
+} from './clickhouse-shared.js';
 
 const issueRowSchema = z
   .object({
     error_fingerprint: z.string().regex(/^[0-9a-f]{32}$/),
     error_name: z.string().max(256),
     error_message: z.string().min(1).max(2_048),
-    occurrence_count: integerSchema,
-    affected_session_count: integerSchema,
-    affected_user_count: integerSchema,
-    first_seen_ms: integerSchema,
-    last_seen_ms: integerSchema,
+    occurrence_count: nonNegativeSafeIntegerSchema,
+    affected_session_count: nonNegativeSafeIntegerSchema,
+    affected_user_count: nonNegativeSafeIntegerSchema,
+    first_seen_ms: nonNegativeSafeIntegerSchema,
+    last_seen_ms: nonNegativeSafeIntegerSchema,
     latest_event_id: z.string(),
     latest_page_path: z.string().max(2_048),
     latest_release: z.string().max(128),
   })
   .strict();
 
-export interface ClickHouseIssueQueryClient {
-  query(request: {
-    readonly query: string;
-    readonly query_params: Record<string, unknown>;
-    readonly format: 'JSONEachRow';
-  }): Promise<{ json(): Promise<unknown> }>;
-}
+export type ClickHouseIssueQueryClient = ClickHouseJsonEachRowClient;
 
 function toIssue(row: z.infer<typeof issueRowSchema>): ErrorIssueSummary {
   return {

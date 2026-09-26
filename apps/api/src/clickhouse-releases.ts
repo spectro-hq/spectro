@@ -7,36 +7,25 @@ import {
   type ReleaseListQuery,
   type ReleaseQueryStore,
 } from './releases.js';
-
-const CLICKHOUSE_EVENTS_TABLE = 'spectro.events_v1';
-const unsignedInteger = z.union([z.string(), z.number()]).transform((value, context) => {
-  const parsed = Number(value);
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    context.addIssue({ code: 'custom', message: 'must be a safe unsigned integer' });
-    return z.NEVER;
-  }
-  return parsed;
-});
+import {
+  CLICKHOUSE_EVENTS_TABLE,
+  nonNegativeSafeIntegerSchema,
+  type ClickHouseJsonEachRowClient,
+} from './clickhouse-shared.js';
 
 const rowSchema = z.object({
   release_version: z.string().min(1).max(128),
-  event_count: unsignedInteger,
-  error_count: unsignedInteger,
-  affected_session_count: unsignedInteger,
-  poor_performance_count: unsignedInteger,
-  network_failure_count: unsignedInteger,
-  first_seen_ms: unsignedInteger,
-  last_seen_ms: unsignedInteger,
+  event_count: nonNegativeSafeIntegerSchema,
+  error_count: nonNegativeSafeIntegerSchema,
+  affected_session_count: nonNegativeSafeIntegerSchema,
+  poor_performance_count: nonNegativeSafeIntegerSchema,
+  network_failure_count: nonNegativeSafeIntegerSchema,
+  first_seen_ms: nonNegativeSafeIntegerSchema,
+  last_seen_ms: nonNegativeSafeIntegerSchema,
   latest_event_id: z.string(),
 });
 
-export interface ClickHouseReleaseQueryClient {
-  query(request: {
-    readonly query: string;
-    readonly query_params: Record<string, unknown>;
-    readonly format: 'JSONEachRow';
-  }): Promise<{ json(): Promise<unknown> }>;
-}
+export type ClickHouseReleaseQueryClient = ClickHouseJsonEachRowClient;
 
 function toRelease(row: z.infer<typeof rowSchema>): ReleaseHealth {
   return {

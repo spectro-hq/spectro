@@ -1,5 +1,5 @@
 import cors from '@fastify/cors';
-import Fastify, { type FastifyInstance } from 'fastify';
+import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
 
 import {
   decodeEventCursor,
@@ -104,6 +104,38 @@ function validationIssues(issues: readonly { path: readonly PropertyKey[]; messa
   }));
 }
 
+async function authorizeProjectAccess(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  authorizer: ProjectAuthorizer,
+  projectId: string,
+): Promise<boolean> {
+  const authorization = request.headers.authorization;
+  if (authorization === undefined) {
+    reply.code(401).send({
+      error: { code: 'unauthorized', message: 'Authentication is required.' },
+    });
+    return false;
+  }
+
+  try {
+    if (await authorizer.authorize({ authorization, projectId })) return true;
+  } catch {
+    reply.code(503).send({
+      error: {
+        code: 'authorization_unavailable',
+        message: 'Authorization is temporarily unavailable.',
+      },
+    });
+    return false;
+  }
+
+  reply.code(403).send({
+    error: { code: 'forbidden', message: 'Access to this project is denied.' },
+  });
+  return false;
+}
+
 export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
   const app = Fastify({ logger: false });
   const authorizer = options.authorizer ?? denyAllProjects;
@@ -129,32 +161,7 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
       });
     }
 
-    if (request.headers.authorization === undefined) {
-      return reply.code(401).send({
-        error: { code: 'unauthorized', message: 'Authentication is required.' },
-      });
-    }
-
-    let authorized: boolean;
-    try {
-      authorized = await authorizer.authorize({
-        authorization: request.headers.authorization,
-        projectId: path.data.projectId,
-      });
-    } catch {
-      return reply.code(503).send({
-        error: {
-          code: 'authorization_unavailable',
-          message: 'Authorization is temporarily unavailable.',
-        },
-      });
-    }
-
-    if (!authorized) {
-      return reply.code(403).send({
-        error: { code: 'forbidden', message: 'Access to this project is denied.' },
-      });
-    }
+    if (!(await authorizeProjectAccess(request, reply, authorizer, path.data.projectId))) return;
 
     const query = eventListQuerySchema.safeParse(request.query);
     if (!query.success) {
@@ -221,30 +228,7 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
         },
       });
     }
-    if (request.headers.authorization === undefined) {
-      return reply.code(401).send({
-        error: { code: 'unauthorized', message: 'Authentication is required.' },
-      });
-    }
-    let authorized: boolean;
-    try {
-      authorized = await authorizer.authorize({
-        authorization: request.headers.authorization,
-        projectId: path.data.projectId,
-      });
-    } catch {
-      return reply.code(503).send({
-        error: {
-          code: 'authorization_unavailable',
-          message: 'Authorization is temporarily unavailable.',
-        },
-      });
-    }
-    if (!authorized) {
-      return reply.code(403).send({
-        error: { code: 'forbidden', message: 'Access to this project is denied.' },
-      });
-    }
+    if (!(await authorizeProjectAccess(request, reply, authorizer, path.data.projectId))) return;
     const query = performanceListQuerySchema.safeParse(request.query);
     if (!query.success) {
       return reply.code(400).send({
@@ -305,30 +289,7 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
         },
       });
     }
-    if (request.headers.authorization === undefined) {
-      return reply.code(401).send({
-        error: { code: 'unauthorized', message: 'Authentication is required.' },
-      });
-    }
-    let authorized: boolean;
-    try {
-      authorized = await authorizer.authorize({
-        authorization: request.headers.authorization,
-        projectId: path.data.projectId,
-      });
-    } catch {
-      return reply.code(503).send({
-        error: {
-          code: 'authorization_unavailable',
-          message: 'Authorization is temporarily unavailable.',
-        },
-      });
-    }
-    if (!authorized) {
-      return reply.code(403).send({
-        error: { code: 'forbidden', message: 'Access to this project is denied.' },
-      });
-    }
+    if (!(await authorizeProjectAccess(request, reply, authorizer, path.data.projectId))) return;
     const query = networkListQuerySchema.safeParse(request.query);
     if (!query.success) {
       return reply.code(400).send({
@@ -391,30 +352,7 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
         },
       });
     }
-    if (request.headers.authorization === undefined) {
-      return reply.code(401).send({
-        error: { code: 'unauthorized', message: 'Authentication is required.' },
-      });
-    }
-    let authorized: boolean;
-    try {
-      authorized = await authorizer.authorize({
-        authorization: request.headers.authorization,
-        projectId: path.data.projectId,
-      });
-    } catch {
-      return reply.code(503).send({
-        error: {
-          code: 'authorization_unavailable',
-          message: 'Authorization is temporarily unavailable.',
-        },
-      });
-    }
-    if (!authorized) {
-      return reply.code(403).send({
-        error: { code: 'forbidden', message: 'Access to this project is denied.' },
-      });
-    }
+    if (!(await authorizeProjectAccess(request, reply, authorizer, path.data.projectId))) return;
     const query = releaseListQuerySchema.safeParse(request.query);
     if (!query.success) {
       return reply.code(400).send({
@@ -473,32 +411,7 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
       });
     }
 
-    if (request.headers.authorization === undefined) {
-      return reply.code(401).send({
-        error: { code: 'unauthorized', message: 'Authentication is required.' },
-      });
-    }
-
-    let authorized: boolean;
-    try {
-      authorized = await authorizer.authorize({
-        authorization: request.headers.authorization,
-        projectId: path.data.projectId,
-      });
-    } catch {
-      return reply.code(503).send({
-        error: {
-          code: 'authorization_unavailable',
-          message: 'Authorization is temporarily unavailable.',
-        },
-      });
-    }
-
-    if (!authorized) {
-      return reply.code(403).send({
-        error: { code: 'forbidden', message: 'Access to this project is denied.' },
-      });
-    }
+    if (!(await authorizeProjectAccess(request, reply, authorizer, path.data.projectId))) return;
 
     const query = issueListQuerySchema.safeParse(request.query);
     if (!query.success) {
@@ -603,29 +516,7 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
         },
       });
     }
-    if (request.headers.authorization === undefined) {
-      return reply.code(401).send({
-        error: { code: 'unauthorized', message: 'Authentication is required.' },
-      });
-    }
-    try {
-      const authorized = await authorizer.authorize({
-        authorization: request.headers.authorization,
-        projectId: path.data.projectId,
-      });
-      if (!authorized) {
-        return reply.code(403).send({
-          error: { code: 'forbidden', message: 'Access to this project is denied.' },
-        });
-      }
-    } catch {
-      return reply.code(503).send({
-        error: {
-          code: 'authorization_unavailable',
-          message: 'Authorization is temporarily unavailable.',
-        },
-      });
-    }
+    if (!(await authorizeProjectAccess(request, reply, authorizer, path.data.projectId))) return;
     const body = issueLifecycleBodySchema.safeParse(request.body);
     if (!body.success) {
       return reply.code(400).send({
@@ -666,30 +557,7 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
         },
       });
     }
-    if (request.headers.authorization === undefined) {
-      return reply.code(401).send({
-        error: { code: 'unauthorized', message: 'Authentication is required.' },
-      });
-    }
-    let authorized: boolean;
-    try {
-      authorized = await authorizer.authorize({
-        authorization: request.headers.authorization,
-        projectId: path.data.projectId,
-      });
-    } catch {
-      return reply.code(503).send({
-        error: {
-          code: 'authorization_unavailable',
-          message: 'Authorization is temporarily unavailable.',
-        },
-      });
-    }
-    if (!authorized) {
-      return reply.code(403).send({
-        error: { code: 'forbidden', message: 'Access to this project is denied.' },
-      });
-    }
+    if (!(await authorizeProjectAccess(request, reply, authorizer, path.data.projectId))) return;
     try {
       return {
         data: await issueLifecycleStore.history({
