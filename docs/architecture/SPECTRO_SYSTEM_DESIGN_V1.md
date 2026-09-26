@@ -23,6 +23,8 @@ Spectro Console
 
 The web console, product API, and ingestion service are separate deployable units. Ingestion publishes to JetStream, the processor writes the ClickHouse event plane, and the product API reads it through an injected query port. Product authorization is also injected; a deny-by-default static adapter exists only for local development and does not decide the production identity provider.
 
+For the first hosted SaaS release, the product API owns Console sessions and checks PostgreSQL organization membership and permissions on every protected request. An operator-managed OIDC provider authenticates people; ingestion independently authorizes project- and environment-bound browser write keys. [ADR-050](../adr/ADR-050_HOSTED_SAAS_AUTHENTICATION.md) records this production model.
+
 ## Monorepo boundaries
 
 ```text

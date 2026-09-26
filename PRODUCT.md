@@ -26,6 +26,8 @@ Spectro uses one contextual signal model across observability and analytics. Whe
 
 Customer web applications send events through `@spectro/browser` to an independent ingestion service. Authenticated teams investigate projects and environments through a high-interaction console, changing time range, release, browser, device, and other filters while drilling from aggregates into issues, sessions, and individual events.
 
+The first production release is an operator-hosted, multi-tenant SaaS. Self-hosted distribution is outside the first-launch scope.
+
 ## Capabilities and Constraints
 
 - V1 domains: browser SDK, errors, performance, network, sessions/behavior, and a unified event explorer.
