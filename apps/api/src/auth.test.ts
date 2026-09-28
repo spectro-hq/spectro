@@ -36,4 +36,14 @@ describe('StaticProjectAuthorizer', () => {
       }),
     ).resolves.toBe(false);
   });
+
+  it('refuses the static adapter in production even with a configured token', () => {
+    expect(() =>
+      createLocalProjectAuthorizer({
+        NODE_ENV: 'production',
+        SPECTRO_API_LOCAL_PROJECT_ID: 'prj_checkout',
+        SPECTRO_API_LOCAL_TOKEN: 'local-secret',
+      }),
+    ).toThrow('Static project authorization is unavailable in production');
+  });
 });

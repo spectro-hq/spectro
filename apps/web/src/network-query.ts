@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { apiReadHeaders } from './auth-client.js';
 
 import { isTimeRange, type DataSource, type TimeRange } from './event-query.js';
 
@@ -130,7 +131,8 @@ export async function fetchNetworkPage(input: {
   readonly signal?: AbortSignal;
 }): Promise<NetworkPage> {
   const response = await fetch(buildNetworkQueryUrl(input.query), {
-    headers: { authorization: `Bearer ${input.token}` },
+    credentials: 'same-origin',
+    headers: apiReadHeaders(input.token),
     ...(input.signal ? { signal: input.signal } : {}),
   });
   if (!response.ok) {

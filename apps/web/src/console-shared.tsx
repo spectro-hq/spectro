@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { SpectroIcon } from './spectro-icons.js';
+import { hostedConsole } from './auth-client.js';
 
 type ColorTheme = 'light' | 'dark';
 
@@ -91,6 +92,7 @@ export function CommittedInput({
 }
 
 export function readSessionToken(): string {
+  if (hostedConsole) return 'hosted-session';
   try {
     return sessionStorage.getItem('spectro.local-api-token') ?? '';
   } catch {
@@ -99,6 +101,7 @@ export function readSessionToken(): string {
 }
 
 export function writeSessionToken(token: string): void {
+  if (hostedConsole) return;
   try {
     if (token.length > 0) sessionStorage.setItem('spectro.local-api-token', token);
     else sessionStorage.removeItem('spectro.local-api-token');

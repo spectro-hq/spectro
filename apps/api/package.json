@@ -25,9 +25,11 @@
   },
   "dependencies": {
     "@clickhouse/client": "catalog:",
+    "@fastify/cookie": "11.1.2",
     "@fastify/cors": "catalog:",
     "@spectro/protocol": "workspace:*",
     "fastify": "catalog:",
+    "openid-client": "6.8.8",
     "postgres": "^3.4.9",
     "zod": "catalog:"
   },

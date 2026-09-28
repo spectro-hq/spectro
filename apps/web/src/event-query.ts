@@ -1,5 +1,6 @@
 import type { EventType } from '@spectro/protocol';
 import { z } from 'zod';
+import { apiReadHeaders } from './auth-client.js';
 
 const eventTypeSchema = z.enum([
   'session',
@@ -192,7 +193,8 @@ export async function fetchEventPage(input: {
   readonly signal?: AbortSignal;
 }): Promise<EventListPage> {
   const response = await fetch(buildEventQueryUrl(input.query), {
-    headers: { authorization: `Bearer ${input.token}` },
+    credentials: 'same-origin',
+    headers: apiReadHeaders(input.token),
     ...(input.signal === undefined ? {} : { signal: input.signal }),
   });
 

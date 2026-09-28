@@ -4,6 +4,7 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useMemo, useState, type FormEvent } from 'react';
 
 import { CommittedInput, readSessionToken, writeSessionToken } from './console-shared.js';
+import { hostedConsole } from './auth-client.js';
 import { isTimeRange, TIME_RANGES } from './event-query.js';
 import { createIllustrativePerformance } from './illustrative-performance.js';
 import {
@@ -183,17 +184,19 @@ export function PerformanceExplorer() {
             >
               <SpectroIcon name="refresh" />
             </button>
-            <button
-              className="connection-button"
-              type="button"
-              onClick={() => setConnectionOpen((value) => !value)}
-            >
-              {token.length > 0 ? 'Connection' : 'Connect API'}
-            </button>
+            {!hostedConsole ? (
+              <button
+                className="connection-button"
+                type="button"
+                onClick={() => setConnectionOpen((value) => !value)}
+              >
+                {token.length > 0 ? 'Connection' : 'Connect API'}
+              </button>
+            ) : null}
           </div>
         </section>
 
-        {connectionOpen ? (
+        {!hostedConsole && connectionOpen ? (
           <section className="connection-panel" aria-labelledby="performance-connection-title">
             <div>
               <h2 id="performance-connection-title">Local query connection</h2>
@@ -225,9 +228,11 @@ export function PerformanceExplorer() {
           <section className="illustrative-banner" aria-live="polite">
             <span>Illustrative data</span>
             <p>These aggregates demonstrate performance investigation, not production telemetry.</p>
-            <button type="button" onClick={() => setConnectionOpen(true)}>
-              Connect ClickHouse query
-            </button>
+            {!hostedConsole ? (
+              <button type="button" onClick={() => setConnectionOpen(true)}>
+                Connect ClickHouse query
+              </button>
+            ) : null}
           </section>
         ) : null}
 

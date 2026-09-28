@@ -1,4 +1,5 @@
 import { ConsoleShell } from './console-shell.js';
+import { fetchConsoleSession, hostedConsole } from './auth-client.js';
 import {
   QueryClient,
   QueryClientProvider,
@@ -51,6 +52,32 @@ import { SpectroIcon } from './spectro-icons.js';
 import './styles.css';
 
 function AppFrame() {
+  const session = useQuery({
+    queryKey: ['console-session'],
+    queryFn: fetchConsoleSession,
+    enabled: hostedConsole,
+    retry: false,
+  });
+  if (hostedConsole && session.isPending) {
+    return <main className="auth-gate">Checking your session…</main>;
+  }
+  if (hostedConsole && session.isError) {
+    return (
+      <main className="auth-gate">
+        <h1>
+          {session.error.message === 'signed_out' ? 'Sign in to Spectro' : 'Session unavailable'}
+        </h1>
+        <p>
+          {session.error.message === 'signed_out'
+            ? 'Your workspace requires a secure session.'
+            : 'The service could not verify your session. Please try again.'}
+        </p>
+        <a className="primary-button" href="/v1/auth/login">
+          Sign in
+        </a>
+      </main>
+    );
+  }
   return <Outlet />;
 }
 
@@ -350,17 +377,19 @@ function EventExplorer() {
             >
               <SpectroIcon name="refresh" />
             </button>
-            <button
-              className="connection-button"
-              type="button"
-              onClick={() => setConnectionOpen((value) => !value)}
-            >
-              {token.length > 0 ? 'Connection' : 'Connect API'}
-            </button>
+            {!hostedConsole ? (
+              <button
+                className="connection-button"
+                type="button"
+                onClick={() => setConnectionOpen((value) => !value)}
+              >
+                {token.length > 0 ? 'Connection' : 'Connect API'}
+              </button>
+            ) : null}
           </div>
         </section>
 
-        {connectionOpen ? (
+        {!hostedConsole && connectionOpen ? (
           <section className="connection-panel" aria-labelledby="connection-title">
             <div>
               <h2 id="connection-title">Local query connection</h2>
@@ -400,9 +429,11 @@ function EventExplorer() {
           <section className="illustrative-banner" aria-live="polite">
             <span>Illustrative data</span>
             <p>These events demonstrate the explorer and are not production telemetry.</p>
-            <button type="button" onClick={() => setConnectionOpen(true)}>
-              Connect ClickHouse query
-            </button>
+            {!hostedConsole ? (
+              <button type="button" onClick={() => setConnectionOpen(true)}>
+                Connect ClickHouse query
+              </button>
+            ) : null}
           </section>
         ) : null}
 
@@ -689,17 +720,19 @@ function SessionExplorer() {
             >
               <SpectroIcon name="refresh" />
             </button>
-            <button
-              className="connection-button"
-              type="button"
-              onClick={() => setConnectionOpen((value) => !value)}
-            >
-              {token.length > 0 ? 'Connection' : 'Connect API'}
-            </button>
+            {!hostedConsole ? (
+              <button
+                className="connection-button"
+                type="button"
+                onClick={() => setConnectionOpen((value) => !value)}
+              >
+                {token.length > 0 ? 'Connection' : 'Connect API'}
+              </button>
+            ) : null}
           </div>
         </section>
 
-        {connectionOpen ? (
+        {!hostedConsole && connectionOpen ? (
           <section className="connection-panel" aria-labelledby="session-connection-title">
             <div>
               <h2 id="session-connection-title">Local query connection</h2>
@@ -731,9 +764,11 @@ function SessionExplorer() {
           <section className="illustrative-banner" aria-live="polite">
             <span>Illustrative data</span>
             <p>This session demonstrates investigation flow, not production telemetry.</p>
-            <button type="button" onClick={() => setConnectionOpen(true)}>
-              Connect ClickHouse query
-            </button>
+            {!hostedConsole ? (
+              <button type="button" onClick={() => setConnectionOpen(true)}>
+                Connect ClickHouse query
+              </button>
+            ) : null}
           </section>
         ) : null}
 
@@ -1013,17 +1048,19 @@ function IssuesExplorer() {
             >
               <SpectroIcon name="refresh" />
             </button>
-            <button
-              className="connection-button"
-              type="button"
-              onClick={() => setConnectionOpen((value) => !value)}
-            >
-              {token.length > 0 ? 'Connection' : 'Connect API'}
-            </button>
+            {!hostedConsole ? (
+              <button
+                className="connection-button"
+                type="button"
+                onClick={() => setConnectionOpen((value) => !value)}
+              >
+                {token.length > 0 ? 'Connection' : 'Connect API'}
+              </button>
+            ) : null}
           </div>
         </section>
 
-        {connectionOpen ? (
+        {!hostedConsole && connectionOpen ? (
           <section className="connection-panel" aria-labelledby="issue-connection-title">
             <div>
               <h2 id="issue-connection-title">Local query connection</h2>
@@ -1060,9 +1097,11 @@ function IssuesExplorer() {
           <section className="illustrative-banner" aria-live="polite">
             <span>Illustrative data</span>
             <p>These grouped errors demonstrate investigation flow, not production telemetry.</p>
-            <button type="button" onClick={() => setConnectionOpen(true)}>
-              Connect ClickHouse query
-            </button>
+            {!hostedConsole ? (
+              <button type="button" onClick={() => setConnectionOpen(true)}>
+                Connect ClickHouse query
+              </button>
+            ) : null}
           </section>
         ) : null}
 
