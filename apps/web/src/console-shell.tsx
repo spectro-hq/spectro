@@ -82,6 +82,15 @@ export function ConsoleShell({
   );
   return (
     <div className={`console-shell shared-shell${collapsed ? ' rail-collapsed' : ''}`}>
+      <aside className="console-rail shared-rail" id="console-sidebar" aria-label="Sidebar">
+        <div className="rail-brand desktop-rail-brand">
+          <a className="wordmark" href={`/?${parameters}`} aria-label="Spectro events">
+            <SpectroMark />
+            <span>spectro</span>
+          </a>
+        </div>
+        {navigation}
+      </aside>
       <header className="console-topbar shared-topbar">
         <a className="wordmark topbar-brand" href={`/?${parameters}`} aria-label="Spectro events">
           <SpectroMark />
@@ -129,9 +138,6 @@ export function ConsoleShell({
           <ThemeToggle />
         </div>
       </header>
-      <aside className="console-rail shared-rail" id="console-sidebar" aria-label="Sidebar">
-        {navigation}
-      </aside>
       {children}
       <dialog
         className="mobile-navigation"

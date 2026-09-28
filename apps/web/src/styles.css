@@ -3233,12 +3233,18 @@ tr.selected .session-link {
 .shared-shell.rail-collapsed {
   --sidebar-width: 64px;
 }
+@media (min-width: 761px) {
+  .shared-shell {
+    transition: grid-template-columns 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
 .shared-shell .shared-rail {
   grid-column: 1;
-  grid-row: 2;
-  top: 64px;
-  height: calc(100dvh - 64px);
-  padding: 16px 10px 18px;
+  grid-row: 1 / -1;
+  top: 0;
+  height: 100dvh;
+  align-self: start;
+  padding: 0 10px 18px;
   justify-content: flex-start;
   gap: 20px;
   background: var(--surface);
@@ -3258,16 +3264,29 @@ tr.selected .session-link {
 }
 
 .shared-shell .rail-link > span {
-  display: inline;
+  display: block;
   position: static;
   width: auto;
   height: auto;
-  overflow: visible;
+  overflow: hidden;
   clip: auto;
+  min-width: 0;
+  max-width: 12em;
+  opacity: 1;
+  transform: translateX(0);
+  white-space: nowrap;
+  transition:
+    max-width 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 150ms ease-out,
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .shared-shell .rail-link {
   justify-content: flex-start;
+  gap: 11px;
   padding-inline: 12px;
+  transition:
+    gap 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding-inline 240ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .shared-rail .rail-link.active,
 .shared-rail .rail-link:not([aria-disabled='true']):hover {
@@ -3301,16 +3320,40 @@ tr.selected .session-link {
   outline-offset: 1px;
 }
 .shared-shell .shared-topbar {
-  grid-column: 1 / -1;
+  grid-column: 2;
   grid-row: 1;
   min-width: 0;
   position: sticky;
   top: 0;
   display: grid;
-  grid-template-columns: var(--sidebar-width) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   background: var(--surface);
-  padding: 0 20px 0 0;
+  padding: 0 20px;
   border-radius: 0;
+}
+.shared-topbar .topbar-brand {
+  display: none;
+}
+.desktop-rail-brand {
+  flex: 0 0 64px;
+  padding-inline: 20px;
+  border-bottom: 0;
+}
+.desktop-rail-brand .wordmark {
+  gap: 10px;
+  transition: gap 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.desktop-rail-brand .wordmark > span {
+  min-width: 0;
+  max-width: 8em;
+  overflow: hidden;
+  opacity: 1;
+  transform: translateX(0);
+  white-space: nowrap;
+  transition:
+    max-width 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 150ms ease-out,
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .topbar-brand {
   min-width: 0;
@@ -3324,7 +3367,6 @@ tr.selected .session-link {
   align-items: center;
   gap: 12px;
   min-width: 0;
-  padding-left: 20px;
 }
 .shell-breadcrumbs {
   display: inline-flex;
@@ -3369,15 +3411,17 @@ tr.selected .session-link {
 }
 .rail-collapsed .shared-rail .rail-link {
   justify-content: center;
-  padding: 0;
+  gap: 0;
+  padding-inline: 0;
 }
 .rail-collapsed .shared-rail .rail-link > span,
-.rail-collapsed .topbar-brand > span {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
+.rail-collapsed .desktop-rail-brand .wordmark > span {
+  max-width: 0;
+  opacity: 0;
+  transform: translateX(-5px);
+}
+.rail-collapsed .desktop-rail-brand .wordmark {
+  gap: 0;
 }
 .mobile-menu {
   display: none;
@@ -3445,6 +3489,7 @@ tr.selected .session-link {
     border-radius: 0;
   }
   .shared-topbar .topbar-brand {
+    display: inline-flex;
     padding: 0;
   }
   .shared-topbar .topbar-brand > span {

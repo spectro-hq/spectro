@@ -45,7 +45,7 @@ const iconPaths: Readonly<Record<SpectroIconName, ReactNode>> = {
       <path d="M14 6V4.5A1.5 1.5 0 0 0 12.5 3h-9A1.5 1.5 0 0 0 2 4.5v9A1.5 1.5 0 0 0 3.5 15H6" />
     </>
   ),
-  events: <path d="M3 9v2m3.5-5v8m3.5-11v14m3.5-11v8M17 9v2" />,
+  events: <path d="M3.5 12H7.5L9.5 8L12 16L14.5 10L16 12H20.5" />,
   filter: (
     <>
       <path d="M2.5 4h15l-6 6.5v4.25l-3 1.75v-6Z" />
@@ -153,7 +153,7 @@ export function SpectroIcon({
       className="icon spectro-icon"
       fill="none"
       height={size}
-      viewBox="0 0 20 20"
+      viewBox={name === 'events' ? '0 0 24 24' : '0 0 20 20'}
       width={size}
     >
       <g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
