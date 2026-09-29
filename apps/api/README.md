@@ -59,3 +59,5 @@ Hosted mode requires `SPECTRO_AUTH_MODE=hosted`, `SPECTRO_POSTGRES_URL`, `SPECTR
 `GET /v1/auth/login` starts login; `GET /v1/auth/callback` consumes its browser-bound, one-time state and creates a seven-day, revocable host-only session. `GET /v1/auth/session` returns the current Spectro user ID and session-bound CSRF token (never the session credential). `POST /v1/auth/logout` requires an exact same-origin `Origin` header and `X-CSRF-Token` and revokes the session. Issue PATCH uses the same CSRF check. All hosted project reads and writes verify the live session, organization membership, project, environment, and action. Never send OIDC provider tokens to the SPA.
 
 This slice does not provision organizations or projects on first login. An authenticated user without explicit membership receives 403 for project data. Invitation/onboarding and scoped browser ingestion keys remain separate ADR-050 follow-ups.
+
+For Auth0 acceptance before a staging domain is available, see [local HTTPS authentication](../../docs/operations/auth-local.md). For a deployed environment, see [hosted authentication staging acceptance](../../docs/operations/hosted-auth-staging.md).
