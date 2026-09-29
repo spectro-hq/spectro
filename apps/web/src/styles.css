@@ -3523,3 +3523,15 @@ tr.selected .session-link {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+/* Hosted Console authentication gate */
+.auth-gate {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1rem;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 2rem;
+}

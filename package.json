@@ -17,7 +17,12 @@
     "infra:down": "docker compose -f infra/docker/compose.yaml down",
     "pipeline:status": "node services/processor/dist/status.js",
     "test:integration": "SPECTRO_INTEGRATION=1 pnpm --filter @spectro/integration-tests test && pnpm --filter @spectro/api test:integration && pnpm test:ops",
-    "test:ops": "node --test tests/operations/*.test.mjs"
+    "test:ops": "node --test tests/operations/*.test.mjs",
+    "test:auth:staging": "node --test tests/operations/hosted-auth-preflight.test.mjs",
+    "auth:local:setup": "node scripts/setup-auth-local.mjs",
+    "auth:local:prepare": "pnpm auth:local:setup && docker compose -f infra/auth-local/compose.yaml up -d --wait && pnpm --filter @spectro/api... --filter @spectro/web... build && node --env-file=.env.auth-local apps/api/dist/migrate.js",
+    "auth:local:api": "node --env-file=.env.auth-local apps/api/dist/server.js",
+    "auth:local:web": "pnpm --filter @spectro/web exec vite preview --config vite.auth-local.config.ts"
   },
   "devDependencies": {
     "oxfmt": "catalog:",

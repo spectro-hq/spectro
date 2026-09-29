@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ThemeToggle } from './console-shared.js';
+import { hostedConsole, logoutConsole } from './auth-client.js';
 import { SpectroIcon, SpectroMark } from './spectro-icons.js';
 
 const destinations = [
@@ -27,6 +28,7 @@ export function ConsoleShell({
     }
   });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [signoutError, setSignoutError] = useState(false);
   const drawer = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (mobileOpen) drawer.current?.showModal();
@@ -132,12 +134,28 @@ export function ConsoleShell({
           <div className="runtime-state">
             <span className={`status-light ${search.source}`} aria-hidden="true" />
             <span>
-              {search.source === 'live' ? 'Local API connected' : 'Illustrative workspace'}
+              {search.source === 'live'
+                ? hostedConsole
+                  ? 'Hosted Console'
+                  : 'Local API connected'
+                : 'Illustrative workspace'}
             </span>
           </div>
+          {hostedConsole ? (
+            <button
+              className="text-button"
+              type="button"
+              onClick={() => {
+                void logoutConsole().catch(() => setSignoutError(true));
+              }}
+            >
+              Sign out
+            </button>
+          ) : null}
           <ThemeToggle />
         </div>
       </header>
+      {signoutError ? <p role="alert">Sign out failed. Please try again.</p> : null}
       {children}
       <dialog
         className="mobile-navigation"

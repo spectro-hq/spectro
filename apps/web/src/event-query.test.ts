@@ -106,7 +106,7 @@ describe('fetchEventPage', () => {
     ).resolves.toEqual(body);
     expect(fetchMock).toHaveBeenCalledWith(
       '/v1/projects/prj_checkout/events?environment=production&from=0&to=100&limit=50',
-      { headers: { authorization: 'Bearer local-token' } },
+      { credentials: 'same-origin', headers: { authorization: 'Bearer local-token' } },
     );
   });
 

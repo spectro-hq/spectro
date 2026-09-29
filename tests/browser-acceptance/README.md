@@ -10,7 +10,7 @@ untouched:
 
 ```sh
 SPECTRO_API_PORT=4410 SPECTRO_API_HOST=127.0.0.1 \
-  SPECTRO_API_LOCAL_PROJECT_ID=prj_browser_acceptance \
+  SPECTRO_AUTH_MODE=local SPECTRO_API_LOCAL_PROJECT_ID=prj_browser_acceptance \
   SPECTRO_API_LOCAL_TOKEN=sp_acceptance_local pnpm --filter @spectro/api start
 
 SPECTRO_WEB_PORT=5189 SPECTRO_WEB_API_TARGET=http://127.0.0.1:4410 \

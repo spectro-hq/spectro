@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { apiReadHeaders, fetchConsoleSession, hostedConsole } from './auth-client.js';
 
 import { isEventName, isTimeRange, type DataSource, type TimeRange } from './event-query.js';
 
@@ -122,7 +123,8 @@ export async function fetchIssuePage(input: {
   readonly signal?: AbortSignal;
 }): Promise<IssuePage> {
   const response = await fetch(buildIssueQueryUrl(input.query), {
-    headers: { authorization: `Bearer ${input.token}` },
+    credentials: 'same-origin',
+    headers: apiReadHeaders(input.token),
     ...(input.signal === undefined ? {} : { signal: input.signal }),
   });
   if (!response.ok) {
@@ -146,12 +148,15 @@ export async function updateIssueStatus(input: {
   readonly status: IssueStatus;
   readonly updatedAt: string;
 }> {
+  const csrfToken = hostedConsole ? (await fetchConsoleSession()).csrfToken : undefined;
   const response = await fetch(
     `/v1/projects/${encodeURIComponent(input.projectId)}/issues/${input.fingerprint}`,
     {
       method: 'PATCH',
+      credentials: 'same-origin',
       headers: {
-        authorization: `Bearer ${input.token}`,
+        ...apiReadHeaders(input.token),
+        ...(csrfToken === undefined ? {} : { 'x-csrf-token': csrfToken }),
         'content-type': 'application/json',
       },
       body: JSON.stringify({ environment: input.environment, status: input.status }),
@@ -188,7 +193,8 @@ export async function fetchIssueHistory(input: {
   const response = await fetch(
     `/v1/projects/${encodeURIComponent(input.projectId)}/issues/${input.fingerprint}/history?${parameters.toString()}`,
     {
-      headers: { authorization: `Bearer ${input.token}` },
+      credentials: 'same-origin',
+      headers: apiReadHeaders(input.token),
       ...(input.signal === undefined ? {} : { signal: input.signal }),
     },
   );

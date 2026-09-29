@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { apiReadHeaders } from './auth-client.js';
 
 import { isTimeRange, type DataSource, type TimeRange } from './event-query.js';
 
@@ -74,7 +75,8 @@ export async function fetchReleasePage(input: {
   readonly signal?: AbortSignal;
 }): Promise<ReleasePage> {
   const response = await fetch(buildReleaseQueryUrl(input.query), {
-    headers: { authorization: `Bearer ${input.token}` },
+    credentials: 'same-origin',
+    headers: apiReadHeaders(input.token),
     ...(input.signal ? { signal: input.signal } : {}),
   });
   if (!response.ok) {

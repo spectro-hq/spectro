@@ -40,6 +40,9 @@ export class StaticProjectAuthorizer implements ProjectAuthorizer {
 }
 
 export function createLocalProjectAuthorizer(environment: NodeJS.ProcessEnv): ProjectAuthorizer {
+  if (environment.NODE_ENV === 'production') {
+    throw new Error('Static project authorization is unavailable in production');
+  }
   const projectId = environment.SPECTRO_API_LOCAL_PROJECT_ID;
   const token = environment.SPECTRO_API_LOCAL_TOKEN;
 

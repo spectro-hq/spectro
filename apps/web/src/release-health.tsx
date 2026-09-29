@@ -4,6 +4,7 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useMemo, useState, type FormEvent } from 'react';
 
 import { CommittedInput, readSessionToken, writeSessionToken } from './console-shared.js';
+import { hostedConsole } from './auth-client.js';
 import { isTimeRange, TIME_RANGES } from './event-query.js';
 import { createIllustrativeReleases } from './illustrative-releases.js';
 import {
@@ -174,17 +175,19 @@ export function ReleaseHealthExplorer() {
             >
               <SpectroIcon name="refresh" />
             </button>
-            <button
-              className="connection-button"
-              type="button"
-              onClick={() => setConnectionOpen((value) => !value)}
-            >
-              {token ? 'Connection' : 'Connect API'}
-            </button>
+            {!hostedConsole ? (
+              <button
+                className="connection-button"
+                type="button"
+                onClick={() => setConnectionOpen((value) => !value)}
+              >
+                {token ? 'Connection' : 'Connect API'}
+              </button>
+            ) : null}
           </div>
         </section>
 
-        {connectionOpen ? (
+        {!hostedConsole && connectionOpen ? (
           <section className="connection-panel" aria-labelledby="release-connection-title">
             <div>
               <h2 id="release-connection-title">Local query connection</h2>
@@ -211,9 +214,11 @@ export function ReleaseHealthExplorer() {
           <section className="illustrative-banner" aria-live="polite">
             <span>Illustrative data</span>
             <p>These versions demonstrate release investigation, not production telemetry.</p>
-            <button type="button" onClick={() => setConnectionOpen(true)}>
-              Connect ClickHouse query
-            </button>
+            {!hostedConsole ? (
+              <button type="button" onClick={() => setConnectionOpen(true)}>
+                Connect ClickHouse query
+              </button>
+            ) : null}
           </section>
         ) : null}
 

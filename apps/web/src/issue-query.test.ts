@@ -64,6 +64,7 @@ describe('issue query client', () => {
       }),
     ).resolves.toEqual(page);
     expect(fetchMock).toHaveBeenCalledWith(expect.not.stringContaining('local-secret'), {
+      credentials: 'same-origin',
       headers: { authorization: 'Bearer local-secret' },
     });
   });
@@ -126,7 +127,7 @@ describe('issue query client', () => {
     ).resolves.toEqual(history);
     expect(fetchMock).toHaveBeenCalledWith(
       `/v1/projects/prj_checkout/issues/${fingerprint}/history?environment=production&limit=5`,
-      { headers: { authorization: 'Bearer local-secret' } },
+      { credentials: 'same-origin', headers: { authorization: 'Bearer local-secret' } },
     );
   });
 });

@@ -1,5 +1,6 @@
 import cors from '@fastify/cors';
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
+import { z } from 'zod';
 
 import {
   decodeEventCursor,
@@ -47,6 +48,12 @@ import {
   type ReleaseListQuery,
   type ReleaseQueryStore,
 } from './releases.js';
+import {
+  registerHostedAuth,
+  requireSameOriginCsrf,
+  sessionToken,
+  type HostedAuthOptions,
+} from './hosted-auth.js';
 
 const denyAllProjects: ProjectAuthorizer = { authorize: async () => false };
 const unavailableEventStore: EventQueryStore = {
@@ -86,6 +93,7 @@ const defaultLifecycleStore: IssueLifecycleStore = {
 
 export interface ApiAppOptions {
   readonly authorizer?: ProjectAuthorizer;
+  readonly hostedAuth?: HostedAuthOptions;
   readonly eventStore?: EventQueryStore;
   readonly issueStore?: IssueQueryStore;
   readonly performanceStore?: PerformanceQueryStore;
@@ -109,17 +117,69 @@ async function authorizeProjectAccess(
   reply: FastifyReply,
   authorizer: ProjectAuthorizer,
   projectId: string,
-): Promise<boolean> {
+  hostedAuth?: HostedAuthOptions,
+  action: 'project:read' | 'issue:write' = 'project:read',
+): Promise<{ readonly userId?: string } | undefined> {
+  if (hostedAuth !== undefined) {
+    reply.header('cache-control', 'no-store');
+    const token = sessionToken(request);
+    if (token === undefined) {
+      reply
+        .code(401)
+        .send({ error: { code: 'unauthorized', message: 'Authentication is required.' } });
+      return undefined;
+    }
+    const environment = z
+      .object({ environment: z.string().min(1).max(64) })
+      .safeParse(action === 'issue:write' ? request.body : request.query);
+    if (!environment.success) {
+      reply.code(400).send({
+        error: { code: 'invalid_request', message: 'A valid environment is required.' },
+      });
+      return undefined;
+    }
+    if (action === 'issue:write' && !requireSameOriginCsrf(request, reply, hostedAuth, token)) {
+      return undefined;
+    }
+    try {
+      const principal = await hostedAuth.controlPlane.resolveSession(token);
+      if (principal === undefined) {
+        reply
+          .code(401)
+          .send({ error: { code: 'unauthorized', message: 'Authentication is required.' } });
+        return undefined;
+      }
+      const authorized = await hostedAuth.controlPlane.authorizeProject({
+        sessionToken: token,
+        projectId,
+        environment: environment.data.environment,
+        action,
+      });
+      if (authorized !== undefined) return authorized;
+    } catch {
+      reply.code(503).send({
+        error: {
+          code: 'authorization_unavailable',
+          message: 'Authorization is temporarily unavailable.',
+        },
+      });
+      return undefined;
+    }
+    reply
+      .code(403)
+      .send({ error: { code: 'forbidden', message: 'Access to this project is denied.' } });
+    return undefined;
+  }
   const authorization = request.headers.authorization;
   if (authorization === undefined) {
     reply.code(401).send({
       error: { code: 'unauthorized', message: 'Authentication is required.' },
     });
-    return false;
+    return undefined;
   }
 
   try {
-    if (await authorizer.authorize({ authorization, projectId })) return true;
+    if (await authorizer.authorize({ authorization, projectId })) return {};
   } catch {
     reply.code(503).send({
       error: {
@@ -127,16 +187,19 @@ async function authorizeProjectAccess(
         message: 'Authorization is temporarily unavailable.',
       },
     });
-    return false;
+    return undefined;
   }
 
   reply.code(403).send({
     error: { code: 'forbidden', message: 'Access to this project is denied.' },
   });
-  return false;
+  return undefined;
 }
 
 export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
+  if (options.hostedAuth !== undefined && options.authorizer !== undefined) {
+    throw new Error('Hosted and local authorization cannot be enabled together');
+  }
   const app = Fastify({ logger: false });
   const authorizer = options.authorizer ?? denyAllProjects;
   const eventStore = options.eventStore ?? unavailableEventStore;
@@ -146,6 +209,7 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
   const releaseStore = options.releaseStore ?? unavailableReleaseStore;
   const issueLifecycleStore = options.issueLifecycleStore ?? defaultLifecycleStore;
   void app.register(cors, { origin: false });
+  if (options.hostedAuth !== undefined) registerHostedAuth(app, options.hostedAuth);
 
   app.get('/health', async () => ({ service: 'spectro-api', status: 'ok' }));
 
@@ -161,7 +225,16 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
       });
     }
 
-    if (!(await authorizeProjectAccess(request, reply, authorizer, path.data.projectId))) return;
+    if (
+      !(await authorizeProjectAccess(
+        request,
+        reply,
+        authorizer,
+        path.data.projectId,
+        options.hostedAuth,
+      ))
+    )
+      return;
 
     const query = eventListQuerySchema.safeParse(request.query);
     if (!query.success) {
@@ -228,7 +301,16 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
         },
       });
     }
-    if (!(await authorizeProjectAccess(request, reply, authorizer, path.data.projectId))) return;
+    if (
+      !(await authorizeProjectAccess(
+        request,
+        reply,
+        authorizer,
+        path.data.projectId,
+        options.hostedAuth,
+      ))
+    )
+      return;
     const query = performanceListQuerySchema.safeParse(request.query);
     if (!query.success) {
       return reply.code(400).send({
@@ -289,7 +371,16 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
         },
       });
     }
-    if (!(await authorizeProjectAccess(request, reply, authorizer, path.data.projectId))) return;
+    if (
+      !(await authorizeProjectAccess(
+        request,
+        reply,
+        authorizer,
+        path.data.projectId,
+        options.hostedAuth,
+      ))
+    )
+      return;
     const query = networkListQuerySchema.safeParse(request.query);
     if (!query.success) {
       return reply.code(400).send({
@@ -352,7 +443,16 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
         },
       });
     }
-    if (!(await authorizeProjectAccess(request, reply, authorizer, path.data.projectId))) return;
+    if (
+      !(await authorizeProjectAccess(
+        request,
+        reply,
+        authorizer,
+        path.data.projectId,
+        options.hostedAuth,
+      ))
+    )
+      return;
     const query = releaseListQuerySchema.safeParse(request.query);
     if (!query.success) {
       return reply.code(400).send({
@@ -411,7 +511,16 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
       });
     }
 
-    if (!(await authorizeProjectAccess(request, reply, authorizer, path.data.projectId))) return;
+    if (
+      !(await authorizeProjectAccess(
+        request,
+        reply,
+        authorizer,
+        path.data.projectId,
+        options.hostedAuth,
+      ))
+    )
+      return;
 
     const query = issueListQuerySchema.safeParse(request.query);
     if (!query.success) {
@@ -516,7 +625,15 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
         },
       });
     }
-    if (!(await authorizeProjectAccess(request, reply, authorizer, path.data.projectId))) return;
+    const principal = await authorizeProjectAccess(
+      request,
+      reply,
+      authorizer,
+      path.data.projectId,
+      options.hostedAuth,
+      'issue:write',
+    );
+    if (principal === undefined) return;
     const body = issueLifecycleBodySchema.safeParse(request.body);
     if (!body.success) {
       return reply.code(400).send({
@@ -533,6 +650,7 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
         fingerprint: path.data.fingerprint,
         environment: body.data.environment,
         status: body.data.status,
+        ...(principal.userId === undefined ? {} : { actorId: principal.userId }),
       });
     } catch {
       return reply.code(503).send({
@@ -557,7 +675,16 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
         },
       });
     }
-    if (!(await authorizeProjectAccess(request, reply, authorizer, path.data.projectId))) return;
+    if (
+      !(await authorizeProjectAccess(
+        request,
+        reply,
+        authorizer,
+        path.data.projectId,
+        options.hostedAuth,
+      ))
+    )
+      return;
     try {
       return {
         data: await issueLifecycleStore.history({
