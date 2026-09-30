@@ -10,6 +10,7 @@ import type {
   OidcProvider,
 } from './hosted-auth.js';
 import type { IssueLifecycleStore } from './issue-lifecycle.js';
+import type { LiveEventStore } from './live-events.js';
 
 const origin = 'https://console.spectro.example';
 const sessionCookie = '__Host-spectro-session=session-credential';
@@ -208,6 +209,38 @@ describe('hosted product API authentication', () => {
     ).toBe(403);
     expect(eventStore.list).toHaveBeenCalledOnce();
     await app.close();
+  });
+
+  it('rechecks session and environment membership for every live observation page', async () => {
+    const fixture = setup();
+    const list = vi.fn<LiveEventStore['list']>(async () => ({ data: [], from: 100, to: 200 }));
+    const app = createApiApp({ hostedAuth: fixture.hostedAuth, liveStore: { list } });
+    const url = '/v1/projects/prj_allowed/live?environment=production&from=100&to=200';
+    try {
+      expect((await app.inject(url)).statusCode).toBe(401);
+      expect((await app.inject({ url, headers: { cookie: sessionCookie } })).statusCode).toBe(200);
+      expect(
+        (
+          await app.inject({
+            url: url.replace('production', 'staging'),
+            headers: { cookie: sessionCookie },
+          })
+        ).statusCode,
+      ).toBe(403);
+      expect(
+        (
+          await app.inject({
+            url: url.replace('prj_allowed', 'prj_other'),
+            headers: { cookie: sessionCookie },
+          })
+        ).statusCode,
+      ).toBe(403);
+      fixture.resolveSession.mockResolvedValue(undefined);
+      expect((await app.inject({ url, headers: { cookie: sessionCookie } })).statusCode).toBe(401);
+      expect(list).toHaveBeenCalledOnce();
+    } finally {
+      await app.close();
+    }
   });
 
   it('requires same-origin CSRF verification for issue writes and logout', async () => {

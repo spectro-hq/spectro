@@ -56,6 +56,7 @@ import {
 } from './hosted-auth.js';
 import { registerWorkspaceRoutes, type WorkspaceStore } from './workspaces.js';
 import { registerProjectWriteKeyRoutes, type ProjectWriteKeyStore } from './project-write-keys.js';
+import { resolveLiveQuery, type LiveEventStore } from './live-events.js';
 
 const denyAllProjects: ProjectAuthorizer = { authorize: async () => false };
 const unavailableEventStore: EventQueryStore = {
@@ -100,6 +101,7 @@ export interface ApiAppOptions {
   readonly projectWriteKeyStore?: ProjectWriteKeyStore;
   readonly ingestionEndpoint?: string;
   readonly eventStore?: EventQueryStore;
+  readonly liveStore?: LiveEventStore;
   readonly issueStore?: IssueQueryStore;
   readonly performanceStore?: PerformanceQueryStore;
   readonly networkStore?: NetworkQueryStore;
@@ -232,6 +234,48 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
   }
 
   app.get('/health', async () => ({ service: 'spectro-api', status: 'ok' }));
+
+  app.get('/v1/projects/:projectId/live', async (request, reply) => {
+    reply.header('cache-control', 'no-store');
+    const path = eventListPathSchema.safeParse(request.params);
+    if (!path.success)
+      return reply.code(400).send({
+        error: { code: 'invalid_request', message: 'The project path is invalid.' },
+      });
+    if (
+      !(await authorizeProjectAccess(
+        request,
+        reply,
+        authorizer,
+        path.data.projectId,
+        options.hostedAuth,
+      ))
+    )
+      return;
+    const observedAt = Date.now();
+    let query;
+    try {
+      query = resolveLiveQuery(path.data.projectId, request.query, observedAt);
+    } catch {
+      return reply.code(400).send({
+        error: {
+          code: 'invalid_query',
+          message: 'The observation window, filters or cursor are invalid.',
+        },
+      });
+    }
+    try {
+      if (!options.liveStore) throw new Error('Live store unavailable');
+      return { ...(await options.liveStore.list(query)), observedAt };
+    } catch {
+      return reply.code(503).send({
+        error: {
+          code: 'query_unavailable',
+          message: 'Live observation is temporarily unavailable.',
+        },
+      });
+    }
+  });
 
   app.get('/v1/projects/:projectId/events', async (request, reply) => {
     const path = eventListPathSchema.safeParse(request.params);

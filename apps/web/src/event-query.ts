@@ -64,7 +64,7 @@ const eventListItemSchema = z.object({
   }),
 });
 
-const eventListPageSchema = z.object({
+export const eventListPageSchema = z.object({
   data: z.array(eventListItemSchema),
   nextCursor: z.string().optional(),
 });

@@ -94,6 +94,10 @@ function toListItem(row: ClickHouseEventQueryRow): EventListItem {
   };
 }
 
+export function parseStoredEventItems(value: unknown): EventListItem[] {
+  return z.array(clickHouseEventQueryRowSchema).parse(value).map(toListItem);
+}
+
 function filterClause(query: EventListQuery): {
   readonly sql: string;
   readonly parameters: Record<string, unknown>;

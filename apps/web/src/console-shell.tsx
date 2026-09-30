@@ -11,6 +11,7 @@ const destinations = [
   { title: 'Performance', path: '/performance', icon: 'performance' },
   { title: 'Network', path: '/network', icon: 'network' },
   { title: 'Releases', path: '/releases', icon: 'release' },
+  { title: 'Live', path: '/live', icon: 'live' },
 ] as const;
 
 export function ConsoleShell({
@@ -69,15 +70,10 @@ export function ConsoleShell({
             </a>
           );
         })}
-        {(['live', 'schemas'] as const).map((icon) => (
-          <span
-            key={icon}
-            className="rail-link"
-            aria-disabled="true"
-            title={icon === 'live' ? 'Live' : 'Schemas'}
-          >
+        {(['schemas'] as const).map((icon) => (
+          <span key={icon} className="rail-link" aria-disabled="true" title="Schemas">
             <SpectroIcon name={icon} />
-            <span>{icon === 'live' ? 'Live' : 'Schemas'}</span>
+            <span>Schemas</span>
           </span>
         ))}
       </nav>

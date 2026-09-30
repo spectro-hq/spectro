@@ -6,6 +6,8 @@ export * from './clickhouse-network.js';
 export * from './clickhouse-performance.js';
 export * from './clickhouse-releases.js';
 export * from './events.js';
+export * from './live-events.js';
+export * from './clickhouse-live.js';
 export * from './hosted-auth.js';
 export * from './issues.js';
 export * from './issue-lifecycle.js';

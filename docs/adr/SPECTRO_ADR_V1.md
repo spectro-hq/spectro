@@ -54,6 +54,7 @@ Status: accepted unless marked open.
 | ADR-048 | Automatically flush browser event batches and best-effort drain a bounded keepalive batch on page exit.                                                |
 | ADR-049 | Send high-priority failures promptly, batch routine telemetry, and recover a bounded urgent-event outbox from IndexedDB.                               |
 | ADR-050 | Use managed OIDC login, server-side Console sessions, organization permissions, and scoped browser write keys for hosted SaaS.                         |
+| ADR-051 | Observe processed events through bounded authorized polling, with overlap deduplication and a frozen-reading buffer.                                   |
 
 Detailed records:
 
@@ -74,6 +75,7 @@ Detailed records:
 - [ADR-048: Browser batch delivery](./ADR-048_BROWSER_BATCH_DELIVERY.md)
 - [ADR-049: Browser delivery priority and recovery](./ADR-049_BROWSER_DELIVERY_PRIORITY_AND_RECOVERY.md)
 - [ADR-050: Hosted SaaS authentication and authorization](./ADR-050_HOSTED_SAAS_AUTHENTICATION.md)
+- [ADR-051: Bounded live event observation](./ADR-051_LIVE_EVENT_OBSERVATION.md)
 
 ## Change rule
 

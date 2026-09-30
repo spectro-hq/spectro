@@ -1,0 +1,238 @@
+{
+  "regions": [
+    {
+      "id": "scope-row",
+      "kind": "chrome",
+      "grid": "B0:J1",
+      "box": { "x": 0.138671875, "y": 0.060546875, "w": 0.861328125, "h": 0.103515625 },
+      "container": true,
+      "note": "Page title and scope control row"
+    },
+    {
+      "id": "workbench-header",
+      "kind": "chrome",
+      "grid": "B2:J2",
+      "box": { "x": 0.154296875, "y": 0.236328125, "w": 0.833333333, "h": 0.0615234375 },
+      "container": true,
+      "note": "Ledger and selected-event header row"
+    },
+    {
+      "id": "rail",
+      "kind": "chrome",
+      "grid": "A0:B9",
+      "box": {
+        "x": 0,
+        "y": 0,
+        "w": 0.138671875,
+        "h": 1
+      },
+      "note": "Existing Spectro navigation rail and brand",
+      "container": true
+    },
+    {
+      "id": "topbar",
+      "kind": "chrome",
+      "grid": "B0:J0",
+      "box": {
+        "x": 0.138671875,
+        "y": 0,
+        "w": 0.861328125,
+        "h": 0.060546875
+      },
+      "note": "Existing breadcrumb and workspace controls",
+      "container": true
+    },
+    {
+      "id": "title",
+      "kind": "text",
+      "grid": "B0:C1",
+      "box": {
+        "x": 0.15625,
+        "y": 0.0849609375,
+        "w": 0.046875,
+        "h": 0.029296875
+      },
+      "note": "Live page heading"
+    },
+    {
+      "id": "subtitle",
+      "kind": "text",
+      "grid": "B1:F1",
+      "box": {
+        "x": 0.15559895833333334,
+        "y": 0.125,
+        "w": 0.25390625,
+        "h": 0.017578125
+      },
+      "note": "Observe new events as they become available"
+    },
+    {
+      "id": "scope",
+      "kind": "control",
+      "grid": "F0:J1",
+      "box": {
+        "x": 0.5338541666666666,
+        "y": 0.0927734375,
+        "w": 0.453125,
+        "h": 0.0380859375
+      },
+      "note": "Project, environment and illustrative source"
+    },
+    {
+      "id": "observation",
+      "kind": "control",
+      "grid": "B1:E2",
+      "box": {
+        "x": 0.15559895833333334,
+        "y": 0.166015625,
+        "w": 0.3014322916666667,
+        "h": 0.0546875
+      },
+      "note": "Observing status, update cadence and pause"
+    },
+    {
+      "id": "filters",
+      "kind": "control",
+      "grid": "F1:J2",
+      "box": {
+        "x": 0.51171875,
+        "y": 0.1728515625,
+        "w": 0.4713541666666667,
+        "h": 0.0419921875
+      },
+      "note": "Type, event name and session filters"
+    },
+    {
+      "id": "ledger-heading",
+      "kind": "text",
+      "grid": "B2:D2",
+      "box": {
+        "x": 0.166015625,
+        "y": 0.2568359375,
+        "w": 0.12369791666666667,
+        "h": 0.0244140625
+      },
+      "note": "New arrivals heading"
+    },
+    {
+      "id": "new-events",
+      "kind": "control",
+      "grid": "F2:G2",
+      "box": {
+        "x": 0.5559895833333334,
+        "y": 0.2509765625,
+        "w": 0.099609375,
+        "h": 0.03515625
+      },
+      "note": "Show four new events action"
+    },
+    {
+      "id": "batch-one",
+      "kind": "text",
+      "grid": "B3:G4",
+      "box": {
+        "x": 0.162109375,
+        "y": 0.306640625,
+        "w": 0.4908854166666667,
+        "h": 0.1474609375
+      },
+      "note": "Observation time group and three event rows"
+    },
+    {
+      "id": "batch-two",
+      "kind": "text",
+      "grid": "B4:G6",
+      "box": {
+        "x": 0.162109375,
+        "y": 0.46484375,
+        "w": 0.4908854166666667,
+        "h": 0.1513671875
+      },
+      "note": "Second observation group and selected runtime error row"
+    },
+    {
+      "id": "batch-three",
+      "kind": "text",
+      "grid": "B6:G8",
+      "box": {
+        "x": 0.162109375,
+        "y": 0.625,
+        "w": 0.4908854166666667,
+        "h": 0.189453125
+      },
+      "note": "Third observation group and four event rows"
+    },
+    {
+      "id": "batch-four",
+      "kind": "text",
+      "grid": "B8:G9",
+      "box": {
+        "x": 0.162109375,
+        "y": 0.83984375,
+        "w": 0.4908854166666667,
+        "h": 0.1064453125
+      },
+      "note": "Fourth observation group and two event rows"
+    },
+    {
+      "id": "detail-heading",
+      "kind": "text",
+      "grid": "G2:J3",
+      "box": {
+        "x": 0.68359375,
+        "y": 0.2578125,
+        "w": 0.2877604166666667,
+        "h": 0.0478515625
+      },
+      "note": "Selected runtime error with occurred and processed times"
+    },
+    {
+      "id": "detail-tabs",
+      "kind": "control",
+      "grid": "G3:J3",
+      "box": {
+        "x": 0.6848958333333334,
+        "y": 0.3291015625,
+        "w": 0.177734375,
+        "h": 0.0361328125
+      },
+      "note": "Event Context Raw tabs"
+    },
+    {
+      "id": "context",
+      "kind": "text",
+      "grid": "G3:J6",
+      "box": {
+        "x": 0.6907552083333334,
+        "y": 0.390625,
+        "w": 0.275390625,
+        "h": 0.2333984375
+      },
+      "note": "Selected event context labels and values"
+    },
+    {
+      "id": "payload-heading",
+      "kind": "control",
+      "grid": "G6:J6",
+      "box": {
+        "x": 0.6875,
+        "y": 0.6435546875,
+        "w": 0.2884114583333333,
+        "h": 0.0390625
+      },
+      "note": "Event payload title, format selector and Copy"
+    },
+    {
+      "id": "payload-code",
+      "kind": "text",
+      "grid": "G6:J9",
+      "box": {
+        "x": 0.6979166666666666,
+        "y": 0.6953125,
+        "w": 0.26953125,
+        "h": 0.2568359375
+      },
+      "note": "Read-only example JSON with line numbers"
+    }
+  ]
+}

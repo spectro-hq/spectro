@@ -9,9 +9,18 @@ PATCH /v1/projects/:projectId/issues/:fingerprint
 GET /v1/projects/:projectId/issues/:fingerprint/history
 GET /v1/projects/:projectId/performance
 GET /v1/projects/:projectId/network
+GET /v1/projects/:projectId/live
 ```
 
-Both endpoints require `environment`, `from`, and `to`; timestamps are inclusive Unix epoch milliseconds and a query window is capped at 31 days. `limit` defaults to 50 and is capped at 100. Use the opaque `nextCursor` response value as `cursor` for the next page.
+Historical list endpoints require `environment`, `from`, and `to`; timestamps are inclusive Unix epoch milliseconds and a query window is capped at 31 days. `limit` defaults to 50 and is capped at 100. Use the opaque `nextCursor` response value as `cursor` for the next page.
+
+## Live observation
+
+Live observes **processed** events, not ingestion acknowledgements. It requires the same project/environment read permission as Events. `environment` is required; optional exact `type`, `name`, and `sessionId` filters apply. Omitted `from`/`to` select the last 60 seconds of server processing time. Explicit windows are capped at five minutes, with at most five seconds of future clock tolerance. Unknown filters and malformed values return `400 invalid_query`.
+
+Each response contains `data`, `from`, `to`, `observedAt`, and optional `nextCursor`. Drain subsequent pages using the returned fixed `from`/`to`, unchanged scope/filters, and cursor. Ordering is descending `(processed_at_ms, event_id)`, independently of occurrence time. A page has at most 100 protocol-validated events and a 2 MiB serialized response budget. All requests recheck authorization and use `Cache-Control: no-store`. Query execution is capped at two seconds, two million read rows, and 256 MiB of scanned data; exceeding a cap fails closed with `503 query_unavailable`, not partial success or private storage diagnostics.
+
+The Console targets a three-second poll cadence, rechecks a 60-second overlap, deduplicates IDs, and drains at most five pages/8 MiB per update. This is bounded, best-effort observation, **not lossless streaming**. Long disconnections, delayed storage visibility beyond overlap, or load limits may miss arrivals; Events remains the historical investigation path. See [ADR-051](../../docs/adr/ADR-051_LIVE_EVENT_OBSERVATION.md).
 
 The event list accepts optional exact filters for `type`, `name`, `release`, `sessionId`, `pageId`, and the server-generated 32-character hexadecimal `fingerprint`. The issue list groups error events by that fingerprint inside the selected project, environment, and time window; it accepts optional exact `name`, `release`, and lifecycle `status` filters. Each issue reports occurrence, affected-session, and affected-user counts plus first/latest evidence and its PostgreSQL-backed lifecycle status.
 

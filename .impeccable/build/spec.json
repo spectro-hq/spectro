@@ -1,0 +1,1207 @@
+{
+  "tool": "comp-spec",
+  "version": 1,
+  "createdAt": "2026-09-30T16:31:09.466Z",
+  "comp": ".impeccable/mocks/live-event-led.png",
+  "warnings": [
+    "region scope-row: \"container\": true set in the regions file (the region-size refusal is overridden: one undivided element)",
+    "region workbench-header: \"container\": true set in the regions file (the region-size refusal is overridden: one undivided element)",
+    "region rail: \"container\": true set in the regions file (the region-size refusal is overridden: one undivided element)",
+    "region topbar: \"container\": true set in the regions file (the region-size refusal is overridden: one undivided element)"
+  ],
+  "uncoveredInkCells": [],
+  "compSize": {
+    "width": 1536,
+    "height": 1024
+  },
+  "aspect": 1.5,
+  "orientation": "landscape",
+  "palette": [
+    {
+      "hex": "#f7f7f8",
+      "coverage": 0.9643
+    },
+    {
+      "hex": "#dfd7f4",
+      "coverage": 0.0208
+    },
+    {
+      "hex": "#717687",
+      "coverage": 0.0071
+    },
+    {
+      "hex": "#a9acba",
+      "coverage": 0.0058
+    },
+    {
+      "hex": "#151525",
+      "coverage": 0.0021
+    }
+  ],
+  "bands": [
+    {
+      "y": 0.0235,
+      "strength": 0.2666
+    },
+    {
+      "y": 0.1176,
+      "strength": 0.2483
+    },
+    {
+      "y": 0.2,
+      "strength": 0.4109
+    },
+    {
+      "y": 0.2588,
+      "strength": 0.2545
+    }
+  ],
+  "regions": [
+    {
+      "id": "scope-row",
+      "kind": "chrome",
+      "note": "Page title and scope control row",
+      "grid": "B0:J1",
+      "container": true,
+      "box": {
+        "x": 0.1387,
+        "y": 0.0605,
+        "w": 0.8613,
+        "h": 0.1035
+      },
+      "px": {
+        "x": 213,
+        "y": 62,
+        "w": 1323,
+        "h": 106
+      },
+      "aspect": 12.4811,
+      "palette": [
+        {
+          "hex": "#f7f7f8",
+          "coverage": 0.9751
+        },
+        {
+          "hex": "#7d7f8f",
+          "coverage": 0.0108
+        },
+        {
+          "hex": "#c1c4ce",
+          "coverage": 0.0086
+        },
+        {
+          "hex": "#0b0b21",
+          "coverage": 0.0036
+        },
+        {
+          "hex": "#595d73",
+          "coverage": 0.0019
+        }
+      ],
+      "detail": {
+        "energy": 12.5359
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "workbench-header",
+      "kind": "chrome",
+      "note": "Ledger and selected-event header row",
+      "grid": "B2:J2",
+      "container": true,
+      "box": {
+        "x": 0.1543,
+        "y": 0.2363,
+        "w": 0.8333,
+        "h": 0.0615
+      },
+      "px": {
+        "x": 237,
+        "y": 242,
+        "w": 1280,
+        "h": 63
+      },
+      "aspect": 20.3175,
+      "palette": [
+        {
+          "hex": "#f7f7f7",
+          "coverage": 0.9668
+        },
+        {
+          "hex": "#aaabb7",
+          "coverage": 0.0126
+        },
+        {
+          "hex": "#0d0e21",
+          "coverage": 0.0093
+        },
+        {
+          "hex": "#c7c1f8",
+          "coverage": 0.0062
+        },
+        {
+          "hex": "#6b6b7c",
+          "coverage": 0.005
+        }
+      ],
+      "detail": {
+        "energy": 21.8993
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "rail",
+      "kind": "chrome",
+      "note": "Existing Spectro navigation rail and brand",
+      "grid": "A0:B9",
+      "container": true,
+      "box": {
+        "x": 0,
+        "y": 0,
+        "w": 0.1387,
+        "h": 1
+      },
+      "px": {
+        "x": 0,
+        "y": 0,
+        "w": 213,
+        "h": 1024
+      },
+      "aspect": 0.208,
+      "palette": [
+        {
+          "hex": "#f7f7f8",
+          "coverage": 0.9925
+        },
+        {
+          "hex": "#808090",
+          "coverage": 0.0044
+        },
+        {
+          "hex": "#585f6f",
+          "coverage": 0.0013
+        },
+        {
+          "hex": "#bfbfc8",
+          "coverage": 0.0013
+        },
+        {
+          "hex": "#080818",
+          "coverage": 0.0005
+        }
+      ],
+      "detail": {
+        "energy": 4.7249
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "topbar",
+      "kind": "chrome",
+      "note": "Existing breadcrumb and workspace controls",
+      "grid": "B0:J0",
+      "container": true,
+      "box": {
+        "x": 0.1387,
+        "y": 0,
+        "w": 0.8613,
+        "h": 0.0605
+      },
+      "px": {
+        "x": 213,
+        "y": 0,
+        "w": 1323,
+        "h": 62
+      },
+      "aspect": 21.3387,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.9804
+        },
+        {
+          "hex": "#bceacf",
+          "coverage": 0.012
+        },
+        {
+          "hex": "#7f7f8f",
+          "coverage": 0.0047
+        },
+        {
+          "hex": "#b7b7c7",
+          "coverage": 0.0016
+        },
+        {
+          "hex": "#484858",
+          "coverage": 0.0013
+        }
+      ],
+      "detail": {
+        "energy": 10.3097
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "title",
+      "kind": "text",
+      "note": "Live page heading",
+      "grid": "B0:C1",
+      "box": {
+        "x": 0.1563,
+        "y": 0.085,
+        "w": 0.0469,
+        "h": 0.0293
+      },
+      "px": {
+        "x": 240,
+        "y": 87,
+        "w": 72,
+        "h": 30
+      },
+      "aspect": 2.4,
+      "palette": [
+        {
+          "hex": "#f7f7f8",
+          "coverage": 0.6282
+        },
+        {
+          "hex": "#0d0f23",
+          "coverage": 0.2094
+        },
+        {
+          "hex": "#c5c8d0",
+          "coverage": 0.0684
+        },
+        {
+          "hex": "#666b77",
+          "coverage": 0.0598
+        },
+        {
+          "hex": "#9294a4",
+          "coverage": 0.0342
+        }
+      ],
+      "detail": {
+        "energy": 26.0719
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 3,
+          "capHeightPx": 25.6,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.6648,
+          "advTall": 0.4301,
+          "advX": 1.4469,
+          "gap": 0.0587,
+          "xRatio": 0.7091,
+          "stemW": 0.1923,
+          "contrast": 1.1335,
+          "serif": null,
+          "densTall": 0.6118,
+          "densX": 0.5362,
+          "weight": 0.6118
+        },
+        "widthClass": "wide",
+        "weightClass": "bold",
+        "chosen": {
+          "family": "Gochi Hand",
+          "weight": 400,
+          "fontSizePx": 37,
+          "source": "catalog",
+          "estimatedSize": true,
+          "stamp": "ea880b5cf603"
+        }
+      }
+    },
+    {
+      "id": "subtitle",
+      "kind": "text",
+      "note": "Observe new events as they become available",
+      "grid": "B1:F1",
+      "box": {
+        "x": 0.1556,
+        "y": 0.125,
+        "w": 0.2539,
+        "h": 0.0176
+      },
+      "px": {
+        "x": 239,
+        "y": 128,
+        "w": 390,
+        "h": 18
+      },
+      "aspect": 21.6667,
+      "palette": [
+        {
+          "hex": "#f6f7f7",
+          "coverage": 0.7141
+        },
+        {
+          "hex": "#acaebb",
+          "coverage": 0.1385
+        },
+        {
+          "hex": "#727786",
+          "coverage": 0.1385
+        },
+        {
+          "hex": "#5d5d7d",
+          "coverage": 0.009
+        }
+      ],
+      "detail": {
+        "energy": 57.433
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 34,
+          "capHeightPx": 11.7,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.6278,
+          "advTall": 0.4565,
+          "advX": 0.6563,
+          "gap": 0.0856,
+          "xRatio": 0.7317,
+          "stemW": 0.1713,
+          "contrast": 1.0683,
+          "serif": 0.5719,
+          "densTall": 0.4992,
+          "densX": 0.5732,
+          "weight": 0.4992
+        },
+        "widthClass": "normal",
+        "weightClass": "medium"
+      }
+    },
+    {
+      "id": "scope",
+      "kind": "control",
+      "note": "Project, environment and illustrative source",
+      "grid": "F0:J1",
+      "box": {
+        "x": 0.5339,
+        "y": 0.0928,
+        "w": 0.4531,
+        "h": 0.0381
+      },
+      "px": {
+        "x": 820,
+        "y": 95,
+        "w": 696,
+        "h": 39
+      },
+      "aspect": 17.8462,
+      "palette": [
+        {
+          "hex": "#f6f7f7",
+          "coverage": 0.9404
+        },
+        {
+          "hex": "#c2c4cd",
+          "coverage": 0.0231
+        },
+        {
+          "hex": "#8f929f",
+          "coverage": 0.0194
+        },
+        {
+          "hex": "#62687a",
+          "coverage": 0.01
+        },
+        {
+          "hex": "#36384a",
+          "coverage": 0.007
+        }
+      ],
+      "detail": {
+        "energy": 24.1786
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "observation",
+      "kind": "control",
+      "note": "Observing status, update cadence and pause",
+      "grid": "B1:E2",
+      "box": {
+        "x": 0.1556,
+        "y": 0.166,
+        "w": 0.3014,
+        "h": 0.0547
+      },
+      "px": {
+        "x": 239,
+        "y": 170,
+        "w": 463,
+        "h": 56
+      },
+      "aspect": 8.2679,
+      "palette": [
+        {
+          "hex": "#f7f7f7",
+          "coverage": 0.956
+        },
+        {
+          "hex": "#afb1bb",
+          "coverage": 0.0251
+        },
+        {
+          "hex": "#7c7f8e",
+          "coverage": 0.0079
+        },
+        {
+          "hex": "#55586b",
+          "coverage": 0.0065
+        },
+        {
+          "hex": "#0d0d19",
+          "coverage": 0.0045
+        }
+      ],
+      "detail": {
+        "energy": 20.1536
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "filters",
+      "kind": "control",
+      "note": "Type, event name and session filters",
+      "grid": "F1:J2",
+      "box": {
+        "x": 0.5117,
+        "y": 0.1729,
+        "w": 0.4714,
+        "h": 0.042
+      },
+      "px": {
+        "x": 786,
+        "y": 177,
+        "w": 724,
+        "h": 43
+      },
+      "aspect": 16.8372,
+      "palette": [
+        {
+          "hex": "#f7f7f8",
+          "coverage": 0.9453
+        },
+        {
+          "hex": "#bec0cb",
+          "coverage": 0.023
+        },
+        {
+          "hex": "#7a7c8c",
+          "coverage": 0.0214
+        },
+        {
+          "hex": "#5d6177",
+          "coverage": 0.0067
+        },
+        {
+          "hex": "#0d0d19",
+          "coverage": 0.0036
+        }
+      ],
+      "detail": {
+        "energy": 22.2431
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "ledger-heading",
+      "kind": "text",
+      "note": "New arrivals heading",
+      "grid": "B2:D2",
+      "box": {
+        "x": 0.166,
+        "y": 0.2568,
+        "w": 0.1237,
+        "h": 0.0244
+      },
+      "px": {
+        "x": 255,
+        "y": 263,
+        "w": 190,
+        "h": 25
+      },
+      "aspect": 7.6,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.8654
+        },
+        {
+          "hex": "#0b0d1a",
+          "coverage": 0.0542
+        },
+        {
+          "hex": "#3a3c4c",
+          "coverage": 0.035
+        },
+        {
+          "hex": "#b0b0bb",
+          "coverage": 0.0332
+        },
+        {
+          "hex": "#080828",
+          "coverage": 0.0122
+        }
+      ],
+      "detail": {
+        "energy": 41.255
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 10,
+          "capHeightPx": 14.5,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.5854,
+          "advTall": 0.2066,
+          "advX": 0.6199,
+          "gap": 0.1033,
+          "xRatio": 0.7377,
+          "stemW": 0.1965,
+          "contrast": 1.1257,
+          "serif": 0.3041,
+          "densTall": 0.7877,
+          "densX": 0.5908,
+          "weight": 0.7877
+        },
+        "widthClass": "normal",
+        "weightClass": "black"
+      }
+    },
+    {
+      "id": "new-events",
+      "kind": "control",
+      "note": "Show four new events action",
+      "grid": "F2:G2",
+      "box": {
+        "x": 0.556,
+        "y": 0.251,
+        "w": 0.0996,
+        "h": 0.0352
+      },
+      "px": {
+        "x": 854,
+        "y": 257,
+        "w": 153,
+        "h": 36
+      },
+      "aspect": 4.25,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.7993
+        },
+        {
+          "hex": "#c6c1f8",
+          "coverage": 0.0952
+        },
+        {
+          "hex": "#564fe8",
+          "coverage": 0.0381
+        },
+        {
+          "hex": "#807af3",
+          "coverage": 0.0346
+        },
+        {
+          "hex": "#aaa0f8",
+          "coverage": 0.0329
+        }
+      ],
+      "detail": {
+        "energy": 29.1584
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "batch-one",
+      "kind": "text",
+      "note": "Observation time group and three event rows",
+      "grid": "B3:G4",
+      "box": {
+        "x": 0.1621,
+        "y": 0.3066,
+        "w": 0.4909,
+        "h": 0.1475
+      },
+      "px": {
+        "x": 249,
+        "y": 314,
+        "w": 754,
+        "h": 151
+      },
+      "aspect": 4.9934,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.9612
+        },
+        {
+          "hex": "#babecb",
+          "coverage": 0.0177
+        },
+        {
+          "hex": "#7f889a",
+          "coverage": 0.0103
+        },
+        {
+          "hex": "#626a84",
+          "coverage": 0.0087
+        },
+        {
+          "hex": "#1c2838",
+          "coverage": 0.0021
+        }
+      ],
+      "detail": {
+        "energy": 18.8652
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 4,
+          "glyphs": 187,
+          "capHeightPx": 10.8,
+          "inkIsDark": true,
+          "allCaps": true,
+          "advance": 0.5856,
+          "advTall": 0.5856,
+          "advX": null,
+          "gap": 0.1233,
+          "xRatio": null,
+          "stemW": 0.1751,
+          "contrast": 1.127,
+          "serif": 1.1131,
+          "densTall": 0.5068,
+          "densX": null,
+          "weight": 0.5068
+        },
+        "widthClass": "condensed",
+        "weightClass": "medium"
+      }
+    },
+    {
+      "id": "batch-two",
+      "kind": "text",
+      "note": "Second observation group and selected runtime error row",
+      "grid": "B4:G6",
+      "box": {
+        "x": 0.1621,
+        "y": 0.4648,
+        "w": 0.4909,
+        "h": 0.1514
+      },
+      "px": {
+        "x": 249,
+        "y": 476,
+        "w": 754,
+        "h": 155
+      },
+      "aspect": 4.8645,
+      "palette": [
+        {
+          "hex": "#f7f7f8",
+          "coverage": 0.7708
+        },
+        {
+          "hex": "#e1d8f7",
+          "coverage": 0.1971
+        },
+        {
+          "hex": "#a1a8bd",
+          "coverage": 0.0141
+        },
+        {
+          "hex": "#717a92",
+          "coverage": 0.0128
+        },
+        {
+          "hex": "#c9d2d7",
+          "coverage": 0.0052
+        }
+      ],
+      "detail": {
+        "energy": 17.7049
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 4,
+          "glyphs": 179,
+          "capHeightPx": 11,
+          "inkIsDark": true,
+          "allCaps": true,
+          "advance": 0.5844,
+          "advTall": 0.5844,
+          "advX": null,
+          "gap": 0.0969,
+          "xRatio": null,
+          "stemW": 0.1824,
+          "contrast": 1.1429,
+          "serif": 0.635,
+          "densTall": 0.5719,
+          "densX": null,
+          "weight": 0.5719
+        },
+        "widthClass": "condensed",
+        "weightClass": "bold"
+      }
+    },
+    {
+      "id": "batch-three",
+      "kind": "text",
+      "note": "Third observation group and four event rows",
+      "grid": "B6:G8",
+      "box": {
+        "x": 0.1621,
+        "y": 0.625,
+        "w": 0.4909,
+        "h": 0.1895
+      },
+      "px": {
+        "x": 249,
+        "y": 640,
+        "w": 754,
+        "h": 194
+      },
+      "aspect": 3.8866,
+      "palette": [
+        {
+          "hex": "#f7f8f8",
+          "coverage": 0.9612
+        },
+        {
+          "hex": "#c9ccd7",
+          "coverage": 0.0133
+        },
+        {
+          "hex": "#727d95",
+          "coverage": 0.0117
+        },
+        {
+          "hex": "#9aa3b6",
+          "coverage": 0.0099
+        },
+        {
+          "hex": "#5a5d6d",
+          "coverage": 0.0039
+        }
+      ],
+      "detail": {
+        "energy": 16.5485
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 5,
+          "glyphs": 215,
+          "capHeightPx": 10.8,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.5874,
+          "advTall": 0.5874,
+          "advX": 0.6046,
+          "gap": 0.1173,
+          "xRatio": 0.7505,
+          "stemW": 0.1775,
+          "contrast": 1.1416,
+          "serif": 0.5296,
+          "densTall": 0.5183,
+          "densX": 0.5861,
+          "weight": 0.5183
+        },
+        "widthClass": "normal",
+        "weightClass": "medium"
+      }
+    },
+    {
+      "id": "batch-four",
+      "kind": "text",
+      "note": "Fourth observation group and two event rows",
+      "grid": "B8:G9",
+      "box": {
+        "x": 0.1621,
+        "y": 0.8398,
+        "w": 0.4909,
+        "h": 0.1064
+      },
+      "px": {
+        "x": 249,
+        "y": 860,
+        "w": 754,
+        "h": 109
+      },
+      "aspect": 6.9174,
+      "palette": [
+        {
+          "hex": "#f7f8f8",
+          "coverage": 0.9622
+        },
+        {
+          "hex": "#bbbfcd",
+          "coverage": 0.0146
+        },
+        {
+          "hex": "#7d869b",
+          "coverage": 0.0104
+        },
+        {
+          "hex": "#222333",
+          "coverage": 0.0065
+        },
+        {
+          "hex": "#565c71",
+          "coverage": 0.0063
+        }
+      ],
+      "detail": {
+        "energy": 17.5512
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 3,
+          "glyphs": 108,
+          "capHeightPx": 10.6,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.6053,
+          "advTall": 0.6053,
+          "advX": 0.632,
+          "gap": 0.0998,
+          "xRatio": 0.7578,
+          "stemW": 0.1819,
+          "contrast": 1.1458,
+          "serif": 0.5929,
+          "densTall": 0.4992,
+          "densX": 0.5732,
+          "weight": 0.4992
+        },
+        "widthClass": "normal",
+        "weightClass": "medium"
+      }
+    },
+    {
+      "id": "detail-heading",
+      "kind": "text",
+      "note": "Selected runtime error with occurred and processed times",
+      "grid": "G2:J3",
+      "box": {
+        "x": 0.6836,
+        "y": 0.2578,
+        "w": 0.2878,
+        "h": 0.0479
+      },
+      "px": {
+        "x": 1050,
+        "y": 264,
+        "w": 442,
+        "h": 49
+      },
+      "aspect": 9.0204,
+      "palette": [
+        {
+          "hex": "#f7f8f8",
+          "coverage": 0.9124
+        },
+        {
+          "hex": "#bebfca",
+          "coverage": 0.0351
+        },
+        {
+          "hex": "#6f7183",
+          "coverage": 0.0238
+        },
+        {
+          "hex": "#0c0f22",
+          "coverage": 0.0198
+        },
+        {
+          "hex": "#999fa7",
+          "coverage": 0.0089
+        }
+      ],
+      "detail": {
+        "energy": 35.6071
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 24,
+          "capHeightPx": 16.4,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.6263,
+          "advTall": 0.4277,
+          "advX": 0.6415,
+          "gap": 0.0916,
+          "xRatio": 0.7144,
+          "stemW": 0.1979,
+          "contrast": 1.9178,
+          "serif": 0.3571,
+          "densTall": 0.7769,
+          "densX": 0.6474,
+          "weight": 0.7769
+        },
+        "widthClass": "normal",
+        "weightClass": "black"
+      }
+    },
+    {
+      "id": "detail-tabs",
+      "kind": "control",
+      "note": "Event Context Raw tabs",
+      "grid": "G3:J3",
+      "box": {
+        "x": 0.6849,
+        "y": 0.3291,
+        "w": 0.1777,
+        "h": 0.0361
+      },
+      "px": {
+        "x": 1052,
+        "y": 337,
+        "w": 273,
+        "h": 37
+      },
+      "aspect": 7.3784,
+      "palette": [
+        {
+          "hex": "#f7f7f7",
+          "coverage": 0.9406
+        },
+        {
+          "hex": "#c4b9f8",
+          "coverage": 0.0198
+        },
+        {
+          "hex": "#aaacba",
+          "coverage": 0.0172
+        },
+        {
+          "hex": "#7b7f8f",
+          "coverage": 0.0146
+        },
+        {
+          "hex": "#5d6173",
+          "coverage": 0.0078
+        }
+      ],
+      "detail": {
+        "energy": 25.272
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "context",
+      "kind": "text",
+      "note": "Selected event context labels and values",
+      "grid": "G3:J6",
+      "box": {
+        "x": 0.6908,
+        "y": 0.3906,
+        "w": 0.2754,
+        "h": 0.2334
+      },
+      "px": {
+        "x": 1061,
+        "y": 400,
+        "w": 423,
+        "h": 239
+      },
+      "aspect": 1.7699,
+      "palette": [
+        {
+          "hex": "#f7f7f8",
+          "coverage": 0.9708
+        },
+        {
+          "hex": "#9597a6",
+          "coverage": 0.0143
+        },
+        {
+          "hex": "#656c7d",
+          "coverage": 0.0059
+        },
+        {
+          "hex": "#c1c8cd",
+          "coverage": 0.0052
+        },
+        {
+          "hex": "#1a1a2a",
+          "coverage": 0.0038
+        }
+      ],
+      "detail": {
+        "energy": 16.9435
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 8,
+          "glyphs": 139,
+          "capHeightPx": 10.6,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.6204,
+          "advTall": 0.5879,
+          "advX": 0.6345,
+          "gap": 0.1002,
+          "xRatio": 0.7284,
+          "stemW": 0.1756,
+          "contrast": 1.1357,
+          "serif": 0.5924,
+          "densTall": 0.5063,
+          "densX": 0.5436,
+          "weight": 0.5063
+        },
+        "widthClass": "normal",
+        "weightClass": "medium"
+      }
+    },
+    {
+      "id": "payload-heading",
+      "kind": "control",
+      "note": "Event payload title, format selector and Copy",
+      "grid": "G6:J6",
+      "box": {
+        "x": 0.6875,
+        "y": 0.6436,
+        "w": 0.2884,
+        "h": 0.0391
+      },
+      "px": {
+        "x": 1056,
+        "y": 659,
+        "w": 443,
+        "h": 40
+      },
+      "aspect": 11.075,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.9453
+        },
+        {
+          "hex": "#0b0d1b",
+          "coverage": 0.0171
+        },
+        {
+          "hex": "#ced0d5",
+          "coverage": 0.0161
+        },
+        {
+          "hex": "#3a3c4c",
+          "coverage": 0.0122
+        },
+        {
+          "hex": "#acb0bb",
+          "coverage": 0.0093
+        }
+      ],
+      "detail": {
+        "energy": 24.4449
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "payload-code",
+      "kind": "text",
+      "note": "Read-only example JSON with line numbers",
+      "grid": "G6:J9",
+      "box": {
+        "x": 0.6979,
+        "y": 0.6953,
+        "w": 0.2695,
+        "h": 0.2568
+      },
+      "px": {
+        "x": 1072,
+        "y": 712,
+        "w": 414,
+        "h": 263
+      },
+      "aspect": 1.5741,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.9246
+        },
+        {
+          "hex": "#5a78af",
+          "coverage": 0.0254
+        },
+        {
+          "hex": "#97accf",
+          "coverage": 0.0246
+        },
+        {
+          "hex": "#cbd5e6",
+          "coverage": 0.0221
+        },
+        {
+          "hex": "#cfc3f8",
+          "coverage": 0.0032
+        }
+      ],
+      "detail": {
+        "energy": 28.7064
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    }
+  ]
+}

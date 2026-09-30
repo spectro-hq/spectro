@@ -8,6 +8,7 @@ import { PostgresAuthControlPlane } from './postgres-auth-control-plane.js';
 import { PostgresWorkspaceStore } from './postgres-workspaces.js';
 import { PostgresProjectWriteKeyStore } from './postgres-project-write-keys.js';
 import { ClickHouseEventQueryStore } from './clickhouse-events.js';
+import { ClickHouseLiveEventStore } from './clickhouse-live.js';
 import { ClickHouseIssueQueryStore } from './clickhouse-issues.js';
 import { ClickHouseNetworkQueryStore } from './clickhouse-network.js';
 import { ClickHousePerformanceQueryStore } from './clickhouse-performance.js';
@@ -106,6 +107,7 @@ const app = createApiApp({
     ? { authorizer: createLocalProjectAuthorizer(authMode === 'local' ? process.env : {}) }
     : { hostedAuth }),
   eventStore: new ClickHouseEventQueryStore(clickhouse),
+  liveStore: new ClickHouseLiveEventStore(clickhouse),
   issueStore: new ClickHouseIssueQueryStore(clickhouse),
   networkStore: new ClickHouseNetworkQueryStore(clickhouse),
   performanceStore: new ClickHousePerformanceQueryStore(clickhouse),
