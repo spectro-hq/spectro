@@ -125,7 +125,7 @@ export function PerformanceExplorer() {
 
   return (
     <ConsoleShell title="Performance" search={search}>
-      <main className="event-workspace performance-workspace">
+      <main className="event-workspace performance-workspace performance-metrics-workspace">
         <section className="command-deck" aria-labelledby="performance-title">
           <div className="workspace-title">
             <h1 id="performance-title">Performance</h1>
