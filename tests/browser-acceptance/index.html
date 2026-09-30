@@ -4,21 +4,89 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Spectro Browser Acceptance</title>
+    <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <main>
       <h1>Spectro Browser Acceptance</h1>
-      <p>The browser SDK sends signals to the local ingestion service.</p>
-      <p>Mode: <span id="mode"></span></p>
-      <p>Session: <span id="session"></span></p>
-      <button id="capture-error" type="button">Capture runtime error</button>
-      <button id="capture-network" type="button">Capture failed request</button>
-      <button id="capture-interaction" data-spectro-monitor-id="acceptance-action" type="button">
-        Capture interaction
-      </button>
-      <button id="flush" type="button">Flush signals</button>
-      <button id="reload" type="button">Reload with transport restored</button>
-      <pre id="status" aria-live="polite">Starting…</pre>
+      <p class="intro">
+        Send clearly labeled test signals through the real local ingestion pipeline, then inspect
+        them in your Console.
+      </p>
+      <form id="connection" hidden>
+        <h2>Connect your project</h2>
+        <div class="scope-fields">
+          <label for="project"
+            >Project ID<input
+              id="project"
+              required
+              spellcheck="false"
+              autocomplete="off"
+              placeholder="prj_…"
+          /></label>
+          <label for="environment"
+            >Environment<input
+              id="environment"
+              required
+              maxlength="64"
+              autocomplete="off"
+              value="development"
+          /></label>
+        </div>
+        <label for="browser-key"
+          >Browser Key<input
+            id="browser-key"
+            type="password"
+            required
+            autocomplete="off"
+            spellcheck="false"
+            aria-describedby="key-help"
+            placeholder="Paste the complete spk_ key"
+        /></label>
+        <p id="key-help" class="hint">
+          Kept in memory only and cleared from this field after connecting. It is never included in
+          status output, event payloads, or browser storage.
+        </p>
+        <p id="connection-error" role="alert"></p>
+        <button class="primary" type="submit">Connect SDK</button>
+        <a id="console-link" hidden target="_blank" rel="noreferrer">Open live Events</a>
+      </form>
+      <section aria-labelledby="signals-title">
+        <h2 id="signals-title">Capture test signals</h2>
+        <p class="hint">
+          The runtime error and HTTP 503 are simulated. The click and Navigation Timing measurement
+          come from this browser.
+        </p>
+        <fieldset id="signal-controls" disabled>
+          <legend class="sr-only">Signal actions</legend>
+          <button
+            class="primary"
+            id="capture-all"
+            data-spectro-monitor-id="acceptance-all"
+            type="button"
+          >
+            Send all test signals
+          </button>
+          <button id="capture-error" type="button">Capture runtime error</button>
+          <button id="capture-network" type="button">Capture failed request</button>
+          <button
+            id="capture-interaction"
+            data-spectro-monitor-id="acceptance-action"
+            type="button"
+          >
+            Capture interaction
+          </button>
+          <button id="flush" type="button">Flush signals</button>
+          <button id="reload" type="button">Reload with transport restored</button>
+        </fieldset>
+      </section>
+      <section aria-labelledby="status-title">
+        <h2 id="status-title">Delivery status</h2>
+        <p class="hint">
+          Mode: <span id="mode"></span> · Session: <span id="session">not connected</span>
+        </p>
+        <pre id="status" aria-live="polite">Connect the SDK to begin.</pre>
+      </section>
     </main>
     <script type="module" src="/main.ts"></script>
   </body>

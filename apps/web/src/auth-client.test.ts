@@ -7,6 +7,14 @@ afterEach(() => {
 });
 
 describe('hosted Console API credentials', () => {
+  it('recognizes only Spectro-owned hosted-login feedback flags', async () => {
+    const { hasHostedLoginFailure } = await import('./auth-client.js');
+
+    expect(hasHostedLoginFailure('?auth_error=login_failed')).toBe(true);
+    expect(hasHostedLoginFailure('?auth_error=access_denied')).toBe(false);
+    expect(hasHostedLoginFailure('?error_description=Email%20not%20verified')).toBe(false);
+  });
+
   it('does not send a browser-readable bearer token in production', async () => {
     vi.stubEnv('PROD', true);
     vi.resetModules();

@@ -1,12 +1,42 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SpectroClient, type Transport } from '@spectro/core';
 import type { Envelope } from '@spectro/protocol';
 
 import { createIngestApp } from './app.js';
 import { InMemoryEventStore } from './store.js';
+import type { IngestWriteKeyAuthorizer } from './write-key-authorizer.js';
 
 const apps: ReturnType<typeof createIngestApp>[] = [];
+
+function writeKeyEnvelope(
+  events: readonly {
+    readonly id: string;
+    readonly projectId?: string;
+    readonly environment?: string;
+  }[],
+) {
+  return {
+    version: 1,
+    sentAt: Date.now(),
+    items: events.map(({ id, projectId = 'prj_checkout', environment = 'production' }) => ({
+      type: 'event',
+      payload: {
+        id,
+        type: 'custom',
+        name: 'write_key_test',
+        version: 1,
+        timestamp: Date.now(),
+        context: {
+          sdk: { name: '@spectro/browser', version: '0.1.0' },
+          project: { id: projectId },
+          environment,
+        },
+        payload: { properties: {} },
+      },
+    })),
+  };
+}
 
 afterEach(async () => {
   await Promise.all(apps.splice(0).map((app) => app.close()));
@@ -64,6 +94,148 @@ describe('POST /v1/envelope', () => {
 
     expect(response.statusCode).toBe(401);
     expect(response.body).not.toContain('sp_test');
+  });
+
+  it('accepts a valid hosted key only for its allowed origin and exact project scope', async () => {
+    const store = new InMemoryEventStore();
+    const authorize = vi.fn<IngestWriteKeyAuthorizer['authorize']>(async (key) =>
+      key === `spk_${'A'.repeat(43)}`
+        ? {
+            projectId: 'prj_checkout',
+            environment: 'production',
+            allowedOrigins: ['https://app.example.com'],
+          }
+        : undefined,
+    );
+    const app = createIngestApp({ writeKeyAuthorizer: { authorize }, store });
+    apps.push(app);
+    const headers = {
+      'x-spectro-key': `spk_${'A'.repeat(43)}`,
+      origin: 'https://app.example.com',
+    };
+    const accepted = await app.inject({
+      method: 'POST',
+      url: '/v1/envelope',
+      headers,
+      payload: writeKeyEnvelope([{ id: '01994f34-b106-79a3-9865-d835ac0347a9' }]),
+    });
+
+    expect(accepted.statusCode).toBe(202);
+    expect(store.all()).toHaveLength(1);
+    expect(authorize).toHaveBeenCalledWith(headers['x-spectro-key']);
+  });
+
+  it('rejects disallowed or missing browser origins before persistence', async () => {
+    const store = new InMemoryEventStore();
+    const app = createIngestApp({
+      writeKeyAuthorizer: {
+        async authorize() {
+          return {
+            projectId: 'prj_checkout',
+            environment: 'production',
+            allowedOrigins: ['https://app.example.com'],
+          };
+        },
+      },
+      store,
+    });
+    apps.push(app);
+    const payload = writeKeyEnvelope([{ id: '01994f34-b106-79a3-9865-d835ac0347aa' }]);
+    for (const headers of [
+      { 'x-spectro-key': 'spk_test', origin: 'https://attacker.example' },
+      { 'x-spectro-key': 'spk_test' },
+    ]) {
+      // oxlint-disable-next-line no-await-in-loop -- exercise disallowed and absent origin separately.
+      const response = await app.inject({ method: 'POST', url: '/v1/envelope', headers, payload });
+      expect(response.statusCode).toBe(403);
+      expect(response.json()).toMatchObject({ error: { code: 'origin_denied' } });
+    }
+    expect(store.all()).toHaveLength(0);
+  });
+
+  it('rejects an entire envelope if any event escapes the key project or environment', async () => {
+    const store = new InMemoryEventStore();
+    const app = createIngestApp({
+      writeKeyAuthorizer: {
+        async authorize() {
+          return {
+            projectId: 'prj_checkout',
+            environment: 'production',
+            allowedOrigins: [],
+          };
+        },
+      },
+      store,
+    });
+    apps.push(app);
+    const headers = { 'x-spectro-key': 'spk_test' };
+    const outsideProject = await app.inject({
+      method: 'POST',
+      url: '/v1/envelope',
+      headers,
+      payload: writeKeyEnvelope([
+        { id: '01994f34-b106-79a3-9865-d835ac0347ab' },
+        { id: '01994f34-b106-79a3-9865-d835ac0347ac', projectId: 'prj_another' },
+      ]),
+    });
+    expect(outsideProject.statusCode).toBe(403);
+    expect(outsideProject.json()).toMatchObject({ error: { code: 'project_scope_mismatch' } });
+
+    const outsideEnvironment = await app.inject({
+      method: 'POST',
+      url: '/v1/envelope',
+      headers,
+      payload: writeKeyEnvelope([
+        { id: '01994f34-b106-79a3-9865-d835ac0347ad' },
+        { id: '01994f34-b106-79a3-9865-d835ac0347ae', environment: 'staging' },
+      ]),
+    });
+    expect(outsideEnvironment.statusCode).toBe(403);
+    expect(outsideEnvironment.json()).toMatchObject({ error: { code: 'project_scope_mismatch' } });
+    expect(store.all()).toHaveLength(0);
+  });
+
+  it('rejects revoked keys and fails closed when key lookup is unavailable', async () => {
+    let active = true;
+    const store = new InMemoryEventStore();
+    const app = createIngestApp({
+      writeKeyAuthorizer: {
+        async authorize() {
+          if (!active) return undefined;
+          return { projectId: 'prj_checkout', environment: 'production', allowedOrigins: [] };
+        },
+      },
+      store,
+    });
+    apps.push(app);
+    const request = {
+      method: 'POST' as const,
+      url: '/v1/envelope',
+      headers: { 'x-spectro-key': 'spk_test' },
+      payload: writeKeyEnvelope([{ id: '01994f34-b106-79a3-9865-d835ac0347af' }]),
+    };
+    expect((await app.inject(request)).statusCode).toBe(202);
+    active = false;
+    const revoked = await app.inject({
+      ...request,
+      payload: writeKeyEnvelope([{ id: '01994f34-b106-79a3-9865-d835ac0347b0' }]),
+    });
+    expect(revoked.statusCode).toBe(401);
+    expect(store.all()).toHaveLength(1);
+
+    const unavailableApp = createIngestApp({
+      writeKeyAuthorizer: {
+        async authorize() {
+          throw new Error('database-secret');
+        },
+      },
+      store: new InMemoryEventStore(),
+    });
+    apps.push(unavailableApp);
+    const unavailable = await unavailableApp.inject(request);
+    expect(unavailable.statusCode).toBe(503);
+    expect(unavailable.body).not.toContain('database-secret');
+    expect(unavailable.json()).toMatchObject({ error: { code: 'authorization_unavailable' } });
   });
 
   it('returns a stable retryable error when durable admission fails', async () => {

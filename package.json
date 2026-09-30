@@ -22,7 +22,12 @@
     "auth:local:setup": "node scripts/setup-auth-local.mjs",
     "auth:local:prepare": "pnpm auth:local:setup && docker compose -f infra/auth-local/compose.yaml up -d --wait && pnpm --filter @spectro/api... --filter @spectro/web... build && node --env-file=.env.auth-local apps/api/dist/migrate.js",
     "auth:local:api": "node --env-file=.env.auth-local apps/api/dist/server.js",
-    "auth:local:web": "pnpm --filter @spectro/web exec vite preview --config vite.auth-local.config.ts"
+    "auth:local:web": "pnpm --filter @spectro/web exec vite preview --config vite.auth-local.config.ts",
+    "auth:local:ingest:prepare": "node scripts/setup-auth-local-ingestion.mjs",
+    "auth:local:ingest": "node --env-file=.env.ingest-local apps/ingest/dist/server.js",
+    "auth:local:processor": "pnpm --filter @spectro/processor start",
+    "auth:local:harness": "pnpm --filter @spectro/web exec vite ../../tests/browser-acceptance --config vite.acceptance.config.ts --host 127.0.0.1 --port 3000 --strictPort",
+    "auth:local:test-ingestion": "SPECTRO_INTEGRATION=1 pnpm --filter @spectro/integration-tests exec node --env-file=../../.env.auth-local --env-file=../../.env.ingest-local node_modules/vitest/vitest.mjs run hosted-ingestion.integration.test.ts"
   },
   "devDependencies": {
     "oxfmt": "catalog:",

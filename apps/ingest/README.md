@@ -1,9 +1,12 @@
 # Ingestion service
 
 `pnpm --filter @spectro/ingest dev` uses the local-only `sp_local_dev` key when
-`SPECTRO_INGEST_API_KEY` is unset. The service refuses to start with
-`NODE_ENV=production` unless `SPECTRO_INGEST_API_KEY` is configured.
+`SPECTRO_INGEST_API_KEY` is unset and no write-key database URL is configured.
 
-The current V1 adapter compares one configured key for all accepted events.
-Production deployments still need a project-key lookup and rotation strategy
-before serving multiple customer projects.
+Hosted production ingestion uses `SPECTRO_INGEST_KEY_POSTGRES_URL`, a dedicated
+read-only PostgreSQL credential with `SELECT` access to `project_write_keys`.
+It never shares the product API's write-capable `SPECTRO_POSTGRES_URL`. The
+ingestion service looks up SHA-256 verifiers, enforces each key's project and
+environment scope, checks optional exact origin restrictions, and fails closed
+when the lookup database is unavailable. A scoped write key can only admit
+events; it does not grant Console or query access.

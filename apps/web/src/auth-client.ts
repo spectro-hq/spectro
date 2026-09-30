@@ -2,6 +2,10 @@ import { z } from 'zod';
 
 export const hostedConsole = import.meta.env.PROD;
 
+export function hasHostedLoginFailure(search: string): boolean {
+  return new URLSearchParams(search).get('auth_error') === 'login_failed';
+}
+
 export function apiReadHeaders(token: string): HeadersInit {
   return hostedConsole ? {} : { authorization: `Bearer ${token}` };
 }

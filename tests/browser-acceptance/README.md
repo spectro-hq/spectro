@@ -1,5 +1,13 @@
 # Browser-to-console acceptance
 
+For an Auth0 workspace and a scoped Browser Key, use the `hosted` mode and
+[hosted browser acceptance](../../docs/operations/hosted-browser-acceptance.md).
+Run `pnpm auth:local:harness` and open `http://localhost:3000/?mode=hosted`.
+The key is entered locally, is never part of a URL, and is cleared from the
+form after SDK initialization. This mode reuses the hosted Console on 5188.
+
+## Fixed-key delivery recovery scenario
+
 This local-only harness exercises a real browser, ingestion, JetStream,
 processor, ClickHouse, query API, and the React Console. It uses the isolated
 project `prj_browser_acceptance` and environment `acceptance`.

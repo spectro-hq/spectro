@@ -1,11 +1,12 @@
 import { ConsoleShell } from './console-shell.js';
-import { fetchConsoleSession, hostedConsole } from './auth-client.js';
+import { fetchConsoleSession, hasHostedLoginFailure, hostedConsole } from './auth-client.js';
 import {
   QueryClient,
   QueryClientProvider,
   useInfiniteQuery,
   useMutation,
   useQuery,
+  useQueries,
 } from '@tanstack/react-query';
 import {
   createRootRoute,
@@ -15,7 +16,7 @@ import {
   Outlet,
   RouterProvider,
 } from '@tanstack/react-router';
-import { StrictMode, useMemo, useState, type FormEvent } from 'react';
+import { StrictMode, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import {
@@ -43,15 +44,26 @@ import {
   type IssueStatus,
 } from './issue-query.js';
 import { PayloadViewer } from './payload-viewer.js';
+import { ProjectSettings } from './project-settings.js';
 import { parseNetworkSearch } from './network-query.js';
 import { parsePerformanceSearch } from './performance-query.js';
 import { parseReleaseSearch } from './release-query.js';
 import { buildSessionHref, parseSessionSearch, type SessionSearch } from './session-query.js';
 import { formatSessionMetric, orderEventsChronologically } from './session-timeline.js';
-import { SpectroIcon } from './spectro-icons.js';
+import { SpectroIcon, SpectroMark } from './spectro-icons.js';
+import { WorkspaceContext } from './workspace-context.js';
+import {
+  createOrganization,
+  createProject,
+  fetchOrganizationProjects,
+  fetchOrganizations,
+  type OrganizationSummary,
+  type ProjectSummary,
+} from './workspace-client.js';
 import './styles.css';
 
 function AppFrame() {
+  const loginFailed = hasHostedLoginFailure(window.location.search);
   const session = useQuery({
     queryKey: ['console-session'],
     queryFn: fetchConsoleSession,
@@ -62,6 +74,22 @@ function AppFrame() {
     return <main className="auth-gate">Checking your session…</main>;
   }
   if (hostedConsole && session.isError) {
+    if (loginFailed && session.error.message === 'signed_out') {
+      return (
+        <main className="workspace-gate">
+          <section className="workspace-error-panel" aria-labelledby="auth-error-title">
+            <h1 id="auth-error-title">We couldn’t complete sign-in</h1>
+            <p role="alert">
+              If you just created your account, verify your email using the link in your inbox, then
+              try again.
+            </p>
+            <a className="primary-button" href="/v1/auth/login">
+              Try sign-in again
+            </a>
+          </section>
+        </main>
+      );
+    }
     return (
       <main className="auth-gate">
         <h1>
@@ -78,7 +106,273 @@ function AppFrame() {
       </main>
     );
   }
+  if (hostedConsole) return <WorkspaceGate />;
   return <Outlet />;
+}
+
+function WorkspaceGate() {
+  const organizationsQuery = useQuery({
+    queryKey: ['organizations'],
+    queryFn: ({ signal }) => fetchOrganizations(signal),
+    retry: 1,
+  });
+  const organizations = organizationsQuery.data ?? [];
+  const projectQueries = useQueries({
+    queries: organizations.map((organization) => ({
+      queryKey: ['organization-projects', organization.id],
+      queryFn: ({ signal }: { signal: AbortSignal }) =>
+        fetchOrganizationProjects(organization.id, signal),
+      retry: 1,
+    })),
+  });
+
+  if (organizationsQuery.isPending) return <WorkspaceLoading />;
+  if (organizationsQuery.isError) {
+    return (
+      <WorkspaceError
+        onRetry={() => void organizationsQuery.refetch()}
+        message="We couldn't load your organizations. Your session is safe; try again in a moment."
+      />
+    );
+  }
+  if (organizations.length === 0) return <WorkspaceSetup />;
+  if (projectQueries.some((query) => query.isPending)) return <WorkspaceLoading />;
+  if (projectQueries.some((query) => query.isError)) {
+    return (
+      <WorkspaceError
+        onRetry={() => {
+          void organizationsQuery.refetch();
+          for (const query of projectQueries) void query.refetch();
+        }}
+        message="We couldn't load your projects. Your session is safe; try again in a moment."
+      />
+    );
+  }
+
+  const projects = projectQueries.flatMap((query) => query.data ?? []);
+  if (projects.length === 0) {
+    const initialOrganization = organizations[0];
+    return initialOrganization === undefined ? (
+      <WorkspaceSetup />
+    ) : (
+      <WorkspaceSetup initialOrganization={initialOrganization} />
+    );
+  }
+
+  const search = new URLSearchParams(window.location.search);
+  const requestedProjectId = search.get('project');
+  const selectedProject = projects.find((project) => project.id === requestedProjectId);
+  const project = selectedProject ?? projects[0];
+  if (project === undefined) return <WorkspaceSetup />;
+  const environment = search.get('environment');
+  const nextEnvironment =
+    environment && project.environments.includes(environment)
+      ? environment
+      : (project.environments[0] ?? 'production');
+  const selectionIsCurrent =
+    selectedProject !== undefined &&
+    search.get('organization') === project.organizationId &&
+    environment === nextEnvironment &&
+    search.get('source') === 'live';
+
+  if (!selectionIsCurrent) {
+    const resetRouteState = selectedProject === undefined || search.get('source') !== 'live';
+    return (
+      <WorkspaceSelectionRedirect
+        project={project}
+        resetRouteState={resetRouteState}
+        environment={nextEnvironment}
+        range={search.get('range') ?? '24h'}
+      />
+    );
+  }
+
+  return <WorkspaceContent organizations={organizations} projects={projects} />;
+}
+
+function WorkspaceContent({
+  organizations,
+  projects,
+}: {
+  organizations: OrganizationSummary[];
+  projects: ProjectSummary[];
+}) {
+  const value = useMemo(() => ({ organizations, projects }), [organizations, projects]);
+  return (
+    <WorkspaceContext.Provider value={value}>
+      <Outlet />
+    </WorkspaceContext.Provider>
+  );
+}
+
+function WorkspaceSelectionRedirect({
+  project,
+  resetRouteState,
+  environment,
+  range,
+}: {
+  project: ProjectSummary;
+  resetRouteState: boolean;
+  environment: string;
+  range: string;
+}) {
+  useEffect(() => {
+    const parameters = resetRouteState
+      ? new URLSearchParams({ range })
+      : new URLSearchParams(window.location.search);
+    parameters.set('organization', project.organizationId);
+    parameters.set('project', project.id);
+    parameters.set('environment', environment);
+    parameters.set('source', 'live');
+    const path =
+      resetRouteState && window.location.pathname.startsWith('/sessions/')
+        ? '/'
+        : window.location.pathname;
+    window.location.replace(`${path}?${parameters.toString()}`);
+  }, [environment, project, range, resetRouteState]);
+
+  return <WorkspaceLoading message="Opening your workspace…" />;
+}
+
+function WorkspaceLoading({ message = 'Preparing your workspace…' }: { message?: string }) {
+  return (
+    <main className="workspace-gate workspace-gate-loading" aria-live="polite">
+      <span className="workspace-loader" aria-hidden="true" />
+      <p>{message}</p>
+    </main>
+  );
+}
+
+function WorkspaceError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <main className="workspace-gate">
+      <section className="workspace-error-panel">
+        <p className="workspace-eyebrow">WORKSPACE UNAVAILABLE</p>
+        <h1>We lost the signal.</h1>
+        <p role="alert">{message}</p>
+        <button className="primary-button" type="button" onClick={onRetry}>
+          Try again
+        </button>
+      </section>
+    </main>
+  );
+}
+
+function WorkspaceSetup({ initialOrganization }: { initialOrganization?: OrganizationSummary }) {
+  const [organization, setOrganization] = useState(initialOrganization);
+  const [organizationName, setOrganizationName] = useState('');
+  const [projectName, setProjectName] = useState('');
+  const [environment, setEnvironment] = useState('production');
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string>();
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(undefined);
+    setIsSaving(true);
+    try {
+      const workspace =
+        organization ?? (await createOrganization({ name: organizationName.trim() }));
+      setOrganization(workspace);
+      const project = await createProject({
+        organizationId: workspace.id,
+        name: projectName.trim(),
+        environments: [environment],
+      });
+      const parameters = new URLSearchParams({
+        organization: workspace.id,
+        project: project.id,
+        environment: project.environments[0] ?? environment,
+        range: '24h',
+        source: 'live',
+      });
+      window.location.assign(`/settings?${parameters.toString()}`);
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : 'Workspace setup failed. Please try again.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <main className="workspace-gate">
+      <section className="workspace-setup-panel">
+        <a className="wordmark workspace-setup-brand" href="/" aria-label="Spectro">
+          <SpectroMark />
+          <span>spectro</span>
+        </a>
+        <p className="workspace-eyebrow">YOUR DIGITAL OBSERVATORY</p>
+        <h1>{organization ? 'Create your first project' : 'Set up your workspace'}</h1>
+        <p className="workspace-intro">
+          {organization
+            ? `Choose a project for ${organization.name}. Next, you’ll create a scoped key and connect the Browser SDK.`
+            : 'Create a place for your team and a project to organize its product signals.'}
+        </p>
+        <form className="workspace-setup-form" onSubmit={(event) => void handleSubmit(event)}>
+          {organization ? (
+            <div className="workspace-current-org">
+              <span>Organization</span>
+              <strong>{organization.name}</strong>
+              <span className="workspace-role">{organization.role}</span>
+            </div>
+          ) : (
+            <label>
+              <span>Organization name</span>
+              <input
+                autoComplete="organization"
+                maxLength={120}
+                name="organization"
+                placeholder="e.g. Acme"
+                required
+                value={organizationName}
+                onChange={(event) => setOrganizationName(event.currentTarget.value)}
+              />
+            </label>
+          )}
+          <label>
+            <span>First project</span>
+            <input
+              autoComplete="off"
+              maxLength={120}
+              name="project"
+              placeholder="e.g. Web application"
+              required
+              value={projectName}
+              onChange={(event) => setProjectName(event.currentTarget.value)}
+            />
+          </label>
+          <label>
+            <span>First environment</span>
+            <select
+              value={environment}
+              onChange={(event) => setEnvironment(event.currentTarget.value)}
+            >
+              <option value="production">Production</option>
+              <option value="staging">Staging</option>
+              <option value="development">Development</option>
+            </select>
+          </label>
+          {error ? (
+            <p className="workspace-form-error" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <button className="primary-button" type="submit" disabled={isSaving}>
+            {isSaving
+              ? 'Creating…'
+              : organization
+                ? 'Create project and continue'
+                : 'Create workspace and project'}
+          </button>
+        </form>
+        <p className="workspace-setup-footnote">
+          You can add more projects and environments any time.
+        </p>
+      </section>
+    </main>
+  );
 }
 
 const rootRoute = createRootRoute({ component: AppFrame });
@@ -118,6 +412,12 @@ const releaseRoute = createRoute({
   validateSearch: parseReleaseSearch,
   component: lazyRouteComponent(() => import('./release-health.js'), 'ReleaseHealthExplorer'),
 });
+const projectSettingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/settings',
+  validateSearch: parseExplorerSearch,
+  component: ProjectSettings,
+});
 const routeTree = rootRoute.addChildren([
   indexRoute,
   issuesRoute,
@@ -125,6 +425,7 @@ const routeTree = rootRoute.addChildren([
   performanceRoute,
   networkRoute,
   releaseRoute,
+  projectSettingsRoute,
 ]);
 const router = createRouter({ routeTree });
 const queryClient = new QueryClient({

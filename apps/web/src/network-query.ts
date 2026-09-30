@@ -48,6 +48,7 @@ export function formatNetworkTarget(value: string): string {
 }
 
 export interface NetworkSearch {
+  readonly organization?: string | undefined;
   readonly project: string;
   readonly environment: string;
   readonly range: TimeRange;
@@ -66,6 +67,11 @@ function boundedString(value: unknown, maxLength: number): string | undefined {
 }
 
 export function parseNetworkSearch(search: Record<string, unknown>): NetworkSearch {
+  const organization =
+    typeof search.organization === 'string' &&
+    /^org_[A-Za-z0-9_-]{1,120}$/.test(search.organization)
+      ? search.organization
+      : undefined;
   const project =
     typeof search.project === 'string' && /^prj_[A-Za-z0-9_-]{1,120}$/.test(search.project)
       ? search.project
@@ -78,6 +84,7 @@ export function parseNetworkSearch(search: Record<string, unknown>): NetworkSear
   const pagePath = boundedString(search.pagePath, 2_048);
   const release = boundedString(search.release, 128);
   return {
+    ...(organization === undefined ? {} : { organization }),
     project,
     environment,
     range,

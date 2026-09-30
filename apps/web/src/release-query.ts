@@ -24,6 +24,7 @@ export type ReleaseHealth = z.infer<typeof releaseHealthSchema>;
 export type ReleasePage = z.infer<typeof releasePageSchema>;
 
 export interface ReleaseSearch {
+  readonly organization?: string | undefined;
   readonly project: string;
   readonly environment: string;
   readonly range: TimeRange;
@@ -31,6 +32,11 @@ export interface ReleaseSearch {
 }
 
 export function parseReleaseSearch(search: Record<string, unknown>): ReleaseSearch {
+  const organization =
+    typeof search.organization === 'string' &&
+    /^org_[A-Za-z0-9_-]{1,120}$/.test(search.organization)
+      ? search.organization
+      : undefined;
   const project =
     typeof search.project === 'string' && /^prj_[A-Za-z0-9_-]{1,120}$/.test(search.project)
       ? search.project
@@ -44,6 +50,7 @@ export function parseReleaseSearch(search: Record<string, unknown>): ReleaseSear
   const range =
     typeof search.range === 'string' && isTimeRange(search.range) ? search.range : '24h';
   return {
+    ...(organization === undefined ? {} : { organization }),
     project,
     environment,
     range,

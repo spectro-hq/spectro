@@ -24,7 +24,8 @@
     "@nats-io/transport-node": "catalog:",
     "@spectro/pipeline": "workspace:*",
     "@spectro/protocol": "workspace:*",
-    "fastify": "catalog:"
+    "fastify": "catalog:",
+    "postgres": "^3.4.9"
   },
   "devDependencies": {
     "@spectro/core": "workspace:*",

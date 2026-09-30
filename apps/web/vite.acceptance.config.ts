@@ -5,12 +5,21 @@ const workspaceRoot = fileURLToPath(new URL('../..', import.meta.url));
 
 export default defineConfig({
   server: {
-    fs: { allow: [workspaceRoot] },
+    fs: {
+      allow: [workspaceRoot],
+      deny: ['.env', '.env.*', '*.{crt,pem}', '**/.git/**', '**/.local/**', '**/.impeccable/**'],
+    },
     proxy: {
       '/ingest': {
         target: 'http://127.0.0.1:4401',
-        changeOrigin: true,
+        changeOrigin: false,
         rewrite: (path) => path.replace(/^\/ingest/u, ''),
+        configure(proxy) {
+          proxy.on('proxyReq', (request) => {
+            request.removeHeader('cookie');
+            request.removeHeader('authorization');
+          });
+        },
       },
     },
   },

@@ -6,3 +6,12 @@ export function ingestApiKeyFrom(environment: NodeJS.ProcessEnv): string {
   }
   return 'sp_local_dev';
 }
+
+export function ingestWriteKeyDatabaseUrlFrom(environment: NodeJS.ProcessEnv): string | undefined {
+  const url = environment.SPECTRO_INGEST_KEY_POSTGRES_URL;
+  if (url?.trim()) return url;
+  if (environment.NODE_ENV === 'production') {
+    throw new Error('SPECTRO_INGEST_KEY_POSTGRES_URL is required in production.');
+  }
+  return undefined;
+}

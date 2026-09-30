@@ -4,13 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "tsc -p tsconfig.json --pretty false"
+    "check": "tsc -p tsconfig.json --pretty false",
+    "test": "vitest run"
   },
   "dependencies": {
     "@spectro/browser": "workspace:*",
     "@spectro/protocol": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

@@ -57,3 +57,5 @@ pnpm test:auth:staging
 Then follow the login, reload, and logout steps in [hosted authentication acceptance](./hosted-auth-staging.md). A first-time user has no organization membership; project reads returning `403` are expected. This local database does not provision an organization or run the analytics/ingestion stack. Use illustrative Console data for a visual check after login, and test membership separately before production acceptance.
 
 Stop the API and preview with Ctrl+C. Stop the database with `docker compose -f infra/auth-local/compose.yaml stop`; its named volume retains local test accounts and sessions.
+
+After creating a workspace and Browser Key, follow [hosted browser acceptance](./hosted-browser-acceptance.md) to add ingestion/processing and inspect your first live events. The authentication setup alone does not start that data pipeline.

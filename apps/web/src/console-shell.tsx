@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ThemeToggle } from './console-shared.js';
 import { hostedConsole, logoutConsole } from './auth-client.js';
 import { SpectroIcon, SpectroMark } from './spectro-icons.js';
+import { useWorkspace } from './workspace-context.js';
+import type { ProjectSummary } from './workspace-client.js';
 
 const destinations = [
   { title: 'Events', path: '/', icon: 'events' },
@@ -17,9 +19,16 @@ export function ConsoleShell({
   children,
 }: {
   title: string;
-  search: { project: string; environment: string; range: string; source: string };
+  search: {
+    organization?: string | undefined;
+    project: string;
+    environment: string;
+    range: string;
+    source: string;
+  };
   children: ReactNode;
 }): ReactNode {
+  const workspace = useWorkspace();
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem('spectro.sidebar.collapsed') === 'true';
@@ -40,6 +49,8 @@ export function ConsoleShell({
     range: search.range,
     source: search.source,
   });
+  if (search.organization !== undefined) parameters.set('organization', search.organization);
+  const selectedProject = workspace?.projects.find((project) => project.id === search.project);
   const navigation = (
     <>
       <nav aria-label="Primary navigation">
@@ -71,10 +82,15 @@ export function ConsoleShell({
         ))}
       </nav>
       <nav className="rail-secondary" aria-label="Secondary navigation">
-        <span className="rail-link" aria-disabled="true" title="Settings">
+        <a
+          className={`rail-link${title === 'Settings' ? ' active' : ''}`}
+          href={`/settings?${parameters}`}
+          aria-current={title === 'Settings' ? 'page' : undefined}
+          title="Settings"
+        >
           <SpectroIcon name="settings" />
           <span>Settings</span>
-        </span>
+        </a>
         <span className="rail-link" aria-disabled="true" title="API Guide">
           <SpectroIcon name="book" />
           <span>API Guide</span>
@@ -125,12 +141,21 @@ export function ConsoleShell({
             <SidebarIcon />
           </button>
           <nav className="shell-breadcrumbs" aria-label="Breadcrumb">
-            <a href={`/?${parameters}`}>{search.project}</a>
+            <a href={`/?${parameters}`}>{selectedProject?.name ?? search.project}</a>
             <SpectroIcon name="chevron" size={14} />
             <span aria-current="page">{title}</span>
           </nav>
         </div>
         <div className="topbar-actions">
+          {hostedConsole && workspace ? (
+            <WorkspaceSwitcher
+              projects={workspace.projects}
+              organizations={workspace.organizations}
+              selectedProject={selectedProject}
+              range={search.range}
+              pagePath={title.startsWith('Session ') ? '/' : window.location.pathname}
+            />
+          ) : null}
           <div className="runtime-state">
             <span className={`status-light ${search.source}`} aria-hidden="true" />
             <span>
@@ -181,6 +206,57 @@ export function ConsoleShell({
         </div>
       </dialog>
     </div>
+  );
+}
+
+function WorkspaceSwitcher({
+  organizations,
+  projects,
+  selectedProject,
+  range,
+  pagePath,
+}: {
+  organizations: NonNullable<ReturnType<typeof useWorkspace>>['organizations'];
+  projects: NonNullable<ReturnType<typeof useWorkspace>>['projects'];
+  selectedProject: ProjectSummary | undefined;
+  range: string;
+  pagePath: string;
+}): ReactNode {
+  return (
+    <label className="workspace-switcher">
+      <span>Workspace</span>
+      <select
+        aria-label="Organization and project"
+        value={selectedProject?.id ?? ''}
+        onChange={(event) => {
+          const project = projects.find((item) => item.id === event.currentTarget.value);
+          if (project === undefined) return;
+          const parameters = new URLSearchParams({
+            organization: project.organizationId,
+            project: project.id,
+            environment: project.environments[0] ?? 'production',
+            range,
+            source: 'live',
+          });
+          window.location.assign(`${pagePath}?${parameters.toString()}`);
+        }}
+      >
+        {organizations.map((organization) => {
+          const organizationProjects = projects.filter(
+            (project) => project.organizationId === organization.id,
+          );
+          return organizationProjects.length > 0 ? (
+            <optgroup key={organization.id} label={`${organization.name} · ${organization.role}`}>
+              {organizationProjects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </optgroup>
+          ) : null;
+        })}
+      </select>
+    </label>
   );
 }
 

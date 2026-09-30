@@ -10,7 +10,11 @@ import type { PostgresAuthControlPlane } from './postgres-auth-control-plane.js'
 const SESSION_COOKIE = '__Host-spectro-session';
 const LOGIN_COOKIE = '__Host-spectro-login';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1_000;
-const loginCallbackSchema = z.object({ state: z.string().regex(/^[A-Za-z0-9_-]{43}$/) });
+const loginCallbackSchema = z.object({
+  state: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
+  code: z.string().min(1).optional(),
+  error: z.string().min(1).optional(),
+});
 
 export interface OidcIdentity {
   readonly issuer: string;
@@ -30,6 +34,42 @@ export interface OidcProvider {
     readonly nonce: string;
     readonly codeVerifier: string;
   }): Promise<OidcIdentity>;
+}
+
+export type HostedAuthFailureReason =
+  | 'callback_state_invalid'
+  | 'login_attempt_store_failed'
+  | 'login_attempt_unavailable'
+  | 'provider_rejected'
+  | 'authorization_code_missing'
+  | 'oidc_exchange_failed'
+  | 'identity_store_failed'
+  | 'session_store_failed'
+  | 'previous_session_revocation_failed'
+  | 'session_cookie_failed';
+
+export type HostedAuthFailureCategory =
+  | 'oauth_response'
+  | 'client_error'
+  | 'transport_or_validation'
+  | 'unexpected';
+
+export type HostedAuthOAuthErrorCode =
+  | 'access_denied'
+  | 'invalid_client'
+  | 'invalid_grant'
+  | 'invalid_request'
+  | 'invalid_scope'
+  | 'server_error'
+  | 'temporarily_unavailable'
+  | 'unauthorized_client'
+  | 'unsupported_grant_type'
+  | 'other';
+
+export interface HostedAuthFailureDetails {
+  readonly category: HostedAuthFailureCategory;
+  readonly oauthErrorCode?: HostedAuthOAuthErrorCode;
+  readonly httpStatus?: number;
 }
 
 export class ManagedOidcProvider implements OidcProvider {
@@ -120,6 +160,10 @@ export interface HostedAuthOptions {
   readonly publicOrigin: string;
   readonly csrfSecret: string;
   readonly oidc: OidcProvider;
+  readonly onLoginFailure?: (
+    reason: HostedAuthFailureReason,
+    details?: HostedAuthFailureDetails,
+  ) => void;
   readonly controlPlane: Pick<
     PostgresAuthControlPlane,
     | 'createLoginAttempt'
@@ -170,6 +214,92 @@ export function requireSameOriginCsrf(
   return true;
 }
 
+export async function requireConsoleSession(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  options: HostedAuthOptions,
+  verifyCsrf = false,
+): Promise<{ readonly userId: string } | undefined> {
+  reply.header('cache-control', 'no-store');
+  const token = sessionToken(request);
+  try {
+    const principal =
+      token === undefined ? undefined : await options.controlPlane.resolveSession(token);
+    if (principal === undefined || token === undefined) {
+      reply
+        .code(401)
+        .send({ error: { code: 'unauthorized', message: 'Authentication is required.' } });
+      return undefined;
+    }
+    if (verifyCsrf && !requireSameOriginCsrf(request, reply, options, token)) return undefined;
+    return principal;
+  } catch {
+    reply.code(503).send({
+      error: {
+        code: 'authorization_unavailable',
+        message: 'Authorization is temporarily unavailable.',
+      },
+    });
+    return undefined;
+  }
+}
+
+function redirectToLoginFailure(reply: FastifyReply, publicOrigin: string): FastifyReply {
+  const destination = new URL('/', publicOrigin);
+  destination.searchParams.set('auth_error', 'login_failed');
+  return reply.header('cache-control', 'no-store').redirect(destination.href);
+}
+
+function failLogin(
+  reply: FastifyReply,
+  options: HostedAuthOptions,
+  reason: HostedAuthFailureReason,
+  details?: HostedAuthFailureDetails,
+): FastifyReply {
+  try {
+    options.onLoginFailure?.(reason, details);
+  } catch {
+    // Diagnostics must never interfere with the authentication response.
+  }
+  return redirectToLoginFailure(reply, options.publicOrigin);
+}
+
+function safeOAuthErrorCode(value: string | undefined): HostedAuthOAuthErrorCode {
+  switch (value) {
+    case 'access_denied':
+    case 'invalid_client':
+    case 'invalid_grant':
+    case 'invalid_request':
+    case 'invalid_scope':
+    case 'server_error':
+    case 'temporarily_unavailable':
+    case 'unauthorized_client':
+    case 'unsupported_grant_type':
+      return value;
+    default:
+      return 'other';
+  }
+}
+
+function oidcFailureDetails(error: unknown): HostedAuthFailureDetails {
+  if (error instanceof oidc.ResponseBodyError) {
+    return {
+      category: 'oauth_response',
+      oauthErrorCode: safeOAuthErrorCode(error.error),
+      httpStatus: error.status,
+    };
+  }
+  if (error instanceof oidc.AuthorizationResponseError) {
+    return {
+      category: 'oauth_response',
+      oauthErrorCode: safeOAuthErrorCode(error.error),
+    };
+  }
+  if (error instanceof oidc.ClientError) return { category: 'client_error' };
+  if (error instanceof TypeError) return { category: 'transport_or_validation' };
+  return { category: 'unexpected' };
+}
+
 export function registerHostedAuth(app: FastifyInstance, options: HostedAuthOptions): void {
   const origin = new URL(options.publicOrigin);
   if (origin.protocol !== 'https:' || origin.origin !== options.publicOrigin) {
@@ -209,31 +339,36 @@ export function registerHostedAuth(app: FastifyInstance, options: HostedAuthOpti
     reply.clearCookie(LOGIN_COOKIE, { path: '/' });
     const parsed = loginCallbackSchema.safeParse(request.query);
     if (!parsed.success || request.cookies[LOGIN_COOKIE] !== parsed.data.state) {
-      return reply.code(400).send({
-        error: { code: 'login_invalid', message: 'Login could not be verified.' },
-      });
+      return failLogin(reply, options, 'callback_state_invalid');
     }
+    let failureReason: HostedAuthFailureReason = 'login_attempt_store_failed';
     try {
       const attempt = await options.controlPlane.consumeLoginAttempt(parsed.data.state);
-      if (attempt === undefined) {
-        return reply.code(400).send({
-          error: { code: 'login_invalid', message: 'Login could not be verified.' },
-        });
-      }
+      if (attempt === undefined) return failLogin(reply, options, 'login_attempt_unavailable');
+      if (parsed.data.error !== undefined) return failLogin(reply, options, 'provider_rejected');
+      if (parsed.data.code === undefined)
+        return failLogin(reply, options, 'authorization_code_missing');
       const callbackUrl = new URL('/v1/auth/callback', options.publicOrigin);
       callbackUrl.search = new URL(request.url, options.publicOrigin).search;
+      failureReason = 'oidc_exchange_failed';
       const identity = await options.oidc.exchange({
         callbackUrl,
         state: parsed.data.state,
         ...attempt,
       });
+      failureReason = 'identity_store_failed';
       const userId = await options.controlPlane.findOrCreateUser(identity);
+      failureReason = 'session_store_failed';
       const token = await options.controlPlane.createSession({
         userId,
         expiresAt: new Date(Date.now() + SESSION_TTL_MS),
       });
       const previousToken = sessionToken(request);
-      if (previousToken !== undefined) await options.controlPlane.revokeSession(previousToken);
+      if (previousToken !== undefined) {
+        failureReason = 'previous_session_revocation_failed';
+        await options.controlPlane.revokeSession(previousToken);
+      }
+      failureReason = 'session_cookie_failed';
       reply.setCookie(SESSION_COOKIE, token, {
         path: '/',
         httpOnly: true,
@@ -242,10 +377,13 @@ export function registerHostedAuth(app: FastifyInstance, options: HostedAuthOpti
         maxAge: SESSION_TTL_MS / 1_000,
       });
       return reply.header('cache-control', 'no-store').redirect('/');
-    } catch {
-      return reply.code(400).send({
-        error: { code: 'login_invalid', message: 'Login could not be verified.' },
-      });
+    } catch (error) {
+      return failLogin(
+        reply,
+        options,
+        failureReason,
+        failureReason === 'oidc_exchange_failed' ? oidcFailureDetails(error) : undefined,
+      );
     }
   });
 

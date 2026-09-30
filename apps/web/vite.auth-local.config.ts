@@ -13,6 +13,11 @@ export default defineConfig({
       cert: readFileSync(new URL('../../.local/auth/localhost.pem', import.meta.url)),
     },
     proxy: {
+      '/ingest': {
+        target: 'http://127.0.0.1:4401',
+        changeOrigin: false,
+        rewrite: (path) => path.replace(/^\/ingest/u, ''),
+      },
       '/v1': { target: 'http://127.0.0.1:4488', changeOrigin: false },
       '/health': { target: 'http://127.0.0.1:4488', changeOrigin: false },
     },

@@ -1,8 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
+import { ResponseBodyError } from 'openid-client';
 
 import { createApiApp } from './app.js';
 import type { EventQueryStore } from './events.js';
-import type { HostedAuthOptions, OidcProvider } from './hosted-auth.js';
+import type {
+  HostedAuthFailureDetails,
+  HostedAuthFailureReason,
+  HostedAuthOptions,
+  OidcProvider,
+} from './hosted-auth.js';
 import type { IssueLifecycleStore } from './issue-lifecycle.js';
 
 const origin = 'https://console.spectro.example';
@@ -22,6 +28,8 @@ function setup() {
         : undefined,
   );
   const revokeSession = vi.fn<HostedAuthOptions['controlPlane']['revokeSession']>(async () => {});
+  const onLoginFailure =
+    vi.fn<(reason: HostedAuthFailureReason, details?: HostedAuthFailureDetails) => void>();
   const exchange = vi.fn<OidcProvider['exchange']>(async () => ({
     issuer: 'https://idp.example',
     subject: 'stable-subject',
@@ -45,6 +53,7 @@ function setup() {
   const hostedAuth: HostedAuthOptions = {
     publicOrigin: origin,
     csrfSecret: 'a-secret-with-at-least-thirty-two-bytes',
+    onLoginFailure,
     oidc: {
       authorizationUrl: async ({ state }) =>
         new URL(`https://idp.example/authorize?state=${state}`),
@@ -52,7 +61,15 @@ function setup() {
     },
     controlPlane,
   };
-  return { hostedAuth, attempts, resolveSession, authorizeProject, revokeSession, exchange };
+  return {
+    hostedAuth,
+    attempts,
+    resolveSession,
+    authorizeProject,
+    revokeSession,
+    onLoginFailure,
+    exchange,
+  };
 }
 
 describe('hosted product API authentication', () => {
@@ -72,7 +89,9 @@ describe('hosted product API authentication', () => {
       method: 'GET',
       url: `/v1/auth/callback?state=${state}&code=some-code`,
     });
-    expect(missingCookie.statusCode).toBe(400);
+    expect(missingCookie.statusCode).toBe(302);
+    expect(missingCookie.headers.location).toBe(`${origin}/?auth_error=login_failed`);
+    expect(fixture.onLoginFailure).toHaveBeenCalledWith('callback_state_invalid', undefined);
     expect(fixture.attempts.size).toBe(1);
 
     const callback = await app.inject({
@@ -99,8 +118,64 @@ describe('hosted product API authentication', () => {
       url: `/v1/auth/callback?state=${state}&code=some-code`,
       headers: { cookie },
     });
-    expect(replay.statusCode).toBe(400);
+    expect(replay.statusCode).toBe(302);
+    expect(replay.headers.location).toBe(`${origin}/?auth_error=login_failed`);
     expect(fixture.exchange).toHaveBeenCalledOnce();
+    expect(fixture.onLoginFailure).toHaveBeenCalledWith('login_attempt_unavailable', undefined);
+    await app.close();
+  });
+
+  it('returns provider errors to a safe sign-in screen without exposing their description', async () => {
+    const fixture = setup();
+    const app = createApiApp({ hostedAuth: fixture.hostedAuth });
+    const login = await app.inject({ method: 'GET', url: '/v1/auth/login' });
+    const state = new URL(login.headers.location as string).searchParams.get('state');
+    expect(state).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    const callback = await app.inject({
+      method: 'GET',
+      url: `/v1/auth/callback?state=${state}&error=access_denied&error_description=Email+not+verified`,
+      headers: { cookie: `__Host-spectro-login=${state}` },
+    });
+
+    expect(callback.statusCode).toBe(302);
+    expect(callback.headers.location).toBe(`${origin}/?auth_error=login_failed`);
+    expect(callback.body).not.toContain('Email not verified');
+    expect(fixture.attempts.size).toBe(0);
+    expect(fixture.exchange).not.toHaveBeenCalled();
+    expect(fixture.onLoginFailure).toHaveBeenCalledOnce();
+    expect(fixture.onLoginFailure).toHaveBeenCalledWith('provider_rejected', undefined);
+    await app.close();
+  });
+
+  it('reports OIDC exchange failures without exposing provider details', async () => {
+    const fixture = setup();
+    fixture.exchange.mockRejectedValue(
+      new ResponseBodyError('private token exchange detail', {
+        cause: { error: 'invalid_client', error_description: 'private provider detail' },
+        response: new Response(null, { status: 401 }),
+      }),
+    );
+    const app = createApiApp({ hostedAuth: fixture.hostedAuth });
+    const login = await app.inject({ method: 'GET', url: '/v1/auth/login' });
+    const state = new URL(login.headers.location as string).searchParams.get('state');
+    expect(state).toMatch(/^[A-Za-z0-9_-]{43}$/);
+
+    const callback = await app.inject({
+      method: 'GET',
+      url: `/v1/auth/callback?state=${state}&code=some-code`,
+      headers: { cookie: `__Host-spectro-login=${state}` },
+    });
+
+    expect(callback.statusCode).toBe(302);
+    expect(callback.headers.location).toBe(`${origin}/?auth_error=login_failed`);
+    expect(callback.body).not.toContain('private token exchange detail');
+    expect(callback.body).not.toContain('private provider detail');
+    expect(fixture.onLoginFailure).toHaveBeenCalledOnce();
+    expect(fixture.onLoginFailure).toHaveBeenCalledWith('oidc_exchange_failed', {
+      category: 'oauth_response',
+      oauthErrorCode: 'invalid_client',
+      httpStatus: 401,
+    });
     await app.close();
   });
 

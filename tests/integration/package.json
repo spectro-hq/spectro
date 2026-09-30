@@ -16,6 +16,7 @@
     "@spectro/pipeline": "workspace:*",
     "@spectro/processor": "workspace:*",
     "@spectro/protocol": "workspace:*",
+    "postgres": "^3.4.9",
     "uuid": "catalog:"
   },
   "devDependencies": {

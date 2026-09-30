@@ -85,6 +85,7 @@ export type TimeRange = keyof typeof TIME_RANGES;
 export type DataSource = 'illustrative' | 'live';
 
 export interface ExplorerSearch {
+  readonly organization?: string | undefined;
   readonly project: string;
   readonly environment: string;
   readonly range: TimeRange;
@@ -105,6 +106,11 @@ function optionalBoundedString(value: unknown, maxLength: number): string | unde
 }
 
 export function parseExplorerSearch(search: Record<string, unknown>): ExplorerSearch {
+  const organization =
+    typeof search.organization === 'string' &&
+    /^org_[A-Za-z0-9_-]{1,120}$/.test(search.organization)
+      ? search.organization
+      : undefined;
   const project =
     typeof search.project === 'string' && /^prj_[A-Za-z0-9_-]{1,120}$/.test(search.project)
       ? search.project
@@ -123,6 +129,7 @@ export function parseExplorerSearch(search: Record<string, unknown>): ExplorerSe
   const fingerprint = optionalBoundedString(search.fingerprint, 32);
 
   return {
+    ...(organization === undefined ? {} : { organization }),
     project,
     environment,
     range,

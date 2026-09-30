@@ -1,6 +1,7 @@
 import { isTimeRange, type DataSource, type TimeRange } from './event-query.js';
 
 export interface SessionSearch {
+  readonly organization?: string | undefined;
   readonly project: string;
   readonly environment: string;
   readonly range: TimeRange;
@@ -15,6 +16,11 @@ function optionalBoundedString(value: unknown, maxLength: number): string | unde
 }
 
 export function parseSessionSearch(search: Record<string, unknown>): SessionSearch {
+  const organization =
+    typeof search.organization === 'string' &&
+    /^org_[A-Za-z0-9_-]{1,120}$/.test(search.organization)
+      ? search.organization
+      : undefined;
   const project =
     typeof search.project === 'string' && /^prj_[A-Za-z0-9_-]{1,120}$/.test(search.project)
       ? search.project
@@ -25,6 +31,7 @@ export function parseSessionSearch(search: Record<string, unknown>): SessionSear
   const event = optionalBoundedString(search.event, 128);
 
   return {
+    ...(organization === undefined ? {} : { organization }),
     project,
     environment,
     range,
@@ -35,7 +42,7 @@ export function parseSessionSearch(search: Record<string, unknown>): SessionSear
 
 export function buildSessionHref(
   sessionId: string,
-  search: Pick<SessionSearch, 'project' | 'environment' | 'range' | 'source'>,
+  search: Pick<SessionSearch, 'organization' | 'project' | 'environment' | 'range' | 'source'>,
   event?: string,
 ): string {
   const parameters = new URLSearchParams({
@@ -44,6 +51,7 @@ export function buildSessionHref(
     range: search.range,
     source: search.source,
   });
+  if (search.organization !== undefined) parameters.set('organization', search.organization);
   if (event !== undefined) parameters.set('event', event);
   return `/sessions/${encodeURIComponent(sessionId)}?${parameters.toString()}`;
 }

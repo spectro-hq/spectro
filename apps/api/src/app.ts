@@ -54,6 +54,8 @@ import {
   sessionToken,
   type HostedAuthOptions,
 } from './hosted-auth.js';
+import { registerWorkspaceRoutes, type WorkspaceStore } from './workspaces.js';
+import { registerProjectWriteKeyRoutes, type ProjectWriteKeyStore } from './project-write-keys.js';
 
 const denyAllProjects: ProjectAuthorizer = { authorize: async () => false };
 const unavailableEventStore: EventQueryStore = {
@@ -94,6 +96,9 @@ const defaultLifecycleStore: IssueLifecycleStore = {
 export interface ApiAppOptions {
   readonly authorizer?: ProjectAuthorizer;
   readonly hostedAuth?: HostedAuthOptions;
+  readonly workspaceStore?: WorkspaceStore;
+  readonly projectWriteKeyStore?: ProjectWriteKeyStore;
+  readonly ingestionEndpoint?: string;
   readonly eventStore?: EventQueryStore;
   readonly issueStore?: IssueQueryStore;
   readonly performanceStore?: PerformanceQueryStore;
@@ -197,6 +202,12 @@ async function authorizeProjectAccess(
 }
 
 export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
+  if (options.workspaceStore !== undefined && options.hostedAuth === undefined) {
+    throw new Error('Workspace management requires hosted authentication');
+  }
+  if (options.projectWriteKeyStore !== undefined && options.hostedAuth === undefined) {
+    throw new Error('Project write-key management requires hosted authentication');
+  }
   if (options.hostedAuth !== undefined && options.authorizer !== undefined) {
     throw new Error('Hosted and local authorization cannot be enabled together');
   }
@@ -209,7 +220,16 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
   const releaseStore = options.releaseStore ?? unavailableReleaseStore;
   const issueLifecycleStore = options.issueLifecycleStore ?? defaultLifecycleStore;
   void app.register(cors, { origin: false });
-  if (options.hostedAuth !== undefined) registerHostedAuth(app, options.hostedAuth);
+  if (options.hostedAuth !== undefined) {
+    registerHostedAuth(app, options.hostedAuth);
+    registerWorkspaceRoutes(app, options.hostedAuth, options.workspaceStore);
+    registerProjectWriteKeyRoutes(
+      app,
+      options.hostedAuth,
+      options.projectWriteKeyStore,
+      options.ingestionEndpoint ?? 'http://localhost:4401',
+    );
+  }
 
   app.get('/health', async () => ({ service: 'spectro-api', status: 'ok' }));
 

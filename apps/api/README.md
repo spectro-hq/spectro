@@ -58,6 +58,48 @@ Hosted mode requires `SPECTRO_AUTH_MODE=hosted`, `SPECTRO_POSTGRES_URL`, `SPECTR
 
 `GET /v1/auth/login` starts login; `GET /v1/auth/callback` consumes its browser-bound, one-time state and creates a seven-day, revocable host-only session. `GET /v1/auth/session` returns the current Spectro user ID and session-bound CSRF token (never the session credential). `POST /v1/auth/logout` requires an exact same-origin `Origin` header and `X-CSRF-Token` and revokes the session. Issue PATCH uses the same CSRF check. All hosted project reads and writes verify the live session, organization membership, project, environment, and action. Never send OIDC provider tokens to the SPA.
 
-This slice does not provision organizations or projects on first login. An authenticated user without explicit membership receives 403 for project data. Invitation/onboarding and scoped browser ingestion keys remain separate ADR-050 follow-ups.
+Login does not provision organizations or projects automatically. The hosted Console guides a new user through creating one organization and its first project, then opens Project settings to create a scoped Browser write key. Invitations, member administration, and ownership transfer remain ADR-050 follow-ups.
 
 For Auth0 acceptance before a staging domain is available, see [local HTTPS authentication](../../docs/operations/auth-local.md). For a deployed environment, see [hosted authentication staging acceptance](../../docs/operations/hosted-auth-staging.md).
+
+## Workspace provisioning
+
+Hosted mode exposes these same-origin, cookie-authenticated endpoints:
+
+| Method | Path                                         | Permission / response                                                                   |
+| ------ | -------------------------------------------- | --------------------------------------------------------------------------------------- |
+| GET    | `/v1/organizations`                          | Current user's memberships, including each organization ID, name and role               |
+| POST   | `/v1/organizations`                          | Any active Console user; creates the organization and its Owner membership, returns 201 |
+| GET    | `/v1/organizations/:organizationId/projects` | Any current member; projects with registered environment names                          |
+| POST   | `/v1/organizations/:organizationId/projects` | Owner or Admin; creates the project and its environments, returns 201                   |
+
+Both POST routes require the exact Console `Origin` and session-bound `X-CSRF-Token` returned by `/v1/auth/session`. Organization bodies are `{ "name": "My team" }`; project bodies are `{ "name": "Storefront", "environments": ["production", "staging"] }`. Names are trimmed and limited to 120 characters. A project requires 1–10 distinct, trimmed environment names of up to 64 characters. Request bodies are limited to 8 KiB. Unknown properties are rejected; user, role and resource IDs cannot be assigned by the caller. Names need not be unique, and POST requests are not idempotent; clients must not automatically retry creation after an ambiguous response.
+
+GET routes accept `limit` (default 50, maximum 100) and `cursor`. Responses are `{ "data": [...] }` with an optional `nextCursor` containing the last resource ID. Results are ordered by ID; pass the returned cursor unchanged to the same endpoint. Cursors and organization IDs never grant access. Unknown and inaccessible organizations both return 403; missing or invalid sessions return 401. All responses produced by these routes use `Cache-Control: no-store`.
+
+Apply migration `005_workspace_audit_log.sql` before using creation routes. Organization creation, Owner membership and the audit entry commit together. Project creation, environments and its audit entry also commit together. Membership is checked and locked within project transactions. Audit records contain actor ID, organization ID, resource ID, action and timestamp; they contain no session or provider credentials. New projects immediately use the existing project/environment authorization checks.
+
+Run the real PostgreSQL acceptance with `SPECTRO_POSTGRES_URL` pointing to a migrated test database:
+
+```sh
+pnpm --filter @spectro/api migrate
+pnpm --filter @spectro/api exec vitest run src/postgres-workspaces.integration.test.ts
+```
+
+The test creates isolated fixture users and organizations, checks provisioning through the HTTP boundary, cross-organization denial, all four roles, live membership removal, pagination, transaction rollback, audit actors and invalidated sessions, then removes only those fixtures. See [workspace provisioning acceptance](../../docs/operations/workspace-provisioning.md) for scope and rollout notes.
+
+## Browser write keys
+
+Hosted mode exposes project/environment-scoped key management:
+
+| Method | Path                                                           | Permission / behavior                                                           |
+| ------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| GET    | `/v1/projects/:projectId/environments/:environment/write-keys` | Owner/Admin only; returns metadata and the configured public ingestion endpoint |
+| POST   | same path                                                      | Owner/Admin only; creates an overlapping key and returns its secret once        |
+| DELETE | `.../write-keys/:keyId`                                        | Owner/Admin only; revokes the key                                               |
+
+Write-key POST and DELETE require the exact Console `Origin` and session-bound `X-CSRF-Token`. The POST body is `{ "environment": "production", "label": "Browser production", "allowedOrigins": ["https://app.example.com"] }`. `allowedOrigins` is optional, capped at 20 exact HTTPS origins; HTTP is accepted only for localhost development. Empty means any origin may use the public ingestion endpoint, so configure origins for production sites. Keys are project/environment-specific. Create a replacement before revoking an existing key to rotate without an ingestion gap. Raw secrets are returned only by create and are never stored or logged; the database stores a SHA-256 verifier and a non-secret hint. Revocation and creation are included in the workspace audit log.
+
+`SPECTRO_INGEST_PUBLIC_ENDPOINT` is the public Browser SDK base URL. Production must provide it over HTTPS; local hosted-auth mode proxies `https://localhost:5188/ingest` to the local ingestion service. The ingestion service needs `SPECTRO_INGEST_KEY_POSTGRES_URL`, configured with a dedicated read-only role that has `SELECT` only on `project_write_keys`. The product API keeps using its write-capable `SPECTRO_POSTGRES_URL`; never share the API credential with ingestion.
+
+Ingest verifies the submitted key, optional `Origin` policy, and every event's project and environment before admission. Scope mismatch rejects the entire envelope. A database lookup outage fails closed with 503. Browser keys are admission scopes, not user identities or read/admin credentials. The SDK source package is currently in this repository; publication to a package registry remains a separate release step.

@@ -43,6 +43,7 @@ export type IssueStatus = ErrorIssue['status'];
 export type IssueHistory = z.infer<typeof issueHistorySchema>;
 
 export interface IssueSearch {
+  readonly organization?: string | undefined;
   readonly project: string;
   readonly environment: string;
   readonly range: TimeRange;
@@ -60,6 +61,11 @@ function optionalBoundedString(value: unknown, maxLength: number): string | unde
 }
 
 export function parseIssueSearch(search: Record<string, unknown>): IssueSearch {
+  const organization =
+    typeof search.organization === 'string' &&
+    /^org_[A-Za-z0-9_-]{1,120}$/.test(search.organization)
+      ? search.organization
+      : undefined;
   const project =
     typeof search.project === 'string' && /^prj_[A-Za-z0-9_-]{1,120}$/.test(search.project)
       ? search.project
@@ -76,6 +82,7 @@ export function parseIssueSearch(search: Record<string, unknown>): IssueSearch {
       : undefined;
 
   return {
+    ...(organization === undefined ? {} : { organization }),
     project,
     environment,
     range,

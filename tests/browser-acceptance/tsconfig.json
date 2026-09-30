@@ -7,6 +7,6 @@
     "moduleResolution": "Bundler",
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
-  "include": ["main.ts"],
+  "include": ["main.ts", "connection.ts"],
   "references": [{ "path": "../../packages/browser" }, { "path": "../../packages/protocol" }]
 }
