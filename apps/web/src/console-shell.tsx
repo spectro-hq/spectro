@@ -12,12 +12,14 @@ const destinations = [
   { title: 'Network', path: '/network', icon: 'network' },
   { title: 'Releases', path: '/releases', icon: 'release' },
   { title: 'Live', path: '/live', icon: 'live' },
+  { title: 'Schemas', path: '/schemas', icon: 'schemas' },
 ] as const;
 
 export function ConsoleShell({
   title,
   search,
   children,
+  reference = false,
 }: {
   title: string;
   search: {
@@ -28,6 +30,7 @@ export function ConsoleShell({
     source: string;
   };
   children: ReactNode;
+  reference?: boolean;
 }): ReactNode {
   const workspace = useWorkspace();
   const [collapsed, setCollapsed] = useState(() => {
@@ -70,12 +73,6 @@ export function ConsoleShell({
             </a>
           );
         })}
-        {(['schemas'] as const).map((icon) => (
-          <span key={icon} className="rail-link" aria-disabled="true" title="Schemas">
-            <SpectroIcon name={icon} />
-            <span>Schemas</span>
-          </span>
-        ))}
       </nav>
       <nav className="rail-secondary" aria-label="Secondary navigation">
         <a
@@ -137,7 +134,11 @@ export function ConsoleShell({
             <SidebarIcon />
           </button>
           <nav className="shell-breadcrumbs" aria-label="Breadcrumb">
-            <a href={`/?${parameters}`}>{selectedProject?.name ?? search.project}</a>
+            {reference ? (
+              <span>Protocol</span>
+            ) : (
+              <a href={`/?${parameters}`}>{selectedProject?.name ?? search.project}</a>
+            )}
             <SpectroIcon name="chevron" size={14} />
             <span aria-current="page">{title}</span>
           </nav>
@@ -153,13 +154,17 @@ export function ConsoleShell({
             />
           ) : null}
           <div className="runtime-state">
-            <span className={`status-light ${search.source}`} aria-hidden="true" />
+            {!reference ? (
+              <span className={`status-light ${search.source}`} aria-hidden="true" />
+            ) : null}
             <span>
-              {search.source === 'live'
-                ? hostedConsole
-                  ? 'Hosted Console'
-                  : 'Local API connected'
-                : 'Illustrative workspace'}
+              {reference
+                ? 'Protocol reference'
+                : search.source === 'live'
+                  ? hostedConsole
+                    ? 'Hosted Console'
+                    : 'Local API connected'
+                  : 'Illustrative workspace'}
             </span>
           </div>
           {hostedConsole ? (

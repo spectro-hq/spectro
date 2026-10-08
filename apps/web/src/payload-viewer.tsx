@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react';
 
 import { SpectroIcon } from './spectro-icons.js';
+import { writeClipboard } from './clipboard.js';
 
 export type PayloadFormat = 'json' | 'yaml';
 
@@ -90,35 +91,18 @@ function highlightedLine(line: string): ReactNode[] {
   return fragments;
 }
 
-async function writeClipboard(value: string): Promise<boolean> {
-  try {
-    if (navigator.clipboard !== undefined) {
-      await navigator.clipboard.writeText(value);
-      return true;
-    }
-  } catch {
-    // Continue to the local fallback when Clipboard API access is unavailable.
-  }
-
-  const textarea = document.createElement('textarea');
-  try {
-    textarea.value = value;
-    textarea.setAttribute('readonly', '');
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    document.body.append(textarea);
-    textarea.select();
-    return document.execCommand('copy');
-  } catch {
-    return false;
-  } finally {
-    textarea.remove();
-  }
-}
-
-export function PayloadViewer({ value }: { readonly value: unknown }): ReactElement {
+export function PayloadViewer({
+  value,
+  title = 'Event payload',
+  allowYaml = true,
+}: {
+  readonly value: unknown;
+  readonly title?: string;
+  readonly allowYaml?: boolean;
+}): ReactElement {
   const [format, setFormat] = useState<PayloadFormat>('json');
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const formatted = useMemo(() => formatPayload(value, format), [format, value]);
   const lines = formatted.split('\n');
   const lineOccurrences = new Map<string, number>();
@@ -137,41 +121,54 @@ export function PayloadViewer({ value }: { readonly value: unknown }): ReactElem
   return (
     <section className="payload-section">
       <header className="payload-toolbar">
-        <h3>Event payload</h3>
+        <h3>{title}</h3>
         <div className="payload-actions">
-          <label>
-            <span className="sr-only">Payload format</span>
-            <select
-              aria-label="Payload format"
-              value={format}
-              onChange={(event) => {
-                const nextFormat = event.currentTarget.value;
-                if (isPayloadFormat(nextFormat)) setFormat(nextFormat);
-              }}
-            >
-              <option value="json">JSON</option>
-              <option value="yaml">YAML</option>
-            </select>
-          </label>
+          {allowYaml ? (
+            <label>
+              <span className="sr-only">Payload format</span>
+              <select
+                aria-label="Payload format"
+                value={format}
+                onChange={(event) => {
+                  const nextFormat = event.currentTarget.value;
+                  if (isPayloadFormat(nextFormat)) setFormat(nextFormat);
+                }}
+              >
+                <option value="json">JSON</option>
+                <option value="yaml">YAML</option>
+              </select>
+            </label>
+          ) : null}
           <button
             className={copied ? 'copied' : undefined}
             type="button"
-            onClick={() => void writeClipboard(formatted).then(setCopied)}
+            onClick={() =>
+              void writeClipboard(formatted).then((success) => {
+                setCopied(success);
+                setCopyFailed(!success);
+              })
+            }
           >
             <SpectroIcon name={copied ? 'check' : 'copy'} size={16} />
             <span aria-live="polite">{copied ? 'Copied' : 'Copy'}</span>
           </button>
         </div>
       </header>
-      <div className="payload-code-scroll">
-        <ol className="payload-code" aria-label={`Event payload in ${format.toUpperCase()}`}>
+      {copyFailed ? (
+        <output className="schema-copy-error">
+          Copy failed. Select and copy the code manually.
+        </output>
+      ) : null}
+      {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- A scrollable code viewport needs keyboard focus so arrow keys can reveal overflow. */}
+      <section className="payload-code-scroll" aria-label={`${title} code`} tabIndex={0}>
+        <ol className="payload-code" aria-label={`${title} in ${format.toUpperCase()}`}>
           {displayLines.map(({ key, line }) => (
             <li key={key}>
               <code>{highlightedLine(line)}</code>
             </li>
           ))}
         </ol>
-      </div>
+      </section>
     </section>
   );
 }

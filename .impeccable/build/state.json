@@ -1,326 +1,226 @@
 {
   "tool": "build-phase",
   "version": 2,
-  "startedAt": "2026-09-30T09:20:44.650Z",
-  "comp": ".impeccable/mocks/live-event-led.png",
-  "direction": "40726971",
-  "breakpoint": "1536x1024",
+  "startedAt": "2026-10-01T10:28:22.736Z",
+  "comp": ".impeccable/mocks/decision/schemas-reference-tabs.png",
+  "direction": null,
+  "breakpoint": "1487x1058",
   "artifact": null,
   "phase": "review",
   "phases": {
     "comps": {
-      "status": "closed",
-      "openedAt": "2026-09-30T09:20:44.649Z",
-      "closedAt": "2026-09-30T16:28:03.304Z",
-      "attempts": 2,
-      "notes": [],
-      "gate": {
-        "ok": true,
-        "reasons": [],
-        "summary": "3 comps, 1 approved",
-        "approved": ".impeccable/mocks/live-event-led.png",
-        "at": "2026-09-30T16:28:03.303Z"
-      },
+      "status": "skipped",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [
+        {
+          "at": "2026-10-01T10:28:22.736Z",
+          "text": "started with an approved comp; the comp round happened before this state (surface round or manual)"
+        }
+      ],
+      "gate": null,
       "forced": null
     },
     "spec": {
       "status": "closed",
-      "openedAt": "2026-09-30T16:28:03.322Z",
-      "closedAt": "2026-09-30T16:31:43.869Z",
-      "attempts": 2,
+      "openedAt": "2026-10-01T10:28:22.736Z",
+      "closedAt": "2026-10-01T10:31:34.910Z",
+      "attempts": 3,
       "notes": [],
       "gate": {
         "ok": true,
         "reasons": [],
-        "summary": "20 regions, 0 plates, 10 text regions measured",
-        "at": "2026-09-30T16:31:43.869Z"
+        "summary": "22 regions, 0 plates, 14 text regions measured",
+        "at": "2026-10-01T10:31:34.910Z"
       },
       "forced": null
     },
     "plates": {
       "status": "closed",
-      "openedAt": "2026-09-30T16:31:43.869Z",
-      "closedAt": "2026-09-30T16:31:43.896Z",
+      "openedAt": "2026-10-01T10:31:34.910Z",
+      "closedAt": "2026-10-01T10:31:35.043Z",
       "attempts": 1,
       "notes": [],
       "gate": {
         "ok": true,
         "reasons": [],
         "summary": "no plates owed",
-        "at": "2026-09-30T16:31:43.896Z"
+        "at": "2026-10-01T10:31:35.043Z"
       },
       "forced": null
     },
     "hero": {
       "status": "closed",
-      "openedAt": "2026-09-30T16:31:43.896Z",
-      "closedAt": "2026-09-30T17:32:12.994Z",
-      "attempts": 5,
+      "openedAt": "2026-10-01T10:31:35.043Z",
+      "closedAt": "2026-10-01T10:48:28.734Z",
+      "attempts": 2,
       "notes": [],
       "gate": {
         "ok": true,
         "reasons": [],
-        "summary": "hero 79% (drift)",
-        "score": 0.7927,
-        "verdict": "drift",
+        "summary": "hero 85% (match)",
+        "score": 0.8534,
+        "verdict": "match",
         "report": ".impeccable/review/diff/hero/report.json",
         "sideBySide": "/Users/roshan/Projects/spectro-hq/spectro/.impeccable/review/diff/hero/side-by-side.png",
-        "worst": ["payload-code drift 63%", "batch-four drift 65%", "new-events drift 69%"],
-        "worstIds": ["payload-code", "batch-four", "new-events"],
+        "worst": ["source drift 73%", "fingerprint drift 75%", "footer match 81%"],
+        "worstIds": ["source", "fingerprint", "footer"],
         "worstCrops": [
           {
-            "id": "payload-code",
+            "id": "source",
             "verdict": "drift",
             "score": {
-              "overall": 0.6259,
-              "structure": 0.5209,
-              "color": 0.9322,
-              "colorIntersection": 0.8875,
-              "paletteMatch": 0.9562,
-              "detail": 0.4074,
-              "detailRaw": 0.4335,
-              "detailAdded": 0.0521,
-              "bands": 0.7129
+              "overall": 0.7254,
+              "structure": 0.8181,
+              "color": 0.9793,
+              "colorIntersection": 0.9675,
+              "paletteMatch": 0.9856,
+              "detail": 0.3433,
+              "detailRaw": 0.4787,
+              "detailAdded": 0.2708,
+              "bands": 0.2
             },
-            "file": ".impeccable/review/diff/hero/regions/payload-code.png"
+            "file": ".impeccable/review/diff/hero/regions/source.png"
           },
           {
-            "id": "batch-four",
+            "id": "fingerprint",
             "verdict": "drift",
             "score": {
-              "overall": 0.6499,
-              "structure": 0.7615,
-              "color": 0.8502,
-              "colorIntersection": 0.7471,
-              "paletteMatch": 0.9057,
-              "detail": 0.1286,
-              "detailRaw": 0.2901,
-              "detailAdded": 0.3229,
-              "bands": 0.3733
+              "overall": 0.7465,
+              "structure": 0.8745,
+              "color": 0.9728,
+              "colorIntersection": 0.9573,
+              "paletteMatch": 0.9811,
+              "detail": 0.44,
+              "detailRaw": 0.565,
+              "detailAdded": 0.25,
+              "bands": 0
             },
-            "file": ".impeccable/review/diff/hero/regions/batch-four.png"
+            "file": ".impeccable/review/diff/hero/regions/fingerprint.png"
           },
           {
-            "id": "new-events",
-            "verdict": "drift",
+            "id": "footer",
+            "verdict": "match",
             "score": {
-              "overall": 0.6936,
-              "structure": 0.6311,
-              "color": 0.8738,
-              "colorIntersection": 0.8436,
-              "paletteMatch": 0.89,
-              "detail": 0.519,
-              "detailRaw": 0.6284,
-              "detailAdded": 0.2188,
-              "bands": 1
+              "overall": 0.8055,
+              "structure": 0.9008,
+              "color": 0.9603,
+              "colorIntersection": 0.934,
+              "paletteMatch": 0.9744,
+              "detail": 0.32,
+              "detailRaw": 0.3825,
+              "detailAdded": 0.125,
+              "bands": 0.4
             },
-            "file": ".impeccable/review/diff/hero/regions/new-events.png"
+            "file": ".impeccable/review/diff/hero/regions/footer.png"
           }
         ],
         "advisories": [
-          "(advisory, above the 72% bar; fix in the polish pass before responsive) 4 readings:",
-          "  text batch-four: letter-spacing is wider than the comp's (gap 0.172 vs 0.100 of the cap height); set letter-spacing to close it by about 1px",
-          "  text detail-heading: cap height 8.1px in the build, 16.4px in the comp (-51%); set font-size so the cap height renders at 16.4px",
-          "  text detail-heading: ink is #606062 in the build, #bebfca in the comp; use the comp's colour",
-          "  chrome topbar: its ink is 31px tall in the build and 17px in the comp (+14px); match the height, not only the position",
-          "(advisory, unchanged for 3+ attempts) text context: 5 lines in the build, 8 in the comp; the measure (max-width, font-size, letter-spacing) wraps it differently, so the block is a different shape",
-          "(advisory, unchanged for 3+ attempts) text payload-code: 5 lines in the build, 11 in the comp; the measure (max-width, font-size, letter-spacing) wraps it differently, so the block is a different shape",
-          "(advisory, unchanged for 3+ attempts) text subtitle: ink is #5d5c61 in the build, #acaebb in the comp; use the comp's colour"
+          "(advisory, above the 72% bar; fix in the polish pass before responsive) 7 readings:",
+          "  text subtitle: letter-spacing is tighter than the comp's (gap 0.030 vs 0.088 of the cap height); set letter-spacing to open it by about 1px",
+          "  text versions: letter-spacing is wider than the comp's (gap 0.365 vs 0.116 of the cap height); set letter-spacing to close it by about 3px",
+          "  text detail-heading: letter-spacing is tighter than the comp's (gap 0.052 vs 0.104 of the cap height); set letter-spacing to open it by about 1px",
+          "  text description: letter-spacing is tighter than the comp's (gap 0.030 vs 0.087 of the cap height); set letter-spacing to open it by about 1px",
+          "  text build-note: letter-spacing is wider than the comp's (gap 0.096 vs 0.059 of the cap height); set letter-spacing to close it by about 0px",
+          "  text table-heading: ink is #666666 in the build, #b6b7bc in the comp; use the comp's colour",
+          "  chrome topbar: its ink is 64px tall in the build and 16px in the comp (+48px); match the height, not only the position"
         ],
         "regionVerdicts": {
-          "scope-row": "match",
-          "workbench-header": "match",
           "rail": "match",
-          "topbar": "drift",
-          "title": "drift",
-          "subtitle": "drift",
-          "scope": "drift",
-          "observation": "drift",
-          "filters": "drift",
-          "ledger-heading": "match",
-          "new-events": "drift",
-          "batch-one": "drift",
-          "batch-two": "drift",
-          "batch-three": "drift",
-          "batch-four": "drift",
-          "detail-heading": "drift",
-          "detail-tabs": "drift",
-          "context": "drift",
-          "payload-heading": "match",
-          "payload-code": "drift"
+          "topbar": "match",
+          "title": "match",
+          "subtitle": "match",
+          "versions": "match",
+          "index-common": "match",
+          "index-payloads": "match",
+          "detail-heading": "match",
+          "description": "match",
+          "build-note": "match",
+          "tabs": "match",
+          "table-heading": "match",
+          "mechanism": "match",
+          "message": "match",
+          "handled": "match",
+          "name": "match",
+          "stack": "match",
+          "fingerprint": "drift",
+          "source": "drift",
+          "footer": "match",
+          "index-frame": "match",
+          "workbench-top-rule": "match"
         },
-        "at": "2026-09-30T17:32:12.994Z"
+        "at": "2026-10-01T10:48:28.734Z"
       },
       "forced": null,
       "readingsSeen": {
-        "text detail-heading: cap height 10px in the build, 16.4px in the comp (-39%); set font-size so the cap height renders at 16.4px": 5,
-        "text batch-four: 2 lines in the build, 3 in the comp; the measure (max-width, font-size, letter-spacing) wraps it differently, so the block is a different shape": 5,
-        "text context: 6 lines in the build, 8 in the comp; the measure (max-width, font-size, letter-spacing) wraps it differently, so the block is a different shape": 5,
-        "text payload-code: 6 lines in the build, 11 in the comp; the measure (max-width, font-size, letter-spacing) wraps it differently, so the block is a different shape": 5,
-        "text batch-four: the face renders 27% heavier than the comp's (ink density 0.64 vs 0.50); drop a weight step or use the ranked face": 5,
-        "text title: ink is #adadaf in the build, #0d0f23 in the comp; use the comp's colour": 5,
-        "control payload-heading: its ink is 30px tall in the build and 18px in the comp (+12px); match the height, not only the position": 5,
-        "text detail-heading: cap height 28.9px in the build, 16.4px in the comp (+76%); set font-size so the cap height renders at 16.4px": 3,
-        "text context: 5 lines in the build, 8 in the comp; the measure (max-width, font-size, letter-spacing) wraps it differently, so the block is a different shape": 7,
-        "text payload-code: 5 lines in the build, 11 in the comp; the measure (max-width, font-size, letter-spacing) wraps it differently, so the block is a different shape": 7,
-        "text batch-four: the face renders 25% heavier than the comp's (ink density 0.63 vs 0.50); drop a weight step or use the ranked face": 3,
-        "text context: the face renders 26% heavier than the comp's (ink density 0.64 vs 0.51); drop a weight step or use the ranked face": 3,
-        "text title: ink is #464647 in the build, #0d0f23 in the comp; use the comp's colour": 3,
-        "chrome scope-row: its ink is 106px tall in the build and 57px in the comp (+49px); match the height, not only the position": 3,
-        "chrome topbar: its ink is 59px tall in the build and 17px in the comp (+42px); match the height, not only the position": 3,
-        "control observation: its ink is 36px tall in the build and 16px in the comp (+20px); match the height, not only the position": 3,
-        "control payload-heading: its ink is 1px tall in the build and 18px in the comp (-17px); match the height, not only the position": 3,
-        "text batch-two: letter-spacing is wider than the comp's (gap 0.166 vs 0.097 of the cap height); set letter-spacing to close it by about 1px": 1,
-        "text detail-heading: cap height 9.3px in the build, 16.4px in the comp (-43%); set font-size so the cap height renders at 16.4px": 2,
-        "text batch-three: 4 lines in the build, 5 in the comp; the measure (max-width, font-size, letter-spacing) wraps it differently, so the block is a different shape": 1,
-        "text subtitle: ink is #5d5c61 in the build, #acaebb in the comp; use the comp's colour": 4,
-        "text detail-heading: ink is #212226 in the build, #bebfca in the comp; use the comp's colour": 2,
-        "control observation: its ink is 37px tall in the build and 16px in the comp (+21px); match the height, not only the position": 2,
-        "text batch-four: letter-spacing is wider than the comp's (gap 0.173 vs 0.100 of the cap height); set letter-spacing to close it by about 1px": 1,
-        "text batch-four: letter-spacing is wider than the comp's (gap 0.172 vs 0.100 of the cap height); set letter-spacing to close it by about 1px": 2,
-        "text detail-heading: cap height 8.1px in the build, 16.4px in the comp (-51%); set font-size so the cap height renders at 16.4px": 2,
-        "text detail-heading: ink is #606062 in the build, #bebfca in the comp; use the comp's colour": 2,
-        "chrome topbar: its ink is 31px tall in the build and 17px in the comp (+14px); match the height, not only the position": 2
+        "text subtitle: letter-spacing is tighter than the comp's (gap 0.030 vs 0.088 of the cap height); set letter-spacing to open it by about 1px": 2,
+        "text versions: letter-spacing is wider than the comp's (gap 0.365 vs 0.116 of the cap height); set letter-spacing to close it by about 3px": 2,
+        "text detail-heading: letter-spacing is tighter than the comp's (gap 0.052 vs 0.104 of the cap height); set letter-spacing to open it by about 1px": 2,
+        "text description: letter-spacing is tighter than the comp's (gap 0.030 vs 0.087 of the cap height); set letter-spacing to open it by about 1px": 2,
+        "text build-note: letter-spacing is wider than the comp's (gap 0.096 vs 0.059 of the cap height); set letter-spacing to close it by about 0px": 2,
+        "text table-heading: ink is #666666 in the build, #b6b7bc in the comp; use the comp's colour": 2,
+        "chrome topbar: its ink is 64px tall in the build and 16px in the comp (+48px); match the height, not only the position": 2,
+        "control footer: its ink is 52px tall in the build and 15px in the comp (+37px); match the height, not only the position": 1
       },
-      "records": 7,
       "history": [
         {
-          "at": "2026-09-30T16:57:25.891Z",
-          "score": 0.7192,
-          "worstIds": ["title", "new-events", "payload-code"],
+          "at": "2026-10-01T10:46:49.792Z",
+          "score": 0.7731,
+          "worstIds": ["source", "footer", "fingerprint"],
           "regionVerdicts": {
-            "scope-row": "drift",
-            "workbench-header": "drift",
-            "rail": "drift",
-            "topbar": "drift",
-            "title": "drift",
-            "subtitle": "missing",
-            "scope": "drift",
-            "observation": "drift",
-            "filters": "drift",
-            "ledger-heading": "drift",
-            "new-events": "missing",
-            "batch-one": "drift",
-            "batch-two": "drift",
-            "batch-three": "drift",
-            "batch-four": "drift",
-            "detail-heading": "drift",
-            "detail-tabs": "drift",
-            "context": "drift",
-            "payload-heading": "drift",
-            "payload-code": "contradicted"
-          },
-          "artifactHash": null
-        },
-        {
-          "at": "2026-09-30T17:00:33.073Z",
-          "score": 0.7192,
-          "worstIds": ["title", "new-events", "payload-code"],
-          "regionVerdicts": {
-            "scope-row": "drift",
-            "workbench-header": "drift",
-            "rail": "drift",
-            "topbar": "drift",
-            "title": "drift",
-            "subtitle": "missing",
-            "scope": "drift",
-            "observation": "drift",
-            "filters": "drift",
-            "ledger-heading": "drift",
-            "new-events": "missing",
-            "batch-one": "drift",
-            "batch-two": "drift",
-            "batch-three": "drift",
-            "batch-four": "drift",
-            "detail-heading": "drift",
-            "detail-tabs": "drift",
-            "context": "drift",
-            "payload-heading": "drift",
-            "payload-code": "contradicted"
-          },
-          "artifactHash": null
-        },
-        {
-          "at": "2026-09-30T17:04:07.238Z",
-          "score": 0.7192,
-          "worstIds": ["title", "new-events", "payload-code"],
-          "regionVerdicts": {
-            "scope-row": "drift",
-            "workbench-header": "drift",
-            "rail": "drift",
-            "topbar": "drift",
-            "title": "drift",
-            "subtitle": "missing",
-            "scope": "drift",
-            "observation": "drift",
-            "filters": "drift",
-            "ledger-heading": "drift",
-            "new-events": "missing",
-            "batch-one": "drift",
-            "batch-two": "drift",
-            "batch-three": "drift",
-            "batch-four": "drift",
-            "detail-heading": "drift",
-            "detail-tabs": "drift",
-            "context": "drift",
-            "payload-heading": "drift",
-            "payload-code": "contradicted"
-          },
-          "artifactHash": null
-        },
-        {
-          "at": "2026-09-30T17:06:54.549Z",
-          "score": 0.8067,
-          "worstIds": ["payload-code", "batch-one", "new-events"],
-          "regionVerdicts": {
-            "scope-row": "match",
-            "workbench-header": "drift",
-            "rail": "drift",
-            "topbar": "drift",
-            "title": "drift",
-            "subtitle": "drift",
-            "scope": "drift",
-            "observation": "drift",
-            "filters": "drift",
-            "ledger-heading": "match",
-            "new-events": "drift",
-            "batch-one": "drift",
-            "batch-two": "drift",
-            "batch-three": "drift",
-            "batch-four": "drift",
-            "detail-heading": "drift",
-            "detail-tabs": "drift",
-            "context": "drift",
-            "payload-heading": "missing",
-            "payload-code": "drift"
-          },
-          "artifactHash": null
-        },
-        {
-          "at": "2026-09-30T17:32:12.994Z",
-          "score": 0.7927,
-          "worstIds": ["payload-code", "batch-four", "new-events"],
-          "regionVerdicts": {
-            "scope-row": "match",
-            "workbench-header": "match",
             "rail": "match",
-            "topbar": "drift",
-            "title": "drift",
-            "subtitle": "drift",
-            "scope": "drift",
-            "observation": "drift",
-            "filters": "drift",
-            "ledger-heading": "match",
-            "new-events": "drift",
-            "batch-one": "drift",
-            "batch-two": "drift",
-            "batch-three": "drift",
-            "batch-four": "drift",
-            "detail-heading": "drift",
-            "detail-tabs": "drift",
-            "context": "drift",
-            "payload-heading": "match",
-            "payload-code": "drift"
+            "topbar": "match",
+            "title": "match",
+            "subtitle": "match",
+            "versions": "match",
+            "index-common": "match",
+            "index-payloads": "match",
+            "detail-heading": "match",
+            "description": "match",
+            "build-note": "match",
+            "tabs": "match",
+            "table-heading": "match",
+            "mechanism": "match",
+            "message": "match",
+            "handled": "match",
+            "name": "match",
+            "stack": "match",
+            "fingerprint": "drift",
+            "source": "drift",
+            "footer": "missing",
+            "index-frame": "match",
+            "workbench-top-rule": "match"
+          },
+          "artifactHash": null
+        },
+        {
+          "at": "2026-10-01T10:48:28.734Z",
+          "score": 0.8534,
+          "worstIds": ["source", "fingerprint", "footer"],
+          "regionVerdicts": {
+            "rail": "match",
+            "topbar": "match",
+            "title": "match",
+            "subtitle": "match",
+            "versions": "match",
+            "index-common": "match",
+            "index-payloads": "match",
+            "detail-heading": "match",
+            "description": "match",
+            "build-note": "match",
+            "tabs": "match",
+            "table-heading": "match",
+            "mechanism": "match",
+            "message": "match",
+            "handled": "match",
+            "name": "match",
+            "stack": "match",
+            "fingerprint": "drift",
+            "source": "drift",
+            "footer": "match",
+            "index-frame": "match",
+            "workbench-top-rule": "match"
           },
           "artifactHash": null
         }
@@ -328,115 +228,77 @@
     },
     "sections": {
       "status": "closed",
-      "openedAt": "2026-09-30T17:32:12.994Z",
-      "closedAt": "2026-09-30T17:32:25.437Z",
+      "openedAt": "2026-10-01T10:48:28.734Z",
+      "closedAt": "2026-10-01T10:50:48.369Z",
       "attempts": 1,
-      "notes": [
-        {
-          "at": "2026-09-30T17:32:25.410Z",
-          "text": "The complete Live surface is implemented: grouped arrivals, persistent protocol-valid inspector, exact filters, empty/loading/access/transient error states, bounded queues and history link. Mock payload fields were deliberately replaced by actual protocol fields; shared native shell/type/theme are pinned adaptations."
-        }
-      ],
+      "notes": [],
       "gate": {
         "ok": true,
         "reasons": [],
         "summary": "no mechanical gate",
-        "at": "2026-09-30T17:32:25.437Z"
+        "at": "2026-10-01T10:50:48.369Z"
       },
       "forced": null
     },
     "motion": {
       "status": "closed",
-      "openedAt": "2026-09-30T17:32:25.437Z",
-      "closedAt": "2026-09-30T17:32:46.814Z",
+      "openedAt": "2026-10-01T10:50:48.369Z",
+      "closedAt": "2026-10-01T10:51:34.738Z",
       "attempts": 1,
-      "notes": [
-        {
-          "at": "2026-09-30T17:32:46.789Z",
-          "text": "Signature interaction verified through real browser polling against an isolated loopback fixture: Pause preserves 12 displayed rows, 4 arrivals queue, explicit reveal shows16 and retains selected evidence. No decorative entrance or animation; immediate state changes remain readable with reduced motion."
-        }
-      ],
+      "notes": [],
       "gate": {
         "ok": true,
         "reasons": [],
         "summary": "no mechanical gate",
-        "at": "2026-09-30T17:32:46.814Z"
+        "at": "2026-10-01T10:51:34.738Z"
       },
       "forced": null
     },
     "responsive": {
       "status": "closed",
-      "openedAt": "2026-09-30T17:32:46.814Z",
-      "closedAt": "2026-09-30T17:56:47.176Z",
+      "openedAt": "2026-10-01T10:51:34.738Z",
+      "closedAt": "2026-10-01T11:16:44.006Z",
       "attempts": 2,
-      "notes": [
-        {
-          "at": "2026-09-30T17:32:47.666Z",
-          "text": "Captured full-page desktop1440 and mobile390 plus minimum320 and dark1440. At320 usable310 equals scrollWidth310 after Live-scoped minimum override; Performance type82px has no ellipsis and rows44px. Narrow layouts stack the persistent inspector below the bounded scrolling ledger; native topbar/rail are preserved."
-        },
-        {
-          "at": "2026-09-30T17:36:27.902Z",
-          "text": "Final independent verdict: fix—workflow closure only. Findings1-6 resolved100%; workflow7 partial60%. Responsive gate remains open because normalized1440crop positions mark native responsive regions/content differences missing although reviewer confirms them present. Twofixrounds exhausted; owner choice required: explicitgateexception preservingnative sizing or additionalresponsivefidelityround. Do notforce."
-        },
-        {
-          "at": "2026-09-30T17:56:46.298Z",
-          "text": "Owner replied “同意” on 2026-10-01 to the explicit proposal to retain native responsive sizing and record an exception for the responsive comparison gate. Approval is limited to Live finish closure; no commit, push, global design change, or production-capacity claim is authorized."
-        }
-      ],
+      "notes": [],
       "gate": {
         "ok": false,
         "reasons": [
-          "at desktop width, region subtitle is missing",
-          "at desktop width, region scope is missing",
-          "at desktop width, region observation is missing",
-          "at desktop width, region filters is missing",
-          "at desktop width, region ledger-heading is missing",
-          "at desktop width, region detail-heading is missing",
-          "at desktop width, region detail-tabs is missing",
-          "at desktop width, region payload-heading is missing",
-          "at desktop width, region title (text) is contradicted (structure 49%)",
-          "at desktop width, region payload-code (text) is contradicted (structure 45%)"
+          "at desktop width, region description is missing",
+          "at desktop width, region build-note is missing",
+          "at desktop width, region table-heading is missing",
+          "at desktop width, region footer is missing",
+          "at desktop width, region workbench-top-rule is missing"
         ],
-        "summary": "desktop 76% (drift)",
-        "score": 0.7558,
+        "summary": "desktop 77% (drift)",
+        "score": 0.7749,
         "sideBySide": "/Users/roshan/Projects/spectro-hq/spectro/.impeccable/review/diff/desktop/side-by-side.png",
-        "at": "2026-09-30T17:56:47.170Z"
+        "at": "2026-10-01T11:16:44.004Z"
       },
       "forced": {
-        "at": "2026-09-30T17:56:47.176Z",
-        "reason": "User explicitly replied “同意” on 2026-10-01 to “保留现有原生布局，明确记录对照例外”. The owner approves downgrading the Live responsive comp comparison authority only, preserving native responsive sizing. Keep the failed 1440px comparison evidence; independent paired-crop review confirms the ten flagged regions are present. This is an approved exception, not a numeric gate pass.",
+        "at": "2026-10-01T11:16:44.006Z",
+        "reason": "User-approved downgrade of comp authority on 2026-10-01: owner answered “同意” to “保留第二种布局，字体、间距和响应式沿用现有 Console 规范，不要求逐像素复刻生成图？” Preserve the second composition; use incumbent Console typography, spacing, and responsive conventions rather than pixel fidelity. Independent finish review remains required.",
         "reasons": [
-          "at desktop width, region subtitle is missing",
-          "at desktop width, region scope is missing",
-          "at desktop width, region observation is missing",
-          "at desktop width, region filters is missing",
-          "at desktop width, region ledger-heading is missing",
-          "at desktop width, region detail-heading is missing",
-          "at desktop width, region detail-tabs is missing",
-          "at desktop width, region payload-heading is missing",
-          "at desktop width, region title (text) is contradicted (structure 49%)",
-          "at desktop width, region payload-code (text) is contradicted (structure 45%)"
+          "at desktop width, region description is missing",
+          "at desktop width, region build-note is missing",
+          "at desktop width, region table-heading is missing",
+          "at desktop width, region footer is missing",
+          "at desktop width, region workbench-top-rule is missing"
         ]
       }
     },
     "review": {
       "status": "closed",
-      "openedAt": "2026-09-30T17:56:47.176Z",
-      "closedAt": "2026-09-30T18:00:34.259Z",
+      "openedAt": "2026-10-01T11:16:44.006Z",
+      "closedAt": "2026-10-01T11:42:35.506Z",
       "attempts": 0,
-      "notes": [
-        {
-          "at": "2026-09-30T18:00:34.175Z",
-          "text": "Final independent reviewer disposition: ship within the original seven-finding scope. Findings 1–6 remain resolved100%; finding7 workflow/documentation resolved100% after explicit owner authority and ordinary-extension documentation. Not a new whole-surface approval or production-capacity certification; failed responsive measurement remains preserved under the narrow approved exception."
-        }
-      ],
+      "notes": [],
       "gate": null,
       "forced": null
     }
   },
   "finish": {
     "disposition": "ship",
-    "at": "2026-09-30T18:00:34.259Z",
+    "at": "2026-10-01T11:42:35.506Z",
     "phaseAtFinish": "review"
   },
   "plates": {}

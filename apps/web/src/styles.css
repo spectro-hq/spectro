@@ -4145,6 +4145,403 @@ tr.selected .session-link {
   }
 }
 
+/* Protocol reference: a contract index beside one reading pane. */
+.schema-workspace {
+  min-width: 0;
+  padding: 26px 16px 24px 32px;
+}
+.schema-page-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  padding: 0 24px;
+  margin-bottom: 16px;
+}
+.schema-page-heading h1 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.2;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+}
+.schema-page-heading p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.schema-page-heading > span {
+  padding-bottom: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.schema-workbench {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  min-height: 860px;
+  overflow: clip;
+  border: 1px solid var(--hairline);
+  border-radius: var(--panel-radius);
+  background: var(--surface);
+}
+.schema-index {
+  padding: 16px;
+  border-right: 1px solid var(--hairline);
+}
+.schema-index section + section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline);
+}
+.schema-index h2 {
+  margin: 4px 7px 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.schema-index a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 40px;
+  padding: 8px;
+  border-radius: var(--control-radius);
+  color: var(--ink);
+  font-size: 14px;
+  text-decoration: none;
+}
+.schema-index a:hover {
+  background: var(--surface-hover);
+}
+.schema-index a[aria-current='page'] {
+  color: var(--violet-dark);
+  background: var(--violet-wash);
+}
+.schema-reading-pane {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+.schema-contract-heading {
+  padding: 16px 16px 12px;
+}
+.schema-contract-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 26px;
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.schema-contract-heading p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.schema-contract-heading .schema-build-note {
+  margin-top: 4px;
+  color: var(--faint);
+  font-size: 13px;
+}
+.schema-tabs {
+  min-height: 44px;
+  margin: 0 16px;
+}
+.schema-tabs button {
+  padding: 10px 12px;
+  font-size: 14px;
+}
+.schema-view {
+  min-width: 0;
+  padding: 20px 16px 12px;
+}
+.schema-field-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--control-radius);
+  overflow: hidden;
+}
+.schema-field-table :is(th, td) {
+  width: auto;
+  height: auto;
+  padding: 9px 14px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--hairline);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  vertical-align: top;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.schema-field-table thead th {
+  display: table-cell;
+  padding-block: 8px;
+  background: var(--surface-subtle);
+  font-weight: 600;
+}
+.schema-field-table thead th:first-child {
+  width: 25%;
+}
+.schema-field-table thead th:nth-child(2) {
+  width: 16%;
+}
+.schema-field-table thead th:nth-child(3) {
+  width: 16%;
+}
+.schema-field-table thead th:last-child {
+  width: 43%;
+}
+.schema-field-table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+.schema-field-table code {
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 12px;
+}
+.schema-field-table td code {
+  color: var(--telemetry);
+}
+.schema-field-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+}
+.schema-disclosure-spacer {
+  flex: 0 0 14px;
+}
+.schema-field-name code {
+  min-width: 0;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--readout);
+}
+.schema-field-name button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+}
+.schema-field-name button .icon {
+  rotate: -90deg;
+  transition: rotate 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.schema-field-name button[aria-expanded='true'] .icon {
+  rotate: 0deg;
+}
+.schema-field-description {
+  width: min(65ch, 480px);
+  margin: 2px 0 0 8px;
+  color: var(--faint);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+.schema-field-table td > span,
+.schema-field-table td > small {
+  display: block;
+}
+.schema-field-table tbody tr:nth-child(even):not(.selected) {
+  background: transparent;
+}
+.schema-field-table td > small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.schema-nested-field :is(th, td) {
+  padding-block: 5px;
+}
+.schema-view-note {
+  color: var(--muted);
+  font-size: 12px;
+}
+.schema-view-note {
+  margin: 0 0 16px;
+  max-width: 75ch;
+}
+.schema-guidance {
+  margin-top: 20px;
+}
+.schema-copy-error {
+  color: var(--danger);
+  font-size: 12px;
+}
+.schema-view .payload-code-scroll {
+  max-height: 65vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.schema-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid var(--hairline);
+  color: var(--muted);
+  font-size: 12px;
+}
+.schema-footer code {
+  font: inherit;
+  overflow-wrap: anywhere;
+}
+.schema-identifier {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.schema-identifier code {
+  color: var(--violet-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.schema-identifier .icon-button {
+  margin-left: 8px;
+}
+.schema-field-table td > .schema-mobile-label {
+  display: none;
+}
+@media (max-width: 1100px) {
+  .schema-workbench {
+    grid-template-columns: 190px minmax(0, 1fr);
+  }
+  .schema-field-description {
+    width: min(65ch, 360px);
+  }
+}
+@media (max-width: 760px) {
+  .schema-workspace {
+    padding: 20px 16px;
+  }
+  .schema-page-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0;
+    margin-bottom: 20px;
+  }
+  .schema-page-heading h1 {
+    font-size: 28px;
+  }
+  .schema-workbench {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+  .schema-index {
+    padding: 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .schema-index section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .schema-index h2 {
+    flex: 0 0 100%;
+    margin: 0 4px 4px;
+  }
+  .schema-index a {
+    min-height: 44px;
+    padding: 8px;
+    gap: 6px;
+    font-size: 13px;
+  }
+  .schema-index section + section {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+  .schema-contract-heading {
+    padding: 20px 12px 12px;
+  }
+  .schema-contract-heading h2 {
+    font-size: 24px;
+  }
+  .schema-tabs {
+    margin-inline: 12px;
+    gap: 4px;
+  }
+  .schema-tabs button {
+    min-height: 44px;
+    white-space: nowrap;
+  }
+  .schema-view {
+    padding: 16px 12px;
+  }
+  .schema-field-table,
+  .schema-field-table tbody {
+    display: block;
+  }
+  .schema-field-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .schema-field-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    padding: 10px;
+    gap: 8px 12px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .schema-field-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+  .schema-field-table tbody :is(th, td) {
+    display: block;
+    width: auto;
+    padding: 0;
+    border: 0;
+    font-size: 13px;
+  }
+  .schema-field-table tbody th,
+  .schema-field-table tbody td:last-child {
+    grid-column: 1 / -1;
+  }
+  .schema-field-description {
+    width: auto;
+    margin: 4px 0 0;
+  }
+  .schema-field-name button {
+    min-height: 44px;
+  }
+  .schema-field-table td > .schema-mobile-label {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .schema-footer {
+    padding: 12px;
+  }
+  .schema-identifier {
+    flex-wrap: wrap;
+    font-size: 11px;
+  }
+  .schema-identifier .icon-button,
+  .schema-view .payload-actions button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .schema-field-name button .icon {
+    transition: none;
+  }
+}
 /* Live: compact arrival groups, stable inspector, no fabricated activity chart. */
 .shared-shell .live-workspace {
   padding-inline: 54px 15px;

@@ -21,3 +21,11 @@ Project, environment, time range, event type, event name, release, session, page
 Pause freezes the displayed ledger, not the connection. Matching arrivals accumulate in memory; Resume or **Show N new events** explicitly reveals them without replacing selected detail. Displayed and pending rows share a 500-event/8 MiB UTF-8 budget; the selected event is one additional bounded snapshot. Capacity eviction is reported. Telemetry payloads are never persisted to browser storage.
 
 Polling is suspended and in-flight work cancelled while the tab is hidden. Transient failures preserve displayed evidence and back off to a maximum 30-second interval; access failures stop observation and clear retained data. A successful poll after a gap longer than 60 seconds starts a fresh observation window and reports possible missed arrivals. Scope/filter changes remount and discard the old observation. Illustrative mode is a labeled static preview, not a simulated successful connection.
+
+## Schemas
+
+`/schemas` is a global, read-only reference for the protocol bundled with this Console build, not an inventory inferred from a project's events. Common contracts (Envelope, Event, Context) and the seven payload contracts share Fields, Example, and JSON Schema views. Contract selection and view are shareable URL state; organization/project/environment navigation context is retained. There are no telemetry query or refresh controls on this surface.
+
+Field structures and constraints come from the original documents exported by `@spectro/protocol` as `protocolSchemas`. References resolve from that local registry without fetching schema identifier URLs. Examples are explicitly synthetic and tested with the protocol validators. Runtime admission limits are labeled separately from schema constraints. The reference does not assert compatibility with an independently deployed ingestion service.
+
+See [ADR-052](../../docs/adr/ADR-052_READ_ONLY_PROTOCOL_CATALOGUE.md) and the [Schemas verification record](../../docs/operations/CONSOLE_SCHEMAS_V1_ACCEPTANCE.md) for browser checks, independent review, and the approved native-system fidelity boundary. This reference verification does not claim hosted-service or release acceptance.

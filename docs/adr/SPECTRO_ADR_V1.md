@@ -55,6 +55,7 @@ Status: accepted unless marked open.
 | ADR-049 | Send high-priority failures promptly, batch routine telemetry, and recover a bounded urgent-event outbox from IndexedDB.                               |
 | ADR-050 | Use managed OIDC login, server-side Console sessions, organization permissions, and scoped browser write keys for hosted SaaS.                         |
 | ADR-051 | Observe processed events through bounded authorized polling, with overlap deduplication and a frozen-reading buffer.                                   |
+| ADR-052 | Bundle a read-only protocol catalogue from original JSON Schema sources, with local references and synthetic validated examples.                       |
 
 Detailed records:
 
@@ -76,6 +77,7 @@ Detailed records:
 - [ADR-049: Browser delivery priority and recovery](./ADR-049_BROWSER_DELIVERY_PRIORITY_AND_RECOVERY.md)
 - [ADR-050: Hosted SaaS authentication and authorization](./ADR-050_HOSTED_SAAS_AUTHENTICATION.md)
 - [ADR-051: Bounded live event observation](./ADR-051_LIVE_EVENT_OBSERVATION.md)
+- [ADR-052: Read-only protocol catalogue](./ADR-052_READ_ONLY_PROTOCOL_CATALOGUE.md)
 
 ## Change rule
 

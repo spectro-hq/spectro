@@ -2,10 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Scaffold reference: live-event-led.png</title>
+    <title>Scaffold reference: schemas-reference-tabs.png</title>
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Gochi+Hand:wght@400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Oxygen:wght@700&display=swap"
     />
     <link rel="stylesheet" href="layout.css" />
     <style>
@@ -26,21 +26,15 @@
   </head>
   <body>
     <!-- Reference only. Every region sits at its measured box inside a comp-aspect frame. Take the boxes (layout.css), keep your own semantic structure. -->
-    <main class="comp-frame" style="max-width: 1536px">
-      <div class="r-scope-row region chrome" data-region="scope-row">
-        <!-- Page title and scope control row -->
-      </div>
-      <div class="r-workbench-header region chrome" data-region="workbench-header">
-        <!-- Ledger and selected-event header row -->
-      </div>
+    <main class="comp-frame" style="max-width: 1487px">
       <div class="r-rail region chrome" data-region="rail">
-        <!-- Existing Spectro navigation rail and brand -->
+        <!-- Existing Spectro application rail; Schemas selected. -->
       </div>
       <div class="r-topbar region chrome" data-region="topbar">
-        <!-- Existing breadcrumb and workspace controls -->
+        <!-- Existing native collapse button, breadcrumb and theme control. -->
       </div>
       <div class="r-title region text" data-region="title">
-        <!-- Live page heading -->
+        <!-- Schemas page title. -->
         <p
           style="
             font-size: var(--r-title-font);
@@ -54,64 +48,82 @@
         </p>
       </div>
       <div class="r-subtitle region text" data-region="subtitle">
-        <!-- Observe new events as they become available -->
+        <!-- Supported event contracts. -->
         <p style="font-size: var(--r-subtitle-font); line-height: 1.05; margin: 0">subtitle</p>
       </div>
-      <div class="r-scope region control" data-region="scope">
-        <!-- Project, environment and illustrative source: rebuild the control's chrome from the crop (comp-spec.mjs --crop scope); its ink box, border, fill, radius, and label size are the comp's -->
+      <div class="r-versions region text" data-region="versions">
+        <!-- Event v1 · Envelope v1. -->
+        <p style="font-size: var(--r-versions-font); line-height: 1.05; margin: 0">versions</p>
       </div>
-      <div class="r-observation region control" data-region="observation">
-        <!-- Observing status, update cadence and pause: rebuild the control's chrome from the crop (comp-spec.mjs --crop observation); its ink box, border, fill, radius, and label size are the comp's -->
+      <div class="r-index-common region control" data-region="index-common">
+        <!-- Common contracts navigation: Envelope, Event, Context.: rebuild the control's chrome from the crop (comp-spec.mjs --crop index-common); its ink box, border, fill, radius, and label size are the comp's -->
       </div>
-      <div class="r-filters region control" data-region="filters">
-        <!-- Type, event name and session filters: rebuild the control's chrome from the crop (comp-spec.mjs --crop filters); its ink box, border, fill, radius, and label size are the comp's -->
-      </div>
-      <div class="r-ledger-heading region text" data-region="ledger-heading">
-        <!-- New arrivals heading -->
-        <p style="font-size: var(--r-ledger-heading-font); line-height: 1.05; margin: 0">
-          ledger-heading
-        </p>
-      </div>
-      <div class="r-new-events region control" data-region="new-events">
-        <!-- Show four new events action: rebuild the control's chrome from the crop (comp-spec.mjs --crop new-events); its ink box, border, fill, radius, and label size are the comp's -->
-      </div>
-      <div class="r-batch-one region text" data-region="batch-one">
-        <!-- Observation time group and three event rows -->
-        <p style="font-size: var(--r-batch-one-font); line-height: 1.05; margin: 0">batch-one</p>
-      </div>
-      <div class="r-batch-two region text" data-region="batch-two">
-        <!-- Second observation group and selected runtime error row -->
-        <p style="font-size: var(--r-batch-two-font); line-height: 1.05; margin: 0">batch-two</p>
-      </div>
-      <div class="r-batch-three region text" data-region="batch-three">
-        <!-- Third observation group and four event rows -->
-        <p style="font-size: var(--r-batch-three-font); line-height: 1.05; margin: 0">
-          batch-three
-        </p>
-      </div>
-      <div class="r-batch-four region text" data-region="batch-four">
-        <!-- Fourth observation group and two event rows -->
-        <p style="font-size: var(--r-batch-four-font); line-height: 1.05; margin: 0">batch-four</p>
+      <div class="r-index-payloads region control" data-region="index-payloads">
+        <!-- Payload navigation: Session, Page, Error selected, Performance, Network, Interaction, Custom.: rebuild the control's chrome from the crop (comp-spec.mjs --crop index-payloads); its ink box, border, fill, radius, and label size are the comp's -->
       </div>
       <div class="r-detail-heading region text" data-region="detail-heading">
-        <!-- Selected runtime error with occurred and processed times -->
+        <!-- Error payload heading. -->
         <p style="font-size: var(--r-detail-heading-font); line-height: 1.05; margin: 0">
           detail-heading
         </p>
       </div>
-      <div class="r-detail-tabs region control" data-region="detail-tabs">
-        <!-- Event Context Raw tabs: rebuild the control's chrome from the crop (comp-spec.mjs --crop detail-tabs); its ink box, border, fill, radius, and label size are the comp's -->
+      <div class="r-description region text" data-region="description">
+        <!-- Required fields and optional error context. -->
+        <p style="font-size: var(--r-description-font); line-height: 1.05; margin: 0">
+          description
+        </p>
       </div>
-      <div class="r-context region text" data-region="context">
-        <!-- Selected event context labels and values -->
-        <p style="font-size: var(--r-context-font); line-height: 1.05; margin: 0">context</p>
+      <div class="r-build-note region text" data-region="build-note">
+        <!-- Reference for this Console build; ingestion versions may differ. -->
+        <p style="font-size: var(--r-build-note-font); line-height: 1.05; margin: 0">build-note</p>
       </div>
-      <div class="r-payload-heading region control" data-region="payload-heading">
-        <!-- Event payload title, format selector and Copy: rebuild the control's chrome from the crop (comp-spec.mjs --crop payload-heading); its ink box, border, fill, radius, and label size are the comp's -->
+      <div class="r-tabs region control" data-region="tabs">
+        <!-- Fields active, Example, JSON Schema; thin active underline.: rebuild the control's chrome from the crop (comp-spec.mjs --crop tabs); its ink box, border, fill, radius, and label size are the comp's -->
       </div>
-      <div class="r-payload-code region text" data-region="payload-code">
-        <!-- Read-only example JSON with line numbers -->
-        <p style="line-height: 1.05; margin: 0">payload-code</p>
+      <div class="r-table-heading region text" data-region="table-heading">
+        <!-- Field, Type, Presence, Constraints table headers. -->
+        <p style="font-size: var(--r-table-heading-font); line-height: 1.05; margin: 0">
+          table-heading
+        </p>
+      </div>
+      <div class="r-mechanism region text" data-region="mechanism">
+        <!-- mechanism row: string, Required, enum runtime/promise/resource/manual. -->
+        <p style="font-size: var(--r-mechanism-font); line-height: 1.05; margin: 0">mechanism</p>
+      </div>
+      <div class="r-message region text" data-region="message">
+        <!-- message row: string, Required, 1–2048 characters. -->
+        <p style="font-size: var(--r-message-font); line-height: 1.05; margin: 0">message</p>
+      </div>
+      <div class="r-handled region text" data-region="handled">
+        <!-- handled row: boolean, Required. -->
+        <p style="font-size: var(--r-handled-font); line-height: 1.05; margin: 0">handled</p>
+      </div>
+      <div class="r-name region text" data-region="name">
+        <!-- name row: string, Optional, maximum 256 characters. -->
+        <p style="font-size: var(--r-name-font); line-height: 1.05; margin: 0">name</p>
+      </div>
+      <div class="r-stack region text" data-region="stack">
+        <!-- Expanded stack row and item structure; maximum 50 frames. Correct unsupported order claim. -->
+        <p style="font-size: var(--r-stack-font); line-height: 1.05; margin: 0">stack</p>
+      </div>
+      <div class="r-fingerprint region text" data-region="fingerprint">
+        <!-- Expanded fingerprint row and item structure; maximum 10 strings. -->
+        <p style="font-size: var(--r-fingerprint-font); line-height: 1.05; margin: 0">
+          fingerprint
+        </p>
+      </div>
+      <div class="r-source region text" data-region="source">
+        <!-- Expanded source object with url, line and column; correct URL format and minimum-value defects. -->
+        <p style="font-size: var(--r-source-font); line-height: 1.05; margin: 0">source</p>
+      </div>
+      <div class="r-footer region control" data-region="footer">
+        <!-- Runtime byte limits and local schema identifier with copy control, not a remote download link.: rebuild the control's chrome from the crop (comp-spec.mjs --crop footer); its ink box, border, fill, radius, and label size are the comp's -->
+      </div>
+      <div class="r-index-frame region chrome" data-region="index-frame">
+        <!-- Contract index pane outline and ground; both navigation groups are measured separately. -->
+      </div>
+      <div class="r-workbench-top-rule region chrome" data-region="workbench-top-rule">
+        <!-- Top outline of the single connected workbench. -->
       </div>
     </main>
   </body>

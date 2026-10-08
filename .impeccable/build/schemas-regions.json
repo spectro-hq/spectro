@@ -1,0 +1,268 @@
+{
+  "regions": [
+    {
+      "id": "rail",
+      "kind": "chrome",
+      "box": {
+        "x": 0,
+        "y": 0,
+        "w": 0.12777404169468728,
+        "h": 1
+      },
+      "note": "Existing Spectro application rail; Schemas selected.",
+      "grid": "A0:B9"
+    },
+    {
+      "id": "topbar",
+      "kind": "chrome",
+      "box": {
+        "x": 0.12777404169468728,
+        "y": 0,
+        "w": 0.8722259583053127,
+        "h": 0.06332703213610585
+      },
+      "note": "Existing native collapse button, breadcrumb and theme control.",
+      "grid": "B0:J0"
+    },
+    {
+      "id": "title",
+      "kind": "text",
+      "box": {
+        "x": 0.16139878950907868,
+        "y": 0.08695652173913043,
+        "w": 0.11499663752521856,
+        "h": 0.03780718336483932
+      },
+      "note": "Schemas page title.",
+      "grid": "B0:C1"
+    },
+    {
+      "id": "subtitle",
+      "kind": "text",
+      "box": {
+        "x": 0.1620712844653665,
+        "y": 0.13137996219281664,
+        "w": 0.17484868863483524,
+        "h": 0.01984877126654064
+      },
+      "note": "Supported event contracts.",
+      "grid": "B1:D1"
+    },
+    {
+      "id": "versions",
+      "kind": "text",
+      "box": {
+        "x": 0.8728984532616005,
+        "y": 0.1266540642722117,
+        "w": 0.09952925353059852,
+        "h": 0.020793950850661626
+      },
+      "note": "Event v1 · Envelope v1.",
+      "grid": "I1:J1"
+    },
+    {
+      "id": "index-common",
+      "kind": "control",
+      "box": {
+        "x": 0.15601882985877605,
+        "y": 0.17958412098298676,
+        "w": 0.1472763954270343,
+        "h": 0.15500945179584122
+      },
+      "note": "Common contracts navigation: Envelope, Event, Context.",
+      "grid": "B1:D3"
+    },
+    {
+      "id": "index-payloads",
+      "kind": "control",
+      "box": {
+        "x": 0.15601882985877605,
+        "y": 0.3516068052930057,
+        "w": 0.1472763954270343,
+        "h": 0.3005671077504726
+      },
+      "note": "Payload navigation: Session, Page, Error selected, Performance, Network, Interaction, Custom.",
+      "grid": "B3:D6"
+    },
+    {
+      "id": "detail-heading",
+      "kind": "text",
+      "box": {
+        "x": 0.32481506388702086,
+        "y": 0.1776937618147448,
+        "w": 0.1546738399462004,
+        "h": 0.035916824196597356
+      },
+      "note": "Error payload heading.",
+      "grid": "D1:E2"
+    },
+    {
+      "id": "description",
+      "kind": "text",
+      "box": {
+        "x": 0.32481506388702086,
+        "y": 0.21739130434782608,
+        "w": 0.2992602555480834,
+        "h": 0.023629489603024575
+      },
+      "note": "Required fields and optional error context.",
+      "grid": "D2:G2"
+    },
+    {
+      "id": "build-note",
+      "kind": "text",
+      "box": {
+        "x": 0.32481506388702086,
+        "y": 0.24291115311909262,
+        "w": 0.5581708137188971,
+        "h": 0.022684310018903593
+      },
+      "note": "Reference for this Console build; ingestion versions may differ.",
+      "grid": "D2:I2"
+    },
+    {
+      "id": "tabs",
+      "kind": "control",
+      "box": {
+        "x": 0.32481506388702086,
+        "y": 0.27504725897920607,
+        "w": 0.6422326832548756,
+        "h": 0.038752362948960305
+      },
+      "note": "Fields active, Example, JSON Schema; thin active underline.",
+      "grid": "D2:J3"
+    },
+    {
+      "id": "table-heading",
+      "kind": "text",
+      "box": {
+        "x": 0.32548755884330866,
+        "y": 0.33175803402646503,
+        "w": 0.6422326832548756,
+        "h": 0.036862003780718335
+      },
+      "note": "Field, Type, Presence, Constraints table headers.",
+      "grid": "D3:J3"
+    },
+    {
+      "id": "mechanism",
+      "kind": "text",
+      "box": {
+        "x": 0.32548755884330866,
+        "y": 0.3686200378071834,
+        "w": 0.6422326832548756,
+        "h": 0.05387523629489603
+      },
+      "note": "mechanism row: string, Required, enum runtime/promise/resource/manual.",
+      "grid": "D3:J4"
+    },
+    {
+      "id": "message",
+      "kind": "text",
+      "box": {
+        "x": 0.32548755884330866,
+        "y": 0.4224952741020794,
+        "w": 0.6422326832548756,
+        "h": 0.05671077504725898
+      },
+      "note": "message row: string, Required, 1–2048 characters.",
+      "grid": "D4:J4"
+    },
+    {
+      "id": "handled",
+      "kind": "text",
+      "box": {
+        "x": 0.32548755884330866,
+        "y": 0.4792060491493384,
+        "w": 0.6422326832548756,
+        "h": 0.05671077504725898
+      },
+      "note": "handled row: boolean, Required.",
+      "grid": "D4:J5"
+    },
+    {
+      "id": "name",
+      "kind": "text",
+      "box": {
+        "x": 0.32548755884330866,
+        "y": 0.5359168241965974,
+        "w": 0.6422326832548756,
+        "h": 0.05671077504725898
+      },
+      "note": "name row: string, Optional, maximum 256 characters.",
+      "grid": "D5:J5"
+    },
+    {
+      "id": "stack",
+      "kind": "text",
+      "box": {
+        "x": 0.32548755884330866,
+        "y": 0.5926275992438563,
+        "w": 0.6422326832548756,
+        "h": 0.08506616257088846
+      },
+      "note": "Expanded stack row and item structure; maximum 50 frames. Correct unsupported order claim.",
+      "grid": "D5:J6"
+    },
+    {
+      "id": "fingerprint",
+      "kind": "text",
+      "box": {
+        "x": 0.32548755884330866,
+        "y": 0.6776937618147448,
+        "w": 0.6422326832548756,
+        "h": 0.08601134215500945
+      },
+      "note": "Expanded fingerprint row and item structure; maximum 10 strings.",
+      "grid": "D6:J7"
+    },
+    {
+      "id": "source",
+      "kind": "text",
+      "box": {
+        "x": 0.32548755884330866,
+        "y": 0.7637051039697542,
+        "w": 0.6422326832548756,
+        "h": 0.1502835538752363
+      },
+      "note": "Expanded source object with url, line and column; correct URL format and minimum-value defects.",
+      "grid": "D7:J9"
+    },
+    {
+      "id": "footer",
+      "kind": "control",
+      "box": {
+        "x": 0.31540013449899124,
+        "y": 0.9281663516068053,
+        "w": 0.6657700067249496,
+        "h": 0.04914933837429111
+      },
+      "note": "Runtime byte limits and local schema identifier with copy control, not a remote download link.",
+      "grid": "D9:J9"
+    },
+    {
+      "id": "index-frame",
+      "kind": "chrome",
+      "grid": "B1:D9",
+      "box": {
+        "x": 0.1452589105581708,
+        "y": 0.16257088846880907,
+        "w": 0.1694687289845326,
+        "h": 0.8166351606805293
+      },
+      "note": "Contract index pane outline and ground; both navigation groups are measured separately."
+    },
+    {
+      "id": "workbench-top-rule",
+      "kind": "chrome",
+      "grid": "B1:J1",
+      "box": {
+        "x": 0.1452589105581708,
+        "y": 0.16257088846880907,
+        "w": 0.8365837256220578,
+        "h": 0.015122873345935728
+      },
+      "note": "Top outline of the single connected workbench."
+    }
+  ]
+}

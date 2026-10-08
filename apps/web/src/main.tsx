@@ -56,6 +56,7 @@ import { ProjectSettings } from './project-settings.js';
 import { parseNetworkSearch } from './network-query.js';
 import { parsePerformanceSearch } from './performance-query.js';
 import { parseReleaseSearch } from './release-query.js';
+import { parseSchemaSearch } from './schema-navigation.js';
 import { buildSessionHref, parseSessionSearch, type SessionSearch } from './session-query.js';
 import { orderEventsChronologically } from './session-timeline.js';
 import { SpectroIcon, SpectroMark } from './spectro-icons.js';
@@ -432,6 +433,12 @@ const liveRoute = createRoute({
   validateSearch: parseExplorerSearch,
   component: lazyRouteComponent(() => import('./live-explorer.js'), 'LiveExplorer'),
 });
+const schemaRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/schemas',
+  validateSearch: parseSchemaSearch,
+  component: lazyRouteComponent(() => import('./schema-reference.js'), 'SchemaReference'),
+});
 const routeTree = rootRoute.addChildren([
   indexRoute,
   issuesRoute,
@@ -441,6 +448,7 @@ const routeTree = rootRoute.addChildren([
   releaseRoute,
   projectSettingsRoute,
   liveRoute,
+  schemaRoute,
 ]);
 const router = createRouter({ routeTree });
 const queryClient = new QueryClient({

@@ -1,0 +1,40 @@
+{
+  "title": "Schemas · 布局方向",
+  "question": "首版是全局只读协议参考，保留现有 Spectro 视觉系统。选择你喜欢的布局；生成图中的字段细节会按真实协议校正。",
+  "options": [
+    {
+      "id": "example-led",
+      "label": "示例带着字段说明",
+      "kicker": "THE ROLL",
+      "thesis": "先看到一段有效 payload，再逐项理解字段的含义和约束。",
+      "palette": ["#f5f5f7", "#ffffff", "#24252b", "#5850df"],
+      "materials": ["现有 Spectro 控件", "等宽 JSON", "轻量字段说明"],
+      "viewport": "顶部切换 Envelope、Event、Context 及各类 Payload；左侧大幅示例，右侧对应字段说明；原始 Schema 作为独立视图。",
+      "risk": "需要查某个字段时，效率取决于字段导航；示例只能展示契约的一种合法形态。",
+      "comp": ".impeccable/mocks/decision/schemas-example-led.png"
+    },
+    {
+      "id": "reference-tabs",
+      "label": "目录 + 分页文档",
+      "thesis": "选择契约后，以完整宽度阅读字段、示例或原始 Schema。",
+      "palette": ["#f5f5f7", "#ffffff", "#24252b", "#5850df"],
+      "materials": ["现有 Spectro 控件", "紧凑字段表", "独立阅读视图"],
+      "viewport": "左侧窄契约目录，右侧 Fields、Example、JSON Schema 三个视图；字段表完整展示路径、类型、必填状态与约束。",
+      "risk": "字段和示例不能同时显示，需要切换视图对照。",
+      "comp": ".impeccable/mocks/decision/schemas-reference-tabs.png"
+    },
+    {
+      "id": "reference-split",
+      "label": "字段与示例并排",
+      "thesis": "查字段时，旁边始终保留一个经过验证的合法示例。",
+      "palette": ["#f5f5f7", "#ffffff", "#24252b", "#5850df"],
+      "materials": ["现有 Spectro 控件", "可展开字段结构", "只读代码面板"],
+      "viewport": "左侧契约目录，中间字段结构和约束，右侧 Example、JSON Schema 视图；窄屏依次呈现目录、字段和代码。",
+      "risk": "三个内容区域占用横向空间，较窄桌面需要把代码面板移到字段下方。",
+      "comp": ".impeccable/mocks/decision/schemas-reference-split.png"
+    }
+  ],
+  "reroll": true,
+  "steer": true,
+  "buildPath": { "value": "comp", "toggle": true }
+}
