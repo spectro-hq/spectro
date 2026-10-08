@@ -56,6 +56,7 @@ Status: accepted unless marked open.
 | ADR-050 | Use managed OIDC login, server-side Console sessions, organization permissions, and scoped browser write keys for hosted SaaS.                         |
 | ADR-051 | Observe processed events through bounded authorized polling, with overlap deduplication and a frozen-reading buffer.                                   |
 | ADR-052 | Bundle a read-only protocol catalogue from original JSON Schema sources, with local references and synthetic validated examples.                       |
+| ADR-053 | Manage organization roles and single-use verified-email invitations, with protected ownership and a browser-bound login continuation.                  |
 
 Detailed records:
 
@@ -78,6 +79,7 @@ Detailed records:
 - [ADR-050: Hosted SaaS authentication and authorization](./ADR-050_HOSTED_SAAS_AUTHENTICATION.md)
 - [ADR-051: Bounded live event observation](./ADR-051_LIVE_EVENT_OBSERVATION.md)
 - [ADR-052: Read-only protocol catalogue](./ADR-052_READ_ONLY_PROTOCOL_CATALOGUE.md)
+- [ADR-053: Organization membership and invitations](./ADR-053_ORGANIZATION_MEMBERSHIP_AND_INVITATIONS.md)
 
 ## Change rule
 

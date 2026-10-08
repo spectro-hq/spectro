@@ -16,7 +16,10 @@ const origin = 'https://console.spectro.example';
 const sessionCookie = '__Host-spectro-session=session-credential';
 
 function setup() {
-  const attempts = new Map<string, { nonce: string; codeVerifier: string }>();
+  const attempts = new Map<
+    string,
+    { nonce: string; codeVerifier: string; returnPath?: '/' | '/invite' }
+  >();
   const resolveSession = vi.fn<HostedAuthOptions['controlPlane']['resolveSession']>(
     async (token) => (token === 'session-credential' ? { userId: 'usr_one' } : undefined),
   );
@@ -37,8 +40,12 @@ function setup() {
     email: 'profile@example.test',
   }));
   const controlPlane: HostedAuthOptions['controlPlane'] = {
-    createLoginAttempt: async ({ state, nonce, codeVerifier }) => {
-      attempts.set(state, { nonce, codeVerifier });
+    createLoginAttempt: async ({ state, nonce, codeVerifier, returnPath }) => {
+      attempts.set(state, {
+        nonce,
+        codeVerifier,
+        ...(returnPath === undefined ? {} : { returnPath }),
+      });
     },
     consumeLoginAttempt: async (state) => {
       const value = attempts.get(state);
@@ -74,6 +81,42 @@ function setup() {
 }
 
 describe('hosted product API authentication', () => {
+  it('binds only allowlisted invitation destinations to the login attempt, including failures', async () => {
+    const fixture = setup();
+    const app = createApiApp({ hostedAuth: fixture.hostedAuth });
+    try {
+      for (const destination of [
+        'https://evil.example',
+        '//evil.example',
+        '/invite?token=private',
+        '/settings',
+      ]) {
+        expect(
+          // oxlint-disable-next-line no-await-in-loop -- malicious destination matrix.
+          (await app.inject(`/v1/auth/login?returnTo=${encodeURIComponent(destination)}`))
+            .statusCode,
+        ).toBe(400);
+      }
+      const login = await app.inject('/v1/auth/login?returnTo=%2Finvite&prompt=login');
+      const state = new URL(login.headers.location as string).searchParams.get('state');
+      const callback = await app.inject({
+        url: `/v1/auth/callback?state=${state}&code=some-code`,
+        headers: { cookie: `__Host-spectro-login=${state}` },
+      });
+      expect(callback.headers.location).toBe('/invite');
+      const retry = await app.inject('/v1/auth/login?returnTo=%2Finvite');
+      const nextState = new URL(retry.headers.location as string).searchParams.get('state');
+      fixture.exchange.mockRejectedValue(new Error('private detail'));
+      const failed = await app.inject({
+        url: `/v1/auth/callback?state=${nextState}&code=some-code`,
+        headers: { cookie: `__Host-spectro-login=${nextState}` },
+      });
+      expect(failed.headers.location).toBe(`${origin}/invite?auth_error=login_failed`);
+      expect(failed.body).not.toContain('private detail');
+    } finally {
+      await app.close();
+    }
+  });
   it('binds a single-use OIDC callback to the browser login cookie', async () => {
     const fixture = setup();
     const app = createApiApp({ hostedAuth: fixture.hostedAuth });

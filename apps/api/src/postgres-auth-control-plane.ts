@@ -15,6 +15,7 @@ interface ProjectMembershipRow extends SessionUserRow {
 interface LoginAttemptRow {
   readonly code_verifier: string;
   readonly nonce: string;
+  readonly return_path: '/' | '/invite';
 }
 
 function tokenHash(token: string): Buffer {
@@ -40,11 +41,12 @@ export class PostgresAuthControlPlane {
     readonly state: string;
     readonly codeVerifier: string;
     readonly nonce: string;
+    readonly returnPath?: '/' | '/invite';
   }): Promise<void> {
     await this.#sql`DELETE FROM oidc_login_attempts WHERE expires_at < now()`;
     await this.#sql`
-      INSERT INTO oidc_login_attempts (state_hash, code_verifier, nonce, expires_at)
-      VALUES (${tokenHash(input.state)}, ${input.codeVerifier}, ${input.nonce}, now() + interval '10 minutes')
+      INSERT INTO oidc_login_attempts (state_hash, code_verifier, nonce, expires_at, return_path)
+      VALUES (${tokenHash(input.state)}, ${input.codeVerifier}, ${input.nonce}, now() + interval '10 minutes', ${input.returnPath ?? '/'})
     `;
   }
 
@@ -52,6 +54,7 @@ export class PostgresAuthControlPlane {
     | {
         readonly codeVerifier: string;
         readonly nonce: string;
+        readonly returnPath?: '/' | '/invite';
       }
     | undefined
   > {
@@ -59,15 +62,22 @@ export class PostgresAuthControlPlane {
     const [row] = await this.#sql<LoginAttemptRow[]>`
       DELETE FROM oidc_login_attempts
       WHERE state_hash = ${tokenHash(state)} AND expires_at > now()
-      RETURNING code_verifier, nonce
+      RETURNING code_verifier, nonce, return_path
     `;
-    return row === undefined ? undefined : { codeVerifier: row.code_verifier, nonce: row.nonce };
+    return row === undefined
+      ? undefined
+      : {
+          codeVerifier: row.code_verifier,
+          nonce: row.nonce,
+          ...(row.return_path === '/' ? {} : { returnPath: row.return_path }),
+        };
   }
 
   async findOrCreateUser(input: {
     readonly issuer: string;
     readonly subject: string;
     readonly email?: string;
+    readonly emailVerified?: boolean;
   }): Promise<string> {
     if (
       input.issuer.length < 1 ||
@@ -85,11 +95,19 @@ export class PostgresAuthControlPlane {
         SELECT user_id FROM external_identities
         WHERE issuer = ${input.issuer} AND subject = ${input.subject}
       `;
-      if (existing !== undefined) return existing.user_id;
+      const email =
+        input.email !== undefined && input.email.length <= 320
+          ? input.email.trim().toLowerCase()
+          : null;
+      const verified = email !== null && input.emailVerified === true;
+      if (existing !== undefined) {
+        await transaction`UPDATE console_users SET email = ${email}, email_verified = ${verified} WHERE id = ${existing.user_id}`;
+        return existing.user_id;
+      }
       const userId = `usr_${randomBytes(16).toString('base64url')}`;
       await transaction`
-        INSERT INTO console_users (id, email)
-        VALUES (${userId}, ${input.email ?? null})
+        INSERT INTO console_users (id, email, email_verified)
+        VALUES (${userId}, ${email}, ${verified})
       `;
       await transaction`
         INSERT INTO external_identities (issuer, subject, user_id)

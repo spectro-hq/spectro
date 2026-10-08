@@ -3,7 +3,9 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 
 import { hostedConsole } from './auth-client.js';
 import { ConsoleShell } from './console-shell.js';
-import { parseExplorerSearch, type ExplorerSearch } from './event-query.js';
+import type { ExplorerSearch } from './event-query.js';
+import { parseSettingsSearch, settingsHref } from './settings-navigation.js';
+import { WorkspaceMembers } from './workspace-members.js';
 import { useWorkspace } from './workspace-context.js';
 import {
   createProjectWriteKey,
@@ -14,13 +16,33 @@ import {
 } from './write-key-client.js';
 
 export function ProjectSettings(): ReactNode {
-  const search = parseExplorerSearch(
+  const search = parseSettingsSearch(
     Object.fromEntries(new URLSearchParams(window.location.search)),
   );
 
   return (
     <ConsoleShell title="Settings" search={search}>
-      <ProjectSettingsContent search={search} />
+      <div className="settings-content">
+        <nav className="settings-sections" aria-label="Settings sections">
+          <a
+            href={settingsHref(search, 'project')}
+            aria-current={search.section === 'project' ? 'page' : undefined}
+          >
+            Project
+          </a>
+          <a
+            href={settingsHref(search, 'members')}
+            aria-current={search.section === 'members' ? 'page' : undefined}
+          >
+            Members
+          </a>
+        </nav>
+        {search.section === 'members' ? (
+          <WorkspaceMembers search={search} />
+        ) : (
+          <ProjectSettingsContent search={search} />
+        )}
+      </div>
     </ConsoleShell>
   );
 }

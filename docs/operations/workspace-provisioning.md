@@ -33,6 +33,6 @@ The workspace test exercises Fastify requests, real PostgreSQL sessions, members
 
 - Apply migrations 005 and 006, deploy the product API and ingestion service with separate PostgreSQL credentials, then exercise onboarding and key rotation with a non-production account.
 - On rollback, deploy the previous API and leave the additive audit table intact. Existing user sessions and tenant records do not require a destructive rollback.
-- Organization/project switching is available in the Console. Invitations, member changes, ownership transfer, quotas/rate limits and publishing the Browser SDK remain follow-ups. There is no endpoint here that adds another user to an organization.
+- Organization/project switching is available in the Console. [Invitations and membership management](./organization-membership.md) now implement ADR-053, including protected ownership changes. Quotas/rate limits, organization deletion and publishing the Browser SDK remain follow-ups.
 - Creation requests are not idempotent. After a network timeout, list the caller's organizations/projects before retrying. Names are display labels and are not uniqueness or identity keys.
 - No customer organization is automatically provisioned by the acceptance test. An Auth0 registration still requires an explicit organization creation action.

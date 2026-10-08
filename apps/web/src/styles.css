@@ -3545,18 +3545,15 @@ tr.selected .session-link {
   }
 }
 /* Hosted Console authentication gate */
-.auth-gate {
-  display: flex;
-  min-height: 100vh;
-  flex-direction: column;
-  align-items: flex-start;
+.auth-gate-panel > .primary-button {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
   justify-content: center;
-  gap: 1rem;
-  max-width: 28rem;
-  margin: 0 auto;
-  padding: 2rem;
 }
-
+.auth-gate-panel[role='status'] > .workspace-intro {
+  margin-bottom: 0;
+}
 .workspace-gate {
   display: grid;
   min-height: 100vh;
@@ -3689,6 +3686,170 @@ tr.selected .session-link {
   align-content: start;
   gap: 16px;
   max-width: 1160px;
+}
+.settings-content {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+}
+.settings-sections {
+  display: flex;
+  gap: 24px;
+  margin: 0 clamp(16px, 2vw, 30px);
+  max-width: 1100px;
+  border-bottom: 1px solid var(--hairline);
+}
+.settings-sections a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-bottom: 2px solid transparent;
+}
+.settings-sections a[aria-current='page'] {
+  color: var(--violet-dark);
+  border-bottom-color: var(--violet);
+}
+.settings-sections a:hover {
+  color: var(--ink);
+}
+.settings-sections a:focus-visible,
+.member-role-select:focus-visible,
+.invitation-link-field input:focus-visible {
+  outline: 2px solid var(--focus-border);
+  outline-offset: 3px;
+}
+.member-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.member-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 0;
+}
+.member-list li + li {
+  border-top: 1px solid var(--hairline);
+}
+.member-identity {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+.member-identity strong {
+  font-size: 0.85rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.member-identity span,
+.member-actions > span,
+.members-feedback {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+.member-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.member-role-select {
+  min-height: 44px;
+  min-width: 112px;
+  padding: 8px 12px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--control-radius);
+  font: inherit;
+  font-size: 0.82rem;
+}
+.member-remove {
+  min-height: 44px;
+  color: var(--danger);
+}
+.member-remove:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.members-feedback {
+  margin: 18px 0;
+  max-width: 72ch;
+}
+.invitation-link-field {
+  display: grid;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+.invitation-link-field input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--control-radius);
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+}
+.invitation-acceptance h1 {
+  overflow-wrap: anywhere;
+}
+.invitation-acceptance > :is(.primary-button, .secondary-button) {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+}
+.invitation-access {
+  margin: 0 0 24px;
+  font-size: 0.85rem;
+}
+.invitation-access > div {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 16px;
+  padding: 12px 0;
+}
+.invitation-access > div + div {
+  border-top: 1px solid var(--hairline);
+}
+.invitation-access dt {
+  color: var(--muted);
+}
+.invitation-access dd {
+  margin: 0;
+  line-height: 1.5;
+}
+.invitation-acceptance > .settings-security-note {
+  margin-top: 16px;
+  line-height: 1.6;
+}
+@media (max-width: 760px) {
+  .settings-content {
+    grid-column: 1;
+  }
+  .member-list li {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .members-workspace .settings-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .member-invite-form {
+    max-width: none;
+  }
+  .invitation-acceptance .primary-button {
+    width: 100%;
+  }
 }
 .settings-heading,
 .settings-section-heading,

@@ -13,6 +13,8 @@ export * from './issues.js';
 export * from './issue-lifecycle.js';
 export * from './network.js';
 export * from './organization-permissions.js';
+export * from './organization-members.js';
+export * from './postgres-organization-members.js';
 export * from './postgres-auth-control-plane.js';
 export * from './postgres-workspaces.js';
 export * from './project-write-keys.js';

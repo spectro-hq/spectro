@@ -97,6 +97,31 @@ pnpm --filter @spectro/api exec vitest run src/postgres-workspaces.integration.t
 
 The test creates isolated fixture users and organizations, checks provisioning through the HTTP boundary, cross-organization denial, all four roles, live membership removal, pagination, transaction rollback, audit actors and invalidated sessions, then removes only those fixtures. See [workspace provisioning acceptance](../../docs/operations/workspace-provisioning.md) for scope and rollout notes.
 
+## Organization members and invitations
+
+Hosted Settings exposes organization-wide membership through:
+
+- `GET /v1/organizations/:organizationId/members`: member directory, all current roles.
+- `PATCH .../members/:userId`: `{ "role": "viewer", "expectedRole": "member" }`; stale role changes return 409.
+- `DELETE .../members/:userId`: remove workspace access.
+- `GET /v1/organizations/:organizationId/invitations`: Owner/Admin invitation metadata.
+- `POST .../invitations`: `{ "email": "colleague@example.com", "role": "member" }`; returns a one-time fragment link.
+- `DELETE .../invitations/:invitationId`: revoke an unused invitation.
+- `POST /v1/invitations/claim`: `{ "token": "<fragment secret>" }`; exact same-origin request, no session required, creates a ten-minute HttpOnly continuation cookie but grants no access.
+- `POST /v1/invitations/preview` and `/accept`: `{}` with session-bound CSRF and that continuation cookie; only the matching verified recipient can preview and explicitly accept.
+
+All protected mutations require the Console Origin and `X-CSRF-Token`; reads and
+mutations recheck current membership. Admins cannot manage Owner access. Removing
+or demoting the last active Owner is rejected transactionally. Invitations expire
+after seven days, are single-use, and are capped at 100 pending per organization.
+Lists accept `limit=1..100` and an ID cursor, returning an optional `nextCursor`.
+Member email is directory/profile data, not an account identifier for merging.
+No email delivery is implemented: creators copy and send links themselves.
+
+Login accepts only `returnTo=/` or `/invite`; the path is bound to OIDC state.
+Optional `prompt=login` supports reauthentication without accepting arbitrary
+provider parameters. See [membership acceptance](../../docs/operations/organization-membership.md).
+
 ## Browser write keys
 
 Hosted mode exposes project/environment-scoped key management:

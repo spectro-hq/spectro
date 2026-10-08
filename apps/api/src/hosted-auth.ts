@@ -20,6 +20,7 @@ export interface OidcIdentity {
   readonly issuer: string;
   readonly subject: string;
   readonly email?: string;
+  readonly emailVerified?: boolean;
 }
 
 export interface OidcProvider {
@@ -27,6 +28,7 @@ export interface OidcProvider {
     readonly state: string;
     readonly nonce: string;
     readonly codeVerifier: string;
+    readonly prompt?: 'login';
   }): Promise<URL>;
   exchange(input: {
     readonly callbackUrl: URL;
@@ -110,6 +112,7 @@ export class ManagedOidcProvider implements OidcProvider {
     readonly state: string;
     readonly nonce: string;
     readonly codeVerifier: string;
+    readonly prompt?: 'login';
   }): Promise<URL> {
     const configuration = await this.#config();
     const challenge = await oidc.calculatePKCECodeChallenge(input.codeVerifier);
@@ -121,6 +124,7 @@ export class ManagedOidcProvider implements OidcProvider {
       code_challenge_method: 'S256',
       state: input.state,
       nonce: input.nonce,
+      ...(input.prompt === undefined ? {} : { prompt: input.prompt }),
     });
   }
 
@@ -151,7 +155,9 @@ export class ManagedOidcProvider implements OidcProvider {
     return {
       issuer: claims.iss,
       subject: claims.sub,
-      ...(typeof claims.email === 'string' ? { email: claims.email } : {}),
+      ...(typeof claims.email === 'string' && claims.email.length <= 320
+        ? { email: claims.email, emailVerified: claims.email_verified === true }
+        : {}),
     };
   }
 }
@@ -244,8 +250,12 @@ export async function requireConsoleSession(
   }
 }
 
-function redirectToLoginFailure(reply: FastifyReply, publicOrigin: string): FastifyReply {
-  const destination = new URL('/', publicOrigin);
+function redirectToLoginFailure(
+  reply: FastifyReply,
+  publicOrigin: string,
+  returnPath: '/' | '/invite',
+): FastifyReply {
+  const destination = new URL(returnPath, publicOrigin);
   destination.searchParams.set('auth_error', 'login_failed');
   return reply.header('cache-control', 'no-store').redirect(destination.href);
 }
@@ -255,13 +265,14 @@ function failLogin(
   options: HostedAuthOptions,
   reason: HostedAuthFailureReason,
   details?: HostedAuthFailureDetails,
+  returnPath: '/' | '/invite' = '/',
 ): FastifyReply {
   try {
     options.onLoginFailure?.(reason, details);
   } catch {
     // Diagnostics must never interfere with the authentication response.
   }
-  return redirectToLoginFailure(reply, options.publicOrigin);
+  return redirectToLoginFailure(reply, options.publicOrigin, returnPath);
 }
 
 function safeOAuthErrorCode(value: string | undefined): HostedAuthOAuthErrorCode {
@@ -310,15 +321,32 @@ export function registerHostedAuth(app: FastifyInstance, options: HostedAuthOpti
   }
   void app.register(cookie);
 
-  app.get('/v1/auth/login', async (_request, reply) => {
+  app.get('/v1/auth/login', async (request, reply) => {
     reply.header('cache-control', 'no-store');
+    const continuation = z
+      .object({
+        returnTo: z.enum(['/', '/invite']).optional(),
+        prompt: z.literal('login').optional(),
+      })
+      .strict()
+      .safeParse(request.query);
+    if (!continuation.success)
+      return reply
+        .code(400)
+        .send({ error: { code: 'invalid_request', message: 'Login destination is invalid.' } });
+    const returnPath = continuation.data.returnTo ?? '/';
     const state = randomBytes(32).toString('base64url');
     const nonce = randomBytes(32).toString('base64url');
     const codeVerifier = oidc.randomPKCECodeVerifier();
     try {
-      const url = await options.oidc.authorizationUrl({ state, nonce, codeVerifier });
+      const url = await options.oidc.authorizationUrl({
+        state,
+        nonce,
+        codeVerifier,
+        ...(continuation.data.prompt ? { prompt: continuation.data.prompt } : {}),
+      });
       if (url.protocol !== 'https:') throw new Error('OIDC authorization URL must use HTTPS');
-      await options.controlPlane.createLoginAttempt({ state, nonce, codeVerifier });
+      await options.controlPlane.createLoginAttempt({ state, nonce, codeVerifier, returnPath });
       reply.setCookie(LOGIN_COOKIE, state, {
         path: '/',
         httpOnly: true,
@@ -342,12 +370,15 @@ export function registerHostedAuth(app: FastifyInstance, options: HostedAuthOpti
       return failLogin(reply, options, 'callback_state_invalid');
     }
     let failureReason: HostedAuthFailureReason = 'login_attempt_store_failed';
+    let returnPath: '/' | '/invite' = '/';
     try {
       const attempt = await options.controlPlane.consumeLoginAttempt(parsed.data.state);
       if (attempt === undefined) return failLogin(reply, options, 'login_attempt_unavailable');
-      if (parsed.data.error !== undefined) return failLogin(reply, options, 'provider_rejected');
+      returnPath = attempt.returnPath ?? '/';
+      if (parsed.data.error !== undefined)
+        return failLogin(reply, options, 'provider_rejected', undefined, returnPath);
       if (parsed.data.code === undefined)
-        return failLogin(reply, options, 'authorization_code_missing');
+        return failLogin(reply, options, 'authorization_code_missing', undefined, returnPath);
       const callbackUrl = new URL('/v1/auth/callback', options.publicOrigin);
       callbackUrl.search = new URL(request.url, options.publicOrigin).search;
       failureReason = 'oidc_exchange_failed';
@@ -376,13 +407,14 @@ export function registerHostedAuth(app: FastifyInstance, options: HostedAuthOpti
         sameSite: 'lax',
         maxAge: SESSION_TTL_MS / 1_000,
       });
-      return reply.header('cache-control', 'no-store').redirect('/');
+      return reply.header('cache-control', 'no-store').redirect(returnPath);
     } catch (error) {
       return failLogin(
         reply,
         options,
         failureReason,
         failureReason === 'oidc_exchange_failed' ? oidcFailureDetails(error) : undefined,
+        returnPath,
       );
     }
   });

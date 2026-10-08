@@ -5,6 +5,7 @@ import { createApiApp } from './app.js';
 import { createLocalProjectAuthorizer } from './auth.js';
 import { ManagedOidcProvider, type HostedAuthOptions } from './hosted-auth.js';
 import { PostgresAuthControlPlane } from './postgres-auth-control-plane.js';
+import { PostgresOrganizationMemberStore } from './postgres-organization-members.js';
 import { PostgresWorkspaceStore } from './postgres-workspaces.js';
 import { PostgresProjectWriteKeyStore } from './postgres-project-write-keys.js';
 import { ClickHouseEventQueryStore } from './clickhouse-events.js';
@@ -98,7 +99,10 @@ const hostedAuth: HostedAuthOptions | undefined =
 const app = createApiApp({
   ...(controlPlaneSql === undefined
     ? {}
-    : { workspaceStore: new PostgresWorkspaceStore(controlPlaneSql) }),
+    : {
+        workspaceStore: new PostgresWorkspaceStore(controlPlaneSql),
+        organizationMemberStore: new PostgresOrganizationMemberStore(controlPlaneSql),
+      }),
   ...(controlPlaneSql === undefined
     ? {}
     : { projectWriteKeyStore: new PostgresProjectWriteKeyStore(controlPlaneSql) }),

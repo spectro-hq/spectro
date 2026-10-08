@@ -57,6 +57,7 @@ import { parseNetworkSearch } from './network-query.js';
 import { parsePerformanceSearch } from './performance-query.js';
 import { parseReleaseSearch } from './release-query.js';
 import { parseSchemaSearch } from './schema-navigation.js';
+import { parseSettingsSearch } from './settings-navigation.js';
 import { buildSessionHref, parseSessionSearch, type SessionSearch } from './session-query.js';
 import { orderEventsChronologically } from './session-timeline.js';
 import { SpectroIcon, SpectroMark } from './spectro-icons.js';
@@ -79,8 +80,20 @@ function AppFrame() {
     enabled: hostedConsole,
     retry: false,
   });
+  // Joining must not force a new user through organization creation first.
+  if (window.location.pathname === '/invite') return <Outlet />;
   if (hostedConsole && session.isPending) {
-    return <main className="auth-gate">Checking your session…</main>;
+    return (
+      <main className="workspace-gate">
+        <section className="workspace-setup-panel auth-gate-panel" role="status">
+          <a className="wordmark workspace-setup-brand" href="/" aria-label="Spectro">
+            <SpectroMark />
+            <span>spectro</span>
+          </a>
+          <p className="workspace-intro">Checking your session…</p>
+        </section>
+      </main>
+    );
   }
   if (hostedConsole && session.isError) {
     if (loginFailed && session.error.message === 'signed_out') {
@@ -100,18 +113,27 @@ function AppFrame() {
       );
     }
     return (
-      <main className="auth-gate">
-        <h1>
-          {session.error.message === 'signed_out' ? 'Sign in to Spectro' : 'Session unavailable'}
-        </h1>
-        <p>
-          {session.error.message === 'signed_out'
-            ? 'Your workspace requires a secure session.'
-            : 'The service could not verify your session. Please try again.'}
-        </p>
-        <a className="primary-button" href="/v1/auth/login">
-          Sign in
-        </a>
+      <main className="workspace-gate">
+        <section
+          className="workspace-setup-panel auth-gate-panel"
+          aria-labelledby="auth-gate-title"
+        >
+          <a className="wordmark workspace-setup-brand" href="/" aria-label="Spectro">
+            <SpectroMark />
+            <span>spectro</span>
+          </a>
+          <h1 id="auth-gate-title">
+            {session.error.message === 'signed_out' ? 'Sign in to Spectro' : 'Session unavailable'}
+          </h1>
+          <p className="workspace-intro">
+            {session.error.message === 'signed_out'
+              ? 'Your workspace requires a secure session.'
+              : 'The service could not verify your session. Please try again.'}
+          </p>
+          <a className="primary-button" href="/v1/auth/login">
+            Sign in
+          </a>
+        </section>
       </main>
     );
   }
@@ -159,6 +181,15 @@ function WorkspaceGate() {
   }
 
   const projects = projectQueries.flatMap((query) => query.data ?? []);
+  // Membership is organization-scoped and remains usable before a project exists.
+  if (
+    window.location.pathname === '/settings' &&
+    new URLSearchParams(window.location.search).get('section') === 'members'
+  ) {
+    const requestedOrganization = new URLSearchParams(window.location.search).get('organization');
+    if (organizations.some((item) => item.id === requestedOrganization))
+      return <WorkspaceContent organizations={organizations} projects={projects} />;
+  }
   if (projects.length === 0) {
     const initialOrganization = organizations[0];
     return initialOrganization === undefined ? (
@@ -171,7 +202,10 @@ function WorkspaceGate() {
   const search = new URLSearchParams(window.location.search);
   const requestedProjectId = search.get('project');
   const selectedProject = projects.find((project) => project.id === requestedProjectId);
-  const project = selectedProject ?? projects[0];
+  const project =
+    selectedProject ??
+    projects.find((item) => item.organizationId === search.get('organization')) ??
+    projects[0];
   if (project === undefined) return <WorkspaceSetup />;
   const environment = search.get('environment');
   const nextEnvironment =
@@ -229,6 +263,11 @@ function WorkspaceSelectionRedirect({
     const parameters = resetRouteState
       ? new URLSearchParams({ range })
       : new URLSearchParams(window.location.search);
+    if (
+      window.location.pathname === '/settings' &&
+      new URLSearchParams(window.location.search).get('section') === 'members'
+    )
+      parameters.set('section', 'members');
     parameters.set('organization', project.organizationId);
     parameters.set('project', project.id);
     parameters.set('environment', environment);
@@ -424,7 +463,7 @@ const releaseRoute = createRoute({
 const projectSettingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings',
-  validateSearch: parseExplorerSearch,
+  validateSearch: parseSettingsSearch,
   component: ProjectSettings,
 });
 const liveRoute = createRoute({
@@ -439,6 +478,11 @@ const schemaRoute = createRoute({
   validateSearch: parseSchemaSearch,
   component: lazyRouteComponent(() => import('./schema-reference.js'), 'SchemaReference'),
 });
+const invitationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/invite',
+  component: lazyRouteComponent(() => import('./invite-acceptance.js'), 'InviteAcceptance'),
+});
 const routeTree = rootRoute.addChildren([
   indexRoute,
   issuesRoute,
@@ -449,6 +493,7 @@ const routeTree = rootRoute.addChildren([
   projectSettingsRoute,
   liveRoute,
   schemaRoute,
+  invitationRoute,
 ]);
 const router = createRouter({ routeTree });
 const queryClient = new QueryClient({

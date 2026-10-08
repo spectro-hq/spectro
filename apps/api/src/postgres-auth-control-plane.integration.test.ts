@@ -89,6 +89,26 @@ describe('PostgresAuthControlPlane integration', () => {
     expect(discoveredUserId).toMatch(/^usr_/);
     expect(discoveredUserId).not.toBe(userId);
     expect(await store.findOrCreateUser(identity)).toBe(discoveredUserId);
+    await store.findOrCreateUser({
+      ...identity,
+      email: ' Updated@Example.test ',
+      emailVerified: true,
+    });
+    expect(
+      await sql`SELECT email, email_verified FROM console_users WHERE id = ${discoveredUserId}`,
+    ).toEqual([{ email: 'updated@example.test', email_verified: true }]);
+    await store.findOrCreateUser({ ...identity });
+    expect(
+      await sql`SELECT email_verified FROM console_users WHERE id = ${discoveredUserId}`,
+    ).toEqual([{ email_verified: false }]);
+    const continuationState = randomBytes(32).toString('base64url');
+    await store.createLoginAttempt({
+      state: continuationState,
+      codeVerifier: 'verifier',
+      nonce: 'nonce',
+      returnPath: '/invite',
+    });
+    expect((await store.consumeLoginAttempt(continuationState))?.returnPath).toBe('/invite');
   });
 
   it('enforces live membership and actor identity across HTTP and PostgreSQL', async () => {

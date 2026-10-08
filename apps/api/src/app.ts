@@ -1,4 +1,8 @@
 import cors from '@fastify/cors';
+import {
+  registerOrganizationMemberRoutes,
+  type OrganizationMemberStore,
+} from './organization-members.js';
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
@@ -98,6 +102,7 @@ export interface ApiAppOptions {
   readonly authorizer?: ProjectAuthorizer;
   readonly hostedAuth?: HostedAuthOptions;
   readonly workspaceStore?: WorkspaceStore;
+  readonly organizationMemberStore?: OrganizationMemberStore;
   readonly projectWriteKeyStore?: ProjectWriteKeyStore;
   readonly ingestionEndpoint?: string;
   readonly eventStore?: EventQueryStore;
@@ -204,6 +209,9 @@ async function authorizeProjectAccess(
 }
 
 export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
+  if (options.organizationMemberStore !== undefined && options.hostedAuth === undefined) {
+    throw new Error('Membership management requires hosted authentication');
+  }
   if (options.workspaceStore !== undefined && options.hostedAuth === undefined) {
     throw new Error('Workspace management requires hosted authentication');
   }
@@ -224,6 +232,7 @@ export function createApiApp(options: ApiAppOptions = {}): FastifyInstance {
   void app.register(cors, { origin: false });
   if (options.hostedAuth !== undefined) {
     registerHostedAuth(app, options.hostedAuth);
+    registerOrganizationMemberRoutes(app, options.hostedAuth, options.organizationMemberStore);
     registerWorkspaceRoutes(app, options.hostedAuth, options.workspaceStore);
     registerProjectWriteKeyRoutes(
       app,
