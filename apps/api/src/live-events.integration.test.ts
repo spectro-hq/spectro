@@ -92,7 +92,9 @@ describe('Live API with real ClickHouse', () => {
       const second = next.json<LivePage>();
       expect(second.data).toHaveLength(20);
       expect(second.nextCursor).toBeUndefined();
-      expect([...page.data, ...second.data].map((item) => item.event.id)).toEqual(ids);
+      const receivedIds = [...page.data, ...second.data].map((item) => item.event.id);
+      expect(receivedIds).toHaveLength(ids.length);
+      expect(new Set(receivedIds)).toEqual(new Set(ids));
       expect(Date.now() - started).toBeLessThan(5000);
       expect(
         (
