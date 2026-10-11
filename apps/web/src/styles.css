@@ -3551,7 +3551,7 @@ tr.selected .session-link {
   align-items: center;
   justify-content: center;
 }
-.auth-gate-panel[role='status'] > .workspace-intro {
+.auth-gate-panel > .workspace-intro[aria-live='polite'] {
   margin-bottom: 0;
 }
 .workspace-gate {

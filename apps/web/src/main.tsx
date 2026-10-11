@@ -85,12 +85,14 @@ function AppFrame() {
   if (hostedConsole && session.isPending) {
     return (
       <main className="workspace-gate">
-        <section className="workspace-setup-panel auth-gate-panel" role="status">
+        <section className="workspace-setup-panel auth-gate-panel">
           <a className="wordmark workspace-setup-brand" href="/" aria-label="Spectro">
             <SpectroMark />
             <span>spectro</span>
           </a>
-          <p className="workspace-intro">Checking your session…</p>
+          <p className="workspace-intro" aria-live="polite">
+            Checking your session…
+          </p>
         </section>
       </main>
     );
