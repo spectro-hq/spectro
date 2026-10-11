@@ -20,6 +20,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify
       - run: pnpm infra:up
+      - run: pnpm --filter @spectro/api migrate
       - run: pnpm test:integration
       - if: always()
         run: pnpm infra:down

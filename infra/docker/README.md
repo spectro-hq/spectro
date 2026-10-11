@@ -21,4 +21,4 @@ The credentials are local-only defaults. Production injects credentials and does
 
 Named volumes preserve local data across `down`. Run `down --volumes` only when intentionally discarding local event and control-plane data.
 
-Fresh PostgreSQL volumes apply the API's numbered migration files during initialization. Run the migration command explicitly for existing volumes; applied filenames are tracked in `control_plane_migrations`.
+PostgreSQL volumes contain data only; the API migration runner applies the numbered schema changes and records applied filenames in `control_plane_migrations`. Run `pnpm --filter @spectro/api migrate` after starting the infrastructure, for both fresh and existing volumes.
