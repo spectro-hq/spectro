@@ -19,6 +19,12 @@ try {
       async readAdmissionSnapshot() {
         const connection = await connect({
           servers: process.env.SPECTRO_NATS_URL ?? 'nats://localhost:4222',
+          ...(process.env.SPECTRO_NATS_USER === undefined
+            ? {}
+            : { user: process.env.SPECTRO_NATS_USER }),
+          ...(process.env.SPECTRO_NATS_PASSWORD === undefined
+            ? {}
+            : { pass: process.env.SPECTRO_NATS_PASSWORD }),
           name: 'spectro-pipeline-status',
           timeout: 3_000,
           maxReconnectAttempts: 0,

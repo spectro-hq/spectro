@@ -1,0 +1,17 @@
+{$CONSOLE_HOST} {
+	handle /v1/* {
+		reverse_proxy api:4400
+	}
+	handle /health {
+		reverse_proxy api:4400
+	}
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+{$INGEST_HOST} {
+	reverse_proxy ingest:4401
+}

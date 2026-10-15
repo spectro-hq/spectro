@@ -25,7 +25,14 @@ const clickhouse = createClient({
 });
 
 try {
-  const connection = await connect({ servers: natsServers, name: 'spectro-processor' });
+  const connection = await connect({
+    servers: natsServers,
+    name: 'spectro-processor',
+    ...(process.env.SPECTRO_NATS_USER === undefined ? {} : { user: process.env.SPECTRO_NATS_USER }),
+    ...(process.env.SPECTRO_NATS_PASSWORD === undefined
+      ? {}
+      : { pass: process.env.SPECTRO_NATS_PASSWORD }),
+  });
   await ensureJetStreamPipeline(connection);
   const source = await JetStreamAdmissionSource.create(connection);
   const processor = new EventProcessor(new ClickHouseProcessedEventWriter(clickhouse));

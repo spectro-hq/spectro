@@ -18,7 +18,14 @@ try {
       ? undefined
       : postgres(writeKeyDatabaseUrl, { max: 10, prepare: false });
   const apiKey = writeKeySql === undefined ? ingestApiKeyFrom(process.env) : undefined;
-  const connection = await connect({ servers: natsServers, name: 'spectro-ingest' });
+  const connection = await connect({
+    servers: natsServers,
+    name: 'spectro-ingest',
+    ...(process.env.SPECTRO_NATS_USER === undefined ? {} : { user: process.env.SPECTRO_NATS_USER }),
+    ...(process.env.SPECTRO_NATS_PASSWORD === undefined
+      ? {}
+      : { pass: process.env.SPECTRO_NATS_PASSWORD }),
+  });
   await ensureJetStreamPipeline(connection);
   const app = createIngestApp({
     ...(apiKey === undefined ? {} : { apiKey }),

@@ -1,0 +1,184 @@
+name: spectro-staging
+
+x-runtime: &runtime
+  image: spectro-staging-runtime:local
+  build:
+    context: ../..
+    dockerfile: infra/staging/Dockerfile
+    target: runtime
+  restart: unless-stopped
+  init: true
+  logging: &logging
+    driver: json-file
+    options: { max-size: 10m, max-file: '3' }
+
+x-api-env: &api-env
+  NODE_ENV: production
+  SPECTRO_AUTH_MODE: hosted
+  SPECTRO_POSTGRES_URL: postgres://spectro_api:${POSTGRES_API_PASSWORD:?}@postgres:5432/spectro
+  SPECTRO_CLICKHOUSE_URL: http://clickhouse:8123
+  SPECTRO_CLICKHOUSE_USER: spectro_api
+  SPECTRO_CLICKHOUSE_PASSWORD: ${CLICKHOUSE_API_PASSWORD:?}
+  SPECTRO_PUBLIC_ORIGIN: https://${CONSOLE_HOST:?}
+  SPECTRO_INGEST_PUBLIC_ENDPOINT: https://${INGEST_HOST:?}
+  SPECTRO_AUTH_CSRF_SECRET: ${SPECTRO_AUTH_CSRF_SECRET:?}
+  SPECTRO_OIDC_ISSUER: ${SPECTRO_OIDC_ISSUER:?}
+  SPECTRO_OIDC_CLIENT_ID: ${SPECTRO_OIDC_CLIENT_ID:?}
+  SPECTRO_OIDC_CLIENT_SECRET: ${SPECTRO_OIDC_CLIENT_SECRET:?Fill OIDC secret before startup}
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: spectro_admin
+      POSTGRES_DB: spectro
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?}
+      POSTGRES_API_PASSWORD: ${POSTGRES_API_PASSWORD:?}
+      POSTGRES_INGEST_PASSWORD: ${POSTGRES_INGEST_PASSWORD:?}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./postgres-init.sh:/docker-entrypoint-initdb.d/001_roles.sh:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U spectro_admin -d spectro']
+      interval: 5s
+      retries: 30
+    logging: *logging
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.3.33.24-alpine
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_DB: spectro
+      CLICKHOUSE_USER: spectro_admin
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_ADMIN_PASSWORD:?}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: '1'
+      CLICKHOUSE_API_PASSWORD: ${CLICKHOUSE_API_PASSWORD:?}
+      CLICKHOUSE_PROCESSOR_PASSWORD: ${CLICKHOUSE_PROCESSOR_PASSWORD:?}
+    mem_limit: 3g
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ../docker/clickhouse/init/001_events_v1.sql:/docker-entrypoint-initdb.d/001_events.sql:ro
+      - ./clickhouse-init.sh:/docker-entrypoint-initdb.d/002_users.sh:ro
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--output-document=-', 'http://127.0.0.1:8123/ping']
+      interval: 5s
+      retries: 30
+    logging: *logging
+
+  nats:
+    image: nats:2.14.6-alpine
+    command: ['--config', '/etc/nats/staging.conf']
+    restart: unless-stopped
+    environment:
+      NATS_INGEST_PASSWORD: ${NATS_INGEST_PASSWORD:?}
+      NATS_PROCESSOR_PASSWORD: ${NATS_PROCESSOR_PASSWORD:?}
+    volumes:
+      - nats-data:/data
+      - ./nats.conf:/etc/nats/staging.conf:ro
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--output-document=-', 'http://127.0.0.1:8222/healthz']
+      interval: 5s
+      retries: 30
+    logging: *logging
+
+  migrate:
+    <<: *runtime
+    restart: 'no'
+    environment: *api-env
+    command: ['node', 'apps/api/dist/migrate.js']
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  grant-ingest:
+    image: postgres:18-alpine
+    environment:
+      PGPASSWORD: ${POSTGRES_API_PASSWORD:?}
+    volumes:
+      - ./grant-ingest.sh:/grant-ingest.sh:ro
+    entrypoint: ['sh', '/grant-ingest.sh']
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    logging: *logging
+
+  api:
+    <<: *runtime
+    environment: *api-env
+    command: ['node', 'apps/api/dist/server.js']
+    depends_on:
+      grant-ingest: { condition: service_completed_successfully }
+      clickhouse: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          'fetch("http://127.0.0.1:4400/health").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))',
+        ]
+      interval: 10s
+      retries: 15
+
+  ingest:
+    <<: *runtime
+    command: ['node', 'apps/ingest/dist/server.js']
+    environment:
+      NODE_ENV: production
+      SPECTRO_INGEST_KEY_POSTGRES_URL: postgres://spectro_ingest:${POSTGRES_INGEST_PASSWORD:?}@postgres:5432/spectro
+      SPECTRO_NATS_URL: nats://nats:4222
+      SPECTRO_NATS_USER: ingest
+      SPECTRO_NATS_PASSWORD: ${NATS_INGEST_PASSWORD:?}
+    depends_on:
+      grant-ingest: { condition: service_completed_successfully }
+      nats: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          'fetch("http://127.0.0.1:4401/health").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))',
+        ]
+      interval: 10s
+      retries: 15
+
+  processor:
+    <<: *runtime
+    command: ['node', 'services/processor/dist/server.js']
+    environment:
+      NODE_ENV: production
+      SPECTRO_NATS_URL: nats://nats:4222
+      SPECTRO_NATS_USER: processor
+      SPECTRO_NATS_PASSWORD: ${NATS_PROCESSOR_PASSWORD:?}
+      SPECTRO_CLICKHOUSE_URL: http://clickhouse:8123
+      SPECTRO_CLICKHOUSE_USER: spectro_processor
+      SPECTRO_CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PROCESSOR_PASSWORD:?}
+    depends_on:
+      nats: { condition: service_healthy }
+      clickhouse: { condition: service_healthy }
+
+  web:
+    image: spectro-staging-web:local
+    build:
+      context: ../..
+      dockerfile: infra/staging/Dockerfile
+      target: web
+    restart: unless-stopped
+    environment:
+      CONSOLE_HOST: ${CONSOLE_HOST:?}
+      INGEST_HOST: ${INGEST_HOST:?}
+    ports: ['80:80', '443:443']
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api: { condition: service_healthy }
+      ingest: { condition: service_healthy }
+    logging: *logging
+
+volumes:
+  postgres-data:
+  clickhouse-data:
+  nats-data:
+  caddy-data:
+  caddy-config:
