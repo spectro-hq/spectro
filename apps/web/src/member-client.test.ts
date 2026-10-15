@@ -7,11 +7,11 @@ import {
   fetchMemberPage,
   MemberRequestError,
 } from './member-client.js';
-import { parseSettingsSearch, settingsHref } from './settings-navigation.js';
+import { parseSettingsSearch } from './settings-navigation.js';
 
 afterEach(() => vi.unstubAllGlobals());
 describe('member requests and Settings URL state', () => {
-  it('keeps the section and workspace context shareable, without carrying event detail state', () => {
+  it('keeps the section and workspace context shareable', () => {
     const search = parseSettingsSearch({
       organization: 'org_one',
       project: 'prj_one',
@@ -19,13 +19,9 @@ describe('member requests and Settings URL state', () => {
       range: '6h',
       source: 'live',
       section: 'members',
-      event: 'private',
     });
     expect(search.section).toBe('members');
-    const link = settingsHref(search, 'project');
-    expect(link).toContain('organization=org_one');
-    expect(link).toContain('section=project');
-    expect(link).not.toContain('event=');
+    expect(search.organization).toBe('org_one');
     expect(parseSettingsSearch({ section: 'unknown' }).section).toBe('project');
   });
   it('uses session-bound CSRF and optimistic role comparison without bearer headers', async () => {

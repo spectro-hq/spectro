@@ -295,7 +295,11 @@ function WorkspaceSelectionRedirect({
   environment: string;
   range: string;
 }) {
-  const location = useLocation();
+  // Read the same committed generation as WorkspaceGate so the effect does not
+  // re-fire on the synchronous location update produced by its own navigate().
+  const location = useRouterState({
+    select: (state) => state.resolvedLocation ?? state.location,
+  });
   const navigate = useNavigate();
   useEffect(() => {
     void navigate({
@@ -1040,6 +1044,7 @@ function SessionExplorer() {
               className="back-link"
               to="/"
               search={{
+                ...(search.organization === undefined ? {} : { organization: search.organization }),
                 project: search.project,
                 environment: search.environment,
                 range: search.range,
@@ -1794,6 +1799,7 @@ function IssueDetail({
         className="occurrence-link"
         to="/"
         search={{
+          ...(search.organization === undefined ? {} : { organization: search.organization }),
           project: search.project,
           environment: search.environment,
           range: search.range,

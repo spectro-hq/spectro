@@ -102,6 +102,7 @@ export function NetworkExplorer() {
   };
 
   const baseSearch = {
+    ...(search.organization === undefined ? {} : { organization: search.organization }),
     project: search.project,
     environment: search.environment,
     range: search.range,

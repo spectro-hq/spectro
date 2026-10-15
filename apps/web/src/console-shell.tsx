@@ -58,7 +58,7 @@ export function ConsoleShell({
     source: search.source,
   };
   const selectedProject = workspace?.projects.find((project) => project.id === search.project);
-  const navigation = (
+  const navigation = (onNavigate?: () => void) => (
     <>
       <nav aria-label="Primary navigation">
         {destinations.map(({ title: label, path, icon }) => {
@@ -71,6 +71,7 @@ export function ConsoleShell({
               search={scopeSearch}
               aria-current={active ? 'page' : undefined}
               title={label}
+              onClick={onNavigate}
             >
               <SpectroIcon name={icon} />
               <span>{label}</span>
@@ -85,6 +86,7 @@ export function ConsoleShell({
           search={{ ...scopeSearch, section: 'project' }}
           aria-current={title === 'Settings' ? 'page' : undefined}
           title="Settings"
+          onClick={onNavigate}
         >
           <SpectroIcon name="settings" />
           <span>Settings</span>
@@ -105,7 +107,7 @@ export function ConsoleShell({
             <span>spectro</span>
           </Link>
         </div>
-        {navigation}
+        {navigation()}
       </aside>
       <header className="console-topbar shared-topbar">
         <Link
@@ -203,7 +205,12 @@ export function ConsoleShell({
       >
         <div className="mobile-navigation-body">
           <div className="rail-brand">
-            <Link className="wordmark" to="/" search={scopeSearch}>
+            <Link
+              className="wordmark"
+              to="/"
+              search={scopeSearch}
+              onClick={() => setMobileOpen(false)}
+            >
               <SpectroMark />
               spectro
             </Link>
@@ -215,7 +222,7 @@ export function ConsoleShell({
               <SidebarIcon />
             </button>
           </div>
-          {navigation}
+          {navigation(() => setMobileOpen(false))}
         </div>
       </dialog>
     </div>

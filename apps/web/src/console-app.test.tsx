@@ -29,6 +29,74 @@ afterEach(() => {
   delete (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT;
 });
 
+// Mounts the hosted (PROD) console against a stubbed fetch so gate behavior —
+// session load, workspace resolution, scope normalization — runs for real.
+async function mountHostedConsole(initialEntry: string, projects: ProjectSummary[]) {
+  vi.stubEnv('PROD', true);
+  vi.resetModules();
+
+  const requests: string[] = [];
+  vi.stubGlobal('fetch', async (input: RequestInfo | URL) => {
+    const url = input instanceof URL ? input.href : typeof input === 'string' ? input : input.url;
+    requests.push(url);
+    const body = url.includes('/v1/auth/session')
+      ? { userId: 'usr_1', csrfToken: 'csrf_1' }
+      : url.includes('/v1/organizations?')
+        ? { data: [{ id: 'org_one', name: 'Org One', role: 'owner' }] }
+        : url.includes('/projects?')
+          ? { data: projects }
+          : { data: [] };
+    return new Response(JSON.stringify(body), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  });
+
+  const [
+    { createConsoleRouter: freshCreateRouter },
+    { RouterProvider, createMemoryHistory: freshMemoryHistory },
+    { QueryClient, QueryClientProvider },
+    { act },
+    { createRoot },
+  ] = await Promise.all([
+    import('./console-app.js'),
+    import('@tanstack/react-router'),
+    import('@tanstack/react-query'),
+    import('react'),
+    import('react-dom/client'),
+  ]);
+
+  const router = freshCreateRouter({
+    history: freshMemoryHistory({ initialEntries: [initialEntry] }),
+    isServer: false,
+  });
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const container = document.createElement('div');
+  document.body.append(container);
+  const root = createRoot(container);
+  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+  await act(async () => {
+    root.render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+  });
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  });
+
+  const teardown = async (): Promise<void> => {
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+    queryClient.clear();
+  };
+  return { router, requests, container, teardown };
+}
+
 describe('console router navigation', () => {
   it('navigates across pages client-side while preserving workspace scope', async () => {
     const router = createTestRouter();
@@ -110,76 +178,26 @@ describe('console router navigation', () => {
   });
 
   it('never issues content requests for a scope that is still being normalized', async () => {
-    vi.stubEnv('PROD', true);
-    vi.resetModules();
+    const mounted = await mountHostedConsole(
+      '/issues?project=prj_ghost&environment=production&range=24h&source=live&organization=org_one',
+      [projectFixture],
+    );
 
-    const requests: string[] = [];
-    vi.stubGlobal('fetch', async (input: RequestInfo | URL) => {
-      const url = input instanceof URL ? input.href : typeof input === 'string' ? input : input.url;
-      requests.push(url);
-      const body = url.includes('/v1/auth/session')
-        ? { userId: 'usr_1', csrfToken: 'csrf_1' }
-        : url.includes('/v1/organizations?')
-          ? { data: [{ id: 'org_one', name: 'Org One', role: 'owner' }] }
-          : url.includes('/projects?')
-            ? { data: [projectFixture] }
-            : { data: [] };
-      return new Response(JSON.stringify(body), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      });
-    });
+    expect(mounted.router.state.location.pathname).toBe('/issues');
+    expect(mounted.router.state.location.search).toMatchObject({ project: 'prj_one' });
+    expect(mounted.requests.some((url) => url.includes('prj_ghost'))).toBe(false);
 
-    const [
-      { createConsoleRouter: freshCreateRouter },
-      { RouterProvider, createMemoryHistory: freshMemoryHistory },
-      { QueryClient, QueryClientProvider },
-      { act },
-      { createRoot },
-    ] = await Promise.all([
-      import('./console-app.js'),
-      import('@tanstack/react-router'),
-      import('@tanstack/react-query'),
-      import('react'),
-      import('react-dom/client'),
-    ]);
+    await mounted.teardown();
+  });
 
-    const router = freshCreateRouter({
-      history: freshMemoryHistory({
-        initialEntries: [
-          '/issues?project=prj_ghost&environment=production&range=24h&source=live&organization=org_one',
-        ],
-      }),
-      isServer: false,
-    });
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    });
-    const container = document.createElement('div');
-    document.body.append(container);
-    const root = createRoot(container);
-    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  it('reaches organization members from a deep link when no project exists', async () => {
+    const mounted = await mountHostedConsole('/settings?section=members&organization=org_one', []);
 
-    await act(async () => {
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-        </QueryClientProvider>,
-      );
-    });
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    });
+    expect(mounted.container.textContent).toContain('Members');
+    expect(mounted.container.querySelector('.workspace-setup-panel')).toBeNull();
+    expect(mounted.router.state.location.pathname).toBe('/settings');
 
-    expect(router.state.location.pathname).toBe('/issues');
-    expect(router.state.location.search).toMatchObject({ project: 'prj_one' });
-    expect(requests.some((url) => url.includes('prj_ghost'))).toBe(false);
-
-    await act(async () => {
-      root.unmount();
-    });
-    container.remove();
-    queryClient.clear();
+    await mounted.teardown();
   });
 });
 
