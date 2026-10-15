@@ -146,13 +146,22 @@ function AppFrame() {
 }
 
 function WorkspaceGate() {
-  // Validate against `resolvedLocation`, the location generation the committed
-  // route matches were built for. `location` commits before the pending match
-  // tree does, so reading it here would let the <Outlet/> mount a stale match
-  // (and fire its queries) while a scope normalization is still in flight.
-  const location = useRouterState({
-    select: (state) => state.resolvedLocation ?? state.location,
+  // Gate on the committed match generation — the leaf's pathname and the root
+  // match's search are exactly what <Outlet/> renders. `location` and
+  // `resolvedLocation` commit at different times than the match tree, so
+  // validating either can let Outlet mount a stale match (and fire its
+  // queries) while a scope normalization is still in flight.
+  const pathname = useRouterState({
+    select: (state) => state.matches[state.matches.length - 1]?.pathname ?? state.location.pathname,
   });
+  const search = useRouterState({
+    select: (state) =>
+      (state.matches[0]?.search ?? state.location.search) as Record<string, unknown>,
+  });
+  const searchParam = (key: string): string | undefined => {
+    const value = search[key];
+    return typeof value === 'string' ? value : undefined;
+  };
   const organizationsQuery = useQuery({
     queryKey: ['organizations'],
     queryFn: ({ signal }) => fetchOrganizations(signal),
@@ -193,11 +202,8 @@ function WorkspaceGate() {
 
   const projects = projectQueries.flatMap((query) => query.data ?? []);
   // Membership is organization-scoped and remains usable before a project exists.
-  if (
-    location.pathname === '/settings' &&
-    new URLSearchParams(location.searchStr).get('section') === 'members'
-  ) {
-    const requestedOrganization = new URLSearchParams(location.searchStr).get('organization');
+  if (pathname === '/settings' && searchParam('section') === 'members') {
+    const requestedOrganization = searchParam('organization');
     if (organizations.some((item) => item.id === requestedOrganization))
       return <WorkspaceContent organizations={organizations} projects={projects} />;
   }
@@ -210,33 +216,32 @@ function WorkspaceGate() {
     );
   }
 
-  const search = new URLSearchParams(location.searchStr);
-  const requestedProjectId = search.get('project');
+  const requestedProjectId = searchParam('project');
   const selectedProject = projects.find((project) => project.id === requestedProjectId);
   const project =
     selectedProject ??
-    projects.find((item) => item.organizationId === search.get('organization')) ??
+    projects.find((item) => item.organizationId === searchParam('organization')) ??
     projects[0];
   if (project === undefined) return <WorkspaceSetup />;
-  const environment = search.get('environment');
+  const environment = searchParam('environment');
   const nextEnvironment =
     environment && project.environments.includes(environment)
       ? environment
       : (project.environments[0] ?? 'production');
   const selectionIsCurrent =
     selectedProject !== undefined &&
-    search.get('organization') === project.organizationId &&
+    searchParam('organization') === project.organizationId &&
     environment === nextEnvironment &&
-    search.get('source') === 'live';
+    searchParam('source') === 'live';
 
   if (!selectionIsCurrent) {
-    const resetRouteState = selectedProject === undefined || search.get('source') !== 'live';
+    const resetRouteState = selectedProject === undefined || searchParam('source') !== 'live';
     return (
       <WorkspaceSelectionRedirect
         project={project}
         resetRouteState={resetRouteState}
         environment={nextEnvironment}
-        range={search.get('range') ?? '24h'}
+        range={searchParam('range') ?? '24h'}
       />
     );
   }
@@ -295,11 +300,9 @@ function WorkspaceSelectionRedirect({
   environment: string;
   range: string;
 }) {
-  // Read the same committed generation as WorkspaceGate so the effect does not
-  // re-fire on the synchronous location update produced by its own navigate().
-  const location = useRouterState({
-    select: (state) => state.resolvedLocation ?? state.location,
-  });
+  // Build the replacement from the live location — it is the URL actually
+  // being normalized; a committed-generation read could revert a newer target.
+  const location = useLocation();
   const navigate = useNavigate();
   useEffect(() => {
     void navigate({

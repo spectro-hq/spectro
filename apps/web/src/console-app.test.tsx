@@ -39,13 +39,21 @@ async function mountHostedConsole(initialEntry: string, projects: ProjectSummary
   vi.stubGlobal('fetch', async (input: RequestInfo | URL) => {
     const url = input instanceof URL ? input.href : typeof input === 'string' ? input : input.url;
     requests.push(url);
+    const invitation = {
+      organizationId: 'org_one',
+      organizationName: 'Org One',
+      role: 'member',
+      expiresAt: '2026-10-20T00:00:00.000Z',
+    };
     const body = url.includes('/v1/auth/session')
       ? { userId: 'usr_1', csrfToken: 'csrf_1' }
-      : url.includes('/v1/organizations?')
-        ? { data: [{ id: 'org_one', name: 'Org One', role: 'owner' }] }
-        : url.includes('/projects?')
-          ? { data: projects }
-          : { data: [] };
+      : url.includes('/v1/invitations/preview') || url.includes('/v1/invitations/accept')
+        ? invitation
+        : url.includes('/v1/organizations?')
+          ? { data: [{ id: 'org_one', name: 'Org One', role: 'owner' }] }
+          : url.includes('/projects?')
+            ? { data: projects }
+            : { data: [] };
     return new Response(JSON.stringify(body), {
       status: 200,
       headers: { 'content-type': 'application/json' },
@@ -196,6 +204,93 @@ describe('console router navigation', () => {
     expect(mounted.container.textContent).toContain('Members');
     expect(mounted.container.querySelector('.workspace-setup-panel')).toBeNull();
     expect(mounted.router.state.location.pathname).toBe('/settings');
+
+    await mounted.teardown();
+  });
+
+  it('replaces the unnormalized entry so history back skips it', async () => {
+    const mounted = await mountHostedConsole(`/issues?${liveScope}`, [projectFixture]);
+    const { act } = await import('react');
+
+    await act(async () => {
+      await mounted.router.navigate({ href: `/settings?${liveScope}&section=project` });
+    });
+    await act(async () => {
+      await mounted.router.navigate({
+        href: '/issues?project=prj_ghost&environment=production&range=24h&source=live&organization=org_one',
+      });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    expect(mounted.router.state.location.search).toMatchObject({ project: 'prj_one' });
+    expect(mounted.requests.some((url) => url.includes('prj_ghost'))).toBe(false);
+
+    await act(async () => {
+      mounted.router.history.back();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    expect(mounted.router.state.location.pathname).toBe('/settings');
+    expect(mounted.router.state.location.search).toMatchObject({
+      project: 'prj_one',
+      section: 'project',
+    });
+
+    await mounted.teardown();
+  });
+
+  it('routes a rendered shell link through the router without a document reload', async () => {
+    const mounted = await mountHostedConsole(`/issues?${liveScope}`, [projectFixture]);
+    const { act } = await import('react');
+
+    const settingsLink = mounted.container.querySelector('a[href^="/settings"]');
+    expect(settingsLink).not.toBeNull();
+    await act(async () => {
+      settingsLink?.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(mounted.router.state.location.pathname).toBe('/settings');
+    expect(mounted.router.state.location.search).toMatchObject({
+      organization: 'org_one',
+      project: 'prj_one',
+      environment: 'production',
+      source: 'live',
+      section: 'project',
+    });
+    expect(mounted.container.textContent).toContain('Settings');
+
+    await mounted.teardown();
+  });
+
+  it('accepts an invitation and lands on members without a document reload', async () => {
+    const mounted = await mountHostedConsole('/invite', []);
+    const { act } = await import('react');
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    const accept = mounted.container.querySelector('button.primary-button');
+    expect(accept?.textContent).toBe('Accept invitation');
+    const organizationsBefore = mounted.requests.filter((url) =>
+      url.includes('/v1/organizations?'),
+    ).length;
+
+    await act(async () => {
+      accept?.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(mounted.requests.some((url) => url.includes('/v1/invitations/accept'))).toBe(true);
+    // Accepting invalidates the organizations query before navigating.
+    expect(
+      mounted.requests.filter((url) => url.includes('/v1/organizations?')).length,
+    ).toBeGreaterThan(organizationsBefore);
+    expect(mounted.router.state.location.pathname).toBe('/settings');
+    expect(mounted.router.state.location.search).toMatchObject({
+      organization: 'org_one',
+      section: 'members',
+      source: 'live',
+    });
+    expect(mounted.container.textContent).toContain('Members');
 
     await mounted.teardown();
   });
