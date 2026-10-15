@@ -6,6 +6,10 @@ import { WorkspaceContext, type WorkspaceSnapshot } from './workspace-context.js
 import { WorkspaceMembers } from './workspace-members.js';
 import type { OrganizationRole } from './member-client.js';
 
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => vi.fn<(options: unknown) => Promise<void>>(),
+}));
+
 vi.mock('./auth-client.js', () => ({
   hostedConsole: true,
   fetchConsoleSession: async () => ({ userId: 'usr_self', csrfToken: 'csrf' }),

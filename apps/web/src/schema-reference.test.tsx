@@ -1,5 +1,6 @@
 import { protocolSchemas } from '@spectro/protocol';
 import { renderToStaticMarkup } from 'react-dom/server';
+import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { PayloadViewer } from './payload-viewer.js';
 import { schemaFieldLabel, SchemaFields, SchemaReference } from './schema-reference.js';
@@ -7,6 +8,27 @@ import { parseSchemaSearch } from './schema-navigation.js';
 
 const route = vi.hoisted(() => ({ contract: 'error', view: 'fields' }));
 vi.mock('@tanstack/react-router', () => ({
+  Link: ({
+    to,
+    search,
+    children,
+    ...rest
+  }: {
+    to: string;
+    search?: Record<string, unknown>;
+    children?: ReactNode;
+  }) => {
+    const query = new URLSearchParams(
+      Object.entries(search ?? {}).filter(
+        (entry): entry is [string, string] => typeof entry[1] === 'string',
+      ),
+    ).toString();
+    return (
+      <a href={query === '' ? to : `${to}?${query}`} {...rest}>
+        {children}
+      </a>
+    );
+  },
   useSearch: () =>
     parseSchemaSearch({
       ...route,
@@ -14,6 +36,8 @@ vi.mock('@tanstack/react-router', () => ({
       environment: 'development',
       source: 'illustrative',
     }),
+  useLocation: (options?: { select?: (location: { pathname: string }) => string }) =>
+    options?.select ? options.select({ pathname: '/schemas' }) : { pathname: '/schemas' },
   useNavigate: () => vi.fn<(options: unknown) => Promise<void>>(),
 }));
 vi.mock('./console-shared.js', () => ({ ThemeToggle: () => null }));

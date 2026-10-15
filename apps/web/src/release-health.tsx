@@ -1,6 +1,6 @@
 import { ConsoleShell } from './console-shell.js';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useMemo, useState, type FormEvent } from 'react';
 
 import { CommittedInput, readSessionToken, writeSessionToken } from './console-shared.js';
@@ -387,34 +387,29 @@ export function ReleaseHealthExplorer() {
                 </div>
               </dl>
               <div className="release-signal-stack">
-                <a
-                  href={`/issues?${new URLSearchParams({ ...baseSearch, release: selected.release }).toString()}`}
-                >
+                <Link to="/issues" search={{ ...baseSearch, release: selected.release }}>
                   <span>Errors</span>
                   <strong>{selected.errorCount.toLocaleString()}</strong>
                   <small>{rate(selected.errorCount, selected.eventCount)} of events</small>
-                </a>
-                <a
-                  href={`/performance?${new URLSearchParams({ ...baseSearch, release: selected.release }).toString()}`}
-                >
+                </Link>
+                <Link to="/performance" search={{ ...baseSearch, release: selected.release }}>
                   <span>Performance</span>
                   <strong>{selected.poorPerformanceCount.toLocaleString()}</strong>
                   <small>poor-rated samples</small>
-                </a>
-                <a
-                  href={`/network?${new URLSearchParams({ ...baseSearch, release: selected.release }).toString()}`}
-                >
+                </Link>
+                <Link to="/network" search={{ ...baseSearch, release: selected.release }}>
                   <span>Network</span>
                   <strong>{selected.networkFailureCount.toLocaleString()}</strong>
                   <small>failed requests</small>
-                </a>
+                </Link>
               </div>
-              <a
+              <Link
                 className="occurrence-link"
-                href={`/?${new URLSearchParams({ ...baseSearch, release: selected.release }).toString()}`}
+                to="/"
+                search={{ ...baseSearch, release: selected.release }}
               >
                 Inspect all release events <span aria-hidden="true">→</span>
-              </a>
+              </Link>
               <p className="issue-scope-note">
                 Signals are shown separately; Spectro does not manufacture a composite health score.
               </p>
