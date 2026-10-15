@@ -1,7 +1,8 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocation, useNavigate } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
-import { hostedConsole } from './auth-client.js';
+import { hasHostedLoginFailure, hostedConsole } from './auth-client.js';
 import {
   acceptInvitation,
   claimInvitation,
@@ -33,6 +34,9 @@ function prepareInvitation(): Promise<void> {
 }
 
 export function InviteAcceptance(): ReactNode {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const location = useLocation();
   const query = useQuery({
     queryKey: ['invitation-preview'],
     queryFn: async () => {
@@ -44,10 +48,11 @@ export function InviteAcceptance(): ReactNode {
   });
   const accept = useMutation({
     mutationFn: acceptInvitation,
-    onSuccess: (result) => {
-      window.location.assign(
-        `/settings?${new URLSearchParams({ organization: result.organizationId, section: 'members', source: 'live', range: '24h' })}`,
-      );
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: ['organizations'] });
+      await navigate({
+        href: `/settings?${new URLSearchParams({ organization: result.organizationId, section: 'members', source: 'live', range: '24h' })}`,
+      });
     },
   });
   const error = query.error ?? accept.error;
@@ -55,8 +60,7 @@ export function InviteAcceptance(): ReactNode {
   const switchAccount =
     error instanceof MemberRequestError &&
     (error.code === 'recipient_mismatch' || error.code === 'email_unverified');
-  const loginFailed =
-    new URLSearchParams(window.location.search).get('auth_error') === 'login_failed';
+  const loginFailed = hasHostedLoginFailure(location.searchStr);
   return (
     <main className="workspace-gate">
       <section className="workspace-setup-panel invitation-acceptance" aria-labelledby="join-title">

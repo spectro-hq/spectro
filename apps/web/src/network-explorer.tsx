@@ -1,6 +1,6 @@
 import { ConsoleShell } from './console-shell.js';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useMemo, useState, type FormEvent } from 'react';
 
 import { CommittedInput, readSessionToken, writeSessionToken } from './console-shared.js';
@@ -102,6 +102,7 @@ export function NetworkExplorer() {
   };
 
   const baseSearch = {
+    ...(search.organization === undefined ? {} : { organization: search.organization }),
     project: search.project,
     environment: search.environment,
     range: search.range,
@@ -441,12 +442,22 @@ export function NetworkExplorer() {
                   <strong>{selected.transportFailureCount}</strong>
                 </div>
               </section>
-              <a
+              <Link
                 className="occurrence-link"
-                href={`/?${new URLSearchParams({ ...baseSearch, type: 'network', name: selected.initiator === 'resource' ? 'resource_request' : `${selected.initiator}_request`, event: selected.latestEventId, ...(selected.latestRelease ? { release: selected.latestRelease } : {}) }).toString()}`}
+                to="/"
+                search={{
+                  ...baseSearch,
+                  type: 'network',
+                  name:
+                    selected.initiator === 'resource'
+                      ? 'resource_request'
+                      : `${selected.initiator}_request`,
+                  event: selected.latestEventId,
+                  ...(selected.latestRelease ? { release: selected.latestRelease } : {}),
+                }}
               >
                 Inspect network events <span aria-hidden="true">→</span>
-              </a>
+              </Link>
               <p className="issue-scope-note">
                 Durations and response classes reflect captured requests in this query window. URLs
                 are stored without queries or credentials.

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ConsoleShell } from './console-shell.js';
 import { CommittedInput, readSessionToken, writeSessionToken } from './console-shared.js';
@@ -211,7 +211,7 @@ function LiveObservation({
     pausedRef.current = false;
     setPaused(false);
   };
-  const history = `/?${new URLSearchParams({
+  const historySearch = {
     project: search.project,
     environment: search.environment,
     range: '24h',
@@ -220,7 +220,7 @@ function LiveObservation({
     ...(search.type ? { type: search.type } : {}),
     ...(search.name ? { name: search.name } : {}),
     ...(search.sessionId ? { sessionId: search.sessionId } : {}),
-  })}`;
+  } as const;
   return (
     <main className="event-workspace live-workspace">
       <section className="command-deck" aria-labelledby="live-title">
@@ -409,7 +409,9 @@ function LiveObservation({
           {query.data?.truncated
             ? 'This update reached its load limit. Some arrivals were not loaded. '
             : ''}
-          <a href={history}>Inspect Events history</a>
+          <Link to="/" search={historySearch}>
+            Inspect Events history
+          </Link>
         </output>
       ) : null}
       <div className="live-bench">
@@ -446,7 +448,9 @@ function LiveObservation({
                   ? 'Clear a filter to see the sample events.'
                   : 'Send an event from your connected app, or clear a filter.'}
               </p>
-              <a href={history}>Open Events</a>
+              <Link to="/" search={historySearch}>
+                Open Events
+              </Link>
             </div>
           ) : null}
           {[...groups].map(([observedAt, rows]) => (

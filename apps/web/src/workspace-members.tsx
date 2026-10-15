@@ -1,4 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import { useState, type FormEvent, type ReactNode } from 'react';
 
 import { fetchConsoleSession, hostedConsole } from './auth-client.js';
@@ -59,6 +60,7 @@ function MemberDirectory({
     readonly role: OrganizationRole;
   };
 }): ReactNode {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const canManage = organization.role === 'owner' || organization.role === 'admin';
   const memberKey = ['organization-members', organization.id] as const;
@@ -137,7 +139,8 @@ function MemberDirectory({
     mutationFn: removeMember,
     onSuccess: async (_, input) => {
       if (input.memberId === session.data?.userId) {
-        window.location.assign('/');
+        await queryClient.invalidateQueries({ queryKey: ['organizations'] });
+        await navigate({ href: '/' });
         return;
       }
       setNotice('Member removed from this workspace.');

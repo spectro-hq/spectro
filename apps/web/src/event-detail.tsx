@@ -1,5 +1,6 @@
+import { Link } from '@tanstack/react-router';
 import type { EventListItem, ExplorerSearch } from './event-query.js';
-import { buildSessionHref } from './session-query.js';
+
 import { formatSessionMetric } from './session-timeline.js';
 import { PayloadViewer } from './payload-viewer.js';
 import { SpectroIcon } from './spectro-icons.js';
@@ -171,12 +172,23 @@ export function EventDetail({
                 <dt>Session</dt>
                 <dd>
                   {context.session?.id ? (
-                    <a
+                    <Link
                       className="session-link"
-                      href={buildSessionHref(context.session.id, search, event.event.id)}
+                      to="/sessions/$sessionId"
+                      params={{ sessionId: context.session.id }}
+                      search={{
+                        ...(search.organization === undefined
+                          ? {}
+                          : { organization: search.organization }),
+                        project: search.project,
+                        environment: search.environment,
+                        range: search.range,
+                        source: search.source,
+                        event: event.event.id,
+                      }}
                     >
                       {context.session.id}
-                    </a>
+                    </Link>
                   ) : (
                     'Not available'
                   )}

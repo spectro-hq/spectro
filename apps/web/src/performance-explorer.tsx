@@ -1,6 +1,6 @@
 import { ConsoleShell } from './console-shell.js';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useMemo, useState, type FormEvent } from 'react';
 
 import { CommittedInput, readSessionToken, writeSessionToken } from './console-shared.js';
@@ -117,6 +117,7 @@ export function PerformanceExplorer() {
   };
 
   const baseSearch = {
+    ...(search.organization === undefined ? {} : { organization: search.organization }),
     project: search.project,
     environment: search.environment,
     range: search.range,
@@ -420,18 +421,19 @@ export function PerformanceExplorer() {
                   <strong>{selected.poorCount}</strong>
                 </div>
               </section>
-              <a
+              <Link
                 className="occurrence-link"
-                href={`/?${new URLSearchParams({
+                to="/"
+                search={{
                   ...baseSearch,
                   type: 'performance',
                   name: metricEventName(selected.metric),
                   event: selected.latestEventId,
                   ...(selected.latestRelease ? { release: selected.latestRelease } : {}),
-                }).toString()}`}
+                }}
               >
                 Inspect performance events <span aria-hidden="true">→</span>
-              </a>
+              </Link>
               <p className="issue-scope-note">
                 Percentiles and ratings reflect captured samples in this query window. Missing
                 ratings are not inferred.

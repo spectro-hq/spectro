@@ -7,7 +7,7 @@ import {
   MAX_ENVELOPE_STRUCTURE_DEPTH,
   protocolSchemas,
 } from '@spectro/protocol';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useMemo, useState, type ReactElement } from 'react';
 import { writeClipboard } from './clipboard.js';
 import { ConsoleShell } from './console-shell.js';
@@ -72,28 +72,15 @@ export function SchemaReference(): ReactElement {
                 {schemaContracts
                   .filter((item) => item.group === group)
                   .map((item) => (
-                    <a
+                    <Link
                       key={item.id}
-                      href={`?${new URLSearchParams({ ...Object.fromEntries(Object.entries(search).filter((entry): entry is [string, string] => typeof entry[1] === 'string')), contract: item.id, view: search.view })}`}
+                      to="/schemas"
+                      search={{ ...search, contract: item.id }}
                       aria-current={item.id === search.contract ? 'page' : undefined}
-                      onClick={(event) => {
-                        if (
-                          event.button !== 0 ||
-                          event.metaKey ||
-                          event.ctrlKey ||
-                          event.shiftKey ||
-                          event.altKey
-                        )
-                          return;
-                        event.preventDefault();
-                        void navigate({
-                          search: (previous) => ({ ...previous, contract: item.id }),
-                        });
-                      }}
                     >
                       <SpectroIcon name="page" size={16} />
                       <span>{item.label}</span>
-                    </a>
+                    </Link>
                   ))}
               </section>
             ))}

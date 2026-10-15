@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useSearch } from '@tanstack/react-router';
 import { useState, type FormEvent, type ReactNode } from 'react';
 
 import { hostedConsole } from './auth-client.js';
 import { ConsoleShell } from './console-shell.js';
 import type { ExplorerSearch } from './event-query.js';
-import { parseSettingsSearch, settingsHref } from './settings-navigation.js';
 import { WorkspaceMembers } from './workspace-members.js';
 import { useWorkspace } from './workspace-context.js';
 import {
@@ -16,26 +16,27 @@ import {
 } from './write-key-client.js';
 
 export function ProjectSettings(): ReactNode {
-  const search = parseSettingsSearch(
-    Object.fromEntries(new URLSearchParams(window.location.search)),
-  );
+  const search = useSearch({ from: '/settings' });
+  const scopeSearch = settingsScopeSearch(search);
 
   return (
     <ConsoleShell title="Settings" search={search}>
       <div className="settings-content">
         <nav className="settings-sections" aria-label="Settings sections">
-          <a
-            href={settingsHref(search, 'project')}
+          <Link
+            to="/settings"
+            search={{ ...scopeSearch, section: 'project' }}
             aria-current={search.section === 'project' ? 'page' : undefined}
           >
             Project
-          </a>
-          <a
-            href={settingsHref(search, 'members')}
+          </Link>
+          <Link
+            to="/settings"
+            search={{ ...scopeSearch, section: 'members' }}
             aria-current={search.section === 'members' ? 'page' : undefined}
           >
             Members
-          </a>
+          </Link>
         </nav>
         {search.section === 'members' ? (
           <WorkspaceMembers search={search} />
@@ -126,13 +127,7 @@ function ProjectSettingsContent({ search }: { readonly search: ExplorerSearch })
     });
   }
 
-  const eventsHref = `/?${new URLSearchParams({
-    ...(search.organization === undefined ? {} : { organization: search.organization }),
-    project: search.project,
-    environment: search.environment,
-    range: search.range,
-    source: search.source,
-  })}`;
+  const eventsSearch = settingsScopeSearch(search);
 
   return (
     <main className="event-workspace settings-workspace">
@@ -306,9 +301,9 @@ function ProjectSettingsContent({ search }: { readonly search: ExplorerSearch })
           <strong>Next: see your first event</strong>
           <span>Once the SDK is sending, events will appear in the event explorer.</span>
         </div>
-        <a className="secondary-button" href={eventsHref}>
+        <Link className="secondary-button" to="/" search={eventsSearch}>
           Open Events
-        </a>
+        </Link>
       </aside>
     </main>
   );
@@ -406,6 +401,16 @@ function WriteKeyRow({
       ) : null}
     </article>
   );
+}
+
+function settingsScopeSearch(search: ExplorerSearch): ExplorerSearch {
+  return {
+    ...(search.organization === undefined ? {} : { organization: search.organization }),
+    project: search.project,
+    environment: search.environment,
+    range: search.range,
+    source: search.source,
+  };
 }
 
 function browserSnippet(input: {

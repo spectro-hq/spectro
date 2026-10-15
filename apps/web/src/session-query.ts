@@ -39,19 +39,3 @@ export function parseSessionSearch(search: Record<string, unknown>): SessionSear
     ...(event === undefined ? {} : { event }),
   };
 }
-
-export function buildSessionHref(
-  sessionId: string,
-  search: Pick<SessionSearch, 'organization' | 'project' | 'environment' | 'range' | 'source'>,
-  event?: string,
-): string {
-  const parameters = new URLSearchParams({
-    project: search.project,
-    environment: search.environment,
-    range: search.range,
-    source: search.source,
-  });
-  if (search.organization !== undefined) parameters.set('organization', search.organization);
-  if (event !== undefined) parameters.set('event', event);
-  return `/sessions/${encodeURIComponent(sessionId)}?${parameters.toString()}`;
-}

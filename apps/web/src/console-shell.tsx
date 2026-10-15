@@ -1,6 +1,8 @@
+import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ThemeToggle } from './console-shared.js';
 import { hostedConsole, logoutConsole } from './auth-client.js';
+import type { DataSource, TimeRange } from './event-query.js';
 import { SpectroIcon, SpectroMark } from './spectro-icons.js';
 import { useWorkspace } from './workspace-context.js';
 import type { ProjectSummary } from './workspace-client.js';
@@ -26,13 +28,14 @@ export function ConsoleShell({
     organization?: string | undefined;
     project: string;
     environment: string;
-    range: string;
-    source: string;
+    range: TimeRange;
+    source: DataSource;
   };
   children: ReactNode;
   reference?: boolean;
 }): ReactNode {
   const workspace = useWorkspace();
+  const pathname = useLocation({ select: (location) => location.pathname });
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem('spectro.sidebar.collapsed') === 'true';
@@ -47,43 +50,47 @@ export function ConsoleShell({
     if (mobileOpen) drawer.current?.showModal();
     else drawer.current?.close();
   }, [mobileOpen]);
-  const parameters = new URLSearchParams({
+  const scopeSearch = {
+    ...(search.organization === undefined ? {} : { organization: search.organization }),
     project: search.project,
     environment: search.environment,
     range: search.range,
     source: search.source,
-  });
-  if (search.organization !== undefined) parameters.set('organization', search.organization);
+  };
   const selectedProject = workspace?.projects.find((project) => project.id === search.project);
-  const navigation = (
+  const navigation = (onNavigate?: () => void) => (
     <>
       <nav aria-label="Primary navigation">
         {destinations.map(({ title: label, path, icon }) => {
           const active = title === label || (title.startsWith('Session ') && path === '/');
           return (
-            <a
+            <Link
               key={path}
               className={`rail-link${active ? ' active' : ''}`}
-              href={`${path}?${parameters}`}
+              to={path}
+              search={scopeSearch}
               aria-current={active ? 'page' : undefined}
               title={label}
+              onClick={onNavigate}
             >
               <SpectroIcon name={icon} />
               <span>{label}</span>
-            </a>
+            </Link>
           );
         })}
       </nav>
       <nav className="rail-secondary" aria-label="Secondary navigation">
-        <a
+        <Link
           className={`rail-link${title === 'Settings' ? ' active' : ''}`}
-          href={`/settings?${parameters}`}
+          to="/settings"
+          search={{ ...scopeSearch, section: 'project' }}
           aria-current={title === 'Settings' ? 'page' : undefined}
           title="Settings"
+          onClick={onNavigate}
         >
           <SpectroIcon name="settings" />
           <span>Settings</span>
-        </a>
+        </Link>
         <span className="rail-link" aria-disabled="true" title="API Guide">
           <SpectroIcon name="book" />
           <span>API Guide</span>
@@ -95,18 +102,23 @@ export function ConsoleShell({
     <div className={`console-shell shared-shell${collapsed ? ' rail-collapsed' : ''}`}>
       <aside className="console-rail shared-rail" id="console-sidebar" aria-label="Sidebar">
         <div className="rail-brand desktop-rail-brand">
-          <a className="wordmark" href={`/?${parameters}`} aria-label="Spectro events">
+          <Link className="wordmark" to="/" search={scopeSearch} aria-label="Spectro events">
             <SpectroMark />
             <span>spectro</span>
-          </a>
+          </Link>
         </div>
-        {navigation}
+        {navigation()}
       </aside>
       <header className="console-topbar shared-topbar">
-        <a className="wordmark topbar-brand" href={`/?${parameters}`} aria-label="Spectro events">
+        <Link
+          className="wordmark topbar-brand"
+          to="/"
+          search={scopeSearch}
+          aria-label="Spectro events"
+        >
           <SpectroMark />
           <span>spectro</span>
-        </a>
+        </Link>
         <div className="shell-heading">
           <button
             className="sidebar-toggle desktop-collapse"
@@ -137,7 +149,9 @@ export function ConsoleShell({
             {reference ? (
               <span>Protocol</span>
             ) : (
-              <a href={`/?${parameters}`}>{selectedProject?.name ?? search.project}</a>
+              <Link to="/" search={scopeSearch}>
+                {selectedProject?.name ?? search.project}
+              </Link>
             )}
             <SpectroIcon name="chevron" size={14} />
             <span aria-current="page">{title}</span>
@@ -150,7 +164,7 @@ export function ConsoleShell({
               organizations={workspace.organizations}
               selectedProject={selectedProject}
               range={search.range}
-              pagePath={title.startsWith('Session ') ? '/' : window.location.pathname}
+              pagePath={title.startsWith('Session ') ? '/' : pathname}
             />
           ) : null}
           <div className="runtime-state">
@@ -191,10 +205,15 @@ export function ConsoleShell({
       >
         <div className="mobile-navigation-body">
           <div className="rail-brand">
-            <a className="wordmark" href={`/?${parameters}`}>
+            <Link
+              className="wordmark"
+              to="/"
+              search={scopeSearch}
+              onClick={() => setMobileOpen(false)}
+            >
               <SpectroMark />
               spectro
-            </a>
+            </Link>
             <button
               className="sidebar-toggle"
               aria-label="Close navigation"
@@ -203,7 +222,7 @@ export function ConsoleShell({
               <SidebarIcon />
             </button>
           </div>
-          {navigation}
+          {navigation(() => setMobileOpen(false))}
         </div>
       </dialog>
     </div>
@@ -223,6 +242,7 @@ function WorkspaceSwitcher({
   range: string;
   pagePath: string;
 }): ReactNode {
+  const navigate = useNavigate();
   return (
     <label className="workspace-switcher">
       <span>Workspace</span>
@@ -239,7 +259,7 @@ function WorkspaceSwitcher({
             range,
             source: 'live',
           });
-          window.location.assign(`${pagePath}?${parameters.toString()}`);
+          void navigate({ href: `${pagePath}?${parameters.toString()}` });
         }}
       >
         {organizations.map((organization) => {
