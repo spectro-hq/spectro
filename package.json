@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "sdk:verify": "pnpm --filter @spectro/browser... build && node scripts/verify-sdk-release.mjs",
     "build": "pnpm -r --if-present build",
     "check": "pnpm -r --if-present check",
     "format": "oxfmt .",

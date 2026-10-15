@@ -19,6 +19,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify
+      - run: pnpm sdk:verify
       - run: pnpm infra:up
       - run: pnpm --filter @spectro/api migrate
       - run: pnpm test:integration

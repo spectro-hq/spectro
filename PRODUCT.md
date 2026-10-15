@@ -36,7 +36,7 @@ The first production release is an operator-hosted, multi-tenant SaaS. Self-host
 - JSON Schema is the cross-language protocol source of truth. SDK validation is best-effort; ingestion validation is strict.
 - Web, API, and ingestion are independently deployable. The console is a static SPA and does not become an application server.
 - Privacy defaults exclude passwords, authorization headers, cookies, input values, request/response bodies, and DOM snapshots.
-- Licensing is deliberately undecided. Do not add a repository-wide license until the SDK/protocol and platform licensing strategy is confirmed.
+- The browser, core, types, and protocol packages are MIT-licensed under ADR-055. Platform licensing remains undecided; do not add a repository-wide license.
 - NATS JetStream is the V1 durable admission source, and processed events begin in one ClickHouse table with typed common dimensions plus bounded JSON payload/context columns.
 - Open decisions include production sampling defaults, event retention policy, and the platform source-available license.
 

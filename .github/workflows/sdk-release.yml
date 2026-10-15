@@ -1,0 +1,61 @@
+name: SDK alpha release
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish verified alpha tarballs (requires npm trusted publishers)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sdk-alpha-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify
+      - run: pnpm sdk:verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdk-alpha-tarballs
+          path: .local/sdk-release/*.tgz
+          if-no-files-found: error
+
+  publish:
+    if: inputs.publish && github.ref == 'refs/heads/main'
+    needs: prepare
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdk-alpha-tarballs
+          path: .local/sdk-release
+      - name: Publish dependencies before browser SDK
+        run: |
+          for package in protocol types core browser; do
+            version=$(node -p "require('./packages/$package/package.json').version")
+            npm publish ".local/sdk-release/spectro-$package-$version.tgz" --access public --tag alpha --provenance
+          done

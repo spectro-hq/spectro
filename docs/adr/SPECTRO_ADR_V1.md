@@ -57,6 +57,8 @@ Status: accepted unless marked open.
 | ADR-051 | Observe processed events through bounded authorized polling, with overlap deduplication and a frozen-reading buffer.                                   |
 | ADR-052 | Bundle a read-only protocol catalogue from original JSON Schema sources, with local references and synthetic validated examples.                       |
 | ADR-053 | Manage organization roles and single-use verified-email invitations, with protected ownership and a browser-bound login continuation.                  |
+| ADR-054 | Deploy operator staging on one ARM64 host with private data services, scoped credentials, and a same-origin HTTPS Console.                             |
+| ADR-055 | License the four public SDK/protocol packages under MIT and verify independent-consumer alpha artifacts before npm publication.                        |
 
 Detailed records:
 
@@ -80,6 +82,8 @@ Detailed records:
 - [ADR-051: Bounded live event observation](./ADR-051_LIVE_EVENT_OBSERVATION.md)
 - [ADR-052: Read-only protocol catalogue](./ADR-052_READ_ONLY_PROTOCOL_CATALOGUE.md)
 - [ADR-053: Organization membership and invitations](./ADR-053_ORGANIZATION_MEMBERSHIP_AND_INVITATIONS.md)
+- [ADR-054: Single-host staging deployment](./ADR-054_SINGLE_HOST_STAGING.md)
+- [ADR-055: SDK license and alpha releases](./ADR-055_SDK_LICENSE_AND_ALPHA_RELEASE.md)
 
 ## Change rule
 

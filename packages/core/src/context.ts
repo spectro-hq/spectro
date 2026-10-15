@@ -5,7 +5,7 @@ import { normalizeProperties, normalizeTags } from './normalize.js';
 
 export function createEventContext(options: SpectroClientOptions): EventContext {
   const context: EventContext = {
-    sdk: options.sdk ?? { name: '@spectro/browser', version: '0.1.0' },
+    sdk: options.sdk ?? { name: '@spectro/browser', version: '0.1.0-alpha.0' },
     project: { id: options.projectId },
     environment: options.environment,
   };

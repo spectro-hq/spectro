@@ -1,8 +1,17 @@
 {
   "name": "@spectro/protocol",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.0",
+  "homepage": "https://github.com/spectro-hq/spectro/tree/main/packages/protocol",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spectro-hq/spectro.git",
+    "directory": "packages/protocol"
+  },
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/.tsbuildinfo"
   ],
   "type": "module",
   "sideEffects": false,
@@ -12,6 +21,11 @@
       "import": "./dist/src/index.js"
     },
     "./schemas/*": "./dist/schemas/*"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "tag": "alpha"
   },
   "scripts": {
     "build": "tsc -b",
