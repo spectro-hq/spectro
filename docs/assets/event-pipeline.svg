@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="130" viewBox="0 0 900 130" role="img" aria-label="Event pipeline: browser SDK to ingestion to JetStream to processor to ClickHouse to API and console">
+  <style>
+    .box { fill: #f5f5f7; stroke: #c9c9d2; }
+    .edge { stroke: #24252b; }
+    .arrow { fill: #24252b; }
+    .label { fill: #24252b; }
+    .sub { fill: #61616c; }
+    @media (prefers-color-scheme: dark) {
+      .box { fill: #121a27; stroke: #3b4759; }
+      .edge { stroke: #f1f4fa; }
+      .arrow { fill: #f1f4fa; }
+      .label { fill: #f1f4fa; }
+      .sub { fill: #aab3c2; }
+    }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path class="arrow" d="M 0 0 L 10 5 L 0 10 z"></path>
+    </marker>
+  </defs>
+  <g fill="none" stroke-width="1.5">
+    <rect class="box" x="8" y="35" width="132" height="56" rx="6"></rect>
+    <rect class="box" x="184" y="35" width="120" height="56" rx="6"></rect>
+    <rect class="box" x="348" y="35" width="120" height="56" rx="6"></rect>
+    <rect class="box" x="512" y="35" width="120" height="56" rx="6"></rect>
+    <rect class="box" x="676" y="35" width="120" height="56" rx="6"></rect>
+    <rect class="box" x="820" y="18" width="72" height="56" rx="6"></rect>
+    <rect class="box" x="820" y="86" width="72" height="36" rx="6"></rect>
+  </g>
+  <g class="edge" stroke-width="1.5" marker-end="url(#arrow)">
+    <line x1="140" y1="63" x2="176" y2="63"></line>
+    <line x1="304" y1="63" x2="340" y2="63"></line>
+    <line x1="468" y1="63" x2="504" y2="63"></line>
+    <line x1="632" y1="63" x2="668" y2="63"></line>
+    <line x1="796" y1="52" x2="812" y2="44"></line>
+    <line x1="796" y1="74" x2="812" y2="100"></line>
+  </g>
+  <g font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="12" text-anchor="middle">
+    <text class="label" x="74" y="58">Browser SDK</text><text class="sub" x="74" y="76">events + context</text>
+    <text class="label" x="244" y="58">Ingestion</text><text class="sub" x="244" y="76">strict validation</text>
+    <text class="label" x="408" y="58">JetStream</text><text class="sub" x="408" y="76">durable admission</text>
+    <text class="label" x="572" y="58">Processor</text><text class="sub" x="572" y="76">normalize, group</text>
+    <text class="label" x="736" y="58">ClickHouse</text><text class="sub" x="736" y="76">event plane</text>
+    <text class="label" x="856" y="48">API</text><text class="label" x="856" y="108">Console</text>
+  </g>
+</svg>
