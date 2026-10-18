@@ -4,10 +4,9 @@ Spectro is a digital product observatory that connects technical health, user ex
 
 The current milestone provides the protocol-first monorepo, browser lifecycle, error, performance, network, and explicit interaction capture, a durable event-plane vertical slice, and the first authorized event query API:
 
-```text
-browser lifecycle/error/performance/network/interaction/custom track -> SpectroEvent -> Envelope -> ingestion -> JetStream -> processor -> ClickHouse
-                                                                                                             -> product API event query
-```
+![Event pipeline: browser SDK to ingestion to JetStream to processor to ClickHouse to API and console](docs/assets/event-pipeline.svg)
+
+<sub>PostgreSQL is the control plane; ClickHouse is the event and analytics plane.</sub>
 
 ## Commands
 
