@@ -301,7 +301,7 @@ select {
 
 .command-deck {
   display: grid;
-  grid-template-columns: minmax(120px, 0.6fr) minmax(210px, 1fr) minmax(180px, 0.8fr) minmax(
+  grid-template-columns: minmax(120px, max-content) minmax(210px, 1fr) minmax(180px, 0.8fr) minmax(
       210px,
       0.9fr
     ) auto;
@@ -2502,7 +2502,7 @@ tr.selected .session-link {
   }
 
   .command-deck {
-    grid-template-columns: minmax(90px, 0.5fr) minmax(190px, 1fr) minmax(160px, 0.8fr) minmax(
+    grid-template-columns: minmax(90px, max-content) minmax(190px, 1fr) minmax(160px, 0.8fr) minmax(
         190px,
         0.9fr
       ) auto;
@@ -3427,7 +3427,7 @@ tr.selected .session-link {
 }
 .shared-shell .command-deck {
   grid-template-columns:
-    minmax(118px, 0.62fr) minmax(155px, 1fr) minmax(140px, 0.82fr) minmax(175px, 0.9fr)
+    minmax(118px, max-content) minmax(155px, 1fr) minmax(140px, 0.82fr) minmax(175px, 0.9fr)
     auto;
 }
 .rail-collapsed .shared-rail .rail-link {
