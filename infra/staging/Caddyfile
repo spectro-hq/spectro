@@ -6,7 +6,7 @@
 		reverse_proxy api:4400
 	}
 	handle /app {
-		redir /app/ permanent
+		redir * /app/ permanent
 	}
 	handle_path /app/* {
 		root * /srv
