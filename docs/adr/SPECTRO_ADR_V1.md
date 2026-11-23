@@ -59,6 +59,7 @@ Status: accepted unless marked open.
 | ADR-053 | Manage organization roles and single-use verified-email invitations, with protected ownership and a browser-bound login continuation.                  |
 | ADR-054 | Deploy operator staging on one ARM64 host with private data services, scoped credentials, and a same-origin HTTPS Console.                             |
 | ADR-055 | License the four public SDK/protocol packages under MIT and verify independent-consumer alpha artifacts before npm publication.                        |
+| ADR-056 | Serve a static public landing page at `/landing/` alongside the existing Vite console entry, preserving console routes and authentication.             |
 
 Detailed records:
 
@@ -84,6 +85,7 @@ Detailed records:
 - [ADR-053: Organization membership and invitations](./ADR-053_ORGANIZATION_MEMBERSHIP_AND_INVITATIONS.md)
 - [ADR-054: Single-host staging deployment](./ADR-054_SINGLE_HOST_STAGING.md)
 - [ADR-055: SDK license and alpha releases](./ADR-055_SDK_LICENSE_AND_ALPHA_RELEASE.md)
+- [ADR-056: Static public landing entry](./ADR-056_PUBLIC_LANDING_ENTRY.md)
 
 ## Change rule
 
