@@ -129,7 +129,7 @@ track('checkout_started', {
 
 **Setup note:** The SDK is in alpha. Replace the example values with your project settings. Use the ingestion origin without `/v1/envelope`; the SDK appends that path. Restrict your browser write key to your app's allowed origins.
 
-**Controls:** "Copy" on the agent brief and each manual step (aria-labels: "Copy the coding agent brief", "Copy install command", "Copy setup code"). Success shows a transient ✓ beside the button; the live-region text ("Agent brief copied. Paste it into your coding agent." / "Install command copied." / "Code copied. Replace the example values with your project settings.") stays assistive-tech-only. Failure shows the visible message: Copy is unavailable — select the code above and copy it manually.
+**Controls:** "Copy" on the agent brief and each manual step (aria-labels: "Copy the coding agent brief", "Copy install command", "Copy setup code"). Success shows a transient ✓ inside the button before its label; the live-region text ("Agent brief copied. Paste it into your coding agent." / "Install command copied." / "Code copied. Replace the example values with your project settings.") stays assistive-tech-only. Failure shows the visible message: Copy is unavailable — select the code above and copy it manually.
 
 ## Privacy
 
