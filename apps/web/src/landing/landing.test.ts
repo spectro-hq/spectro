@@ -239,8 +239,11 @@ describe('landing clipboard enhancement', () => {
     expect(copy).toHaveBeenCalledWith(document.querySelector(targetId)?.textContent);
     expect(copy.mock.calls[0]?.[0]).toContain(needle);
     expect(copy.mock.calls[0]?.[0]).not.toContain('<');
+    expect(button?.classList.contains('is-copied')).toBe(true);
+    expect(status.classList.contains('is-shown')).toBe(false);
     expect(button?.disabled).toBe(false);
     cleanup();
+    expect(button?.classList.contains('is-copied')).toBe(false);
   });
 
   it.each(['denied', 'unavailable'])('preserves manual copy when %s', async (failure) => {
@@ -250,6 +253,7 @@ describe('landing clipboard enhancement', () => {
     });
     for (const button of buttons) button.click();
     await vi.waitFor(() => expect(status.textContent).toContain('copy it manually'));
+    expect(status.classList.contains('is-shown')).toBe(true);
     for (const button of buttons) expect(button.disabled).toBe(false);
     expect(document.querySelector('#sdk-example')?.textContent).toContain('init({');
     cleanup();

@@ -40,6 +40,7 @@ function enhanceCopyControls(
     const target = targetId ? root.querySelector<HTMLElement>(`#${targetId}`) : null;
     if (target === null) continue;
     let pending = false;
+    let revertTimer: ReturnType<typeof setTimeout> | undefined;
     button.hidden = false;
 
     const onCopy = async (): Promise<void> => {
@@ -54,6 +55,14 @@ function enhanceCopyControls(
       } finally {
         if (active) {
           status.textContent = copied ? (button.dataset.copySuccess ?? COPY_SUCCESS) : COPY_FAILURE;
+          status.classList.toggle('is-shown', !copied);
+          if (copied) {
+            button.classList.add('is-copied');
+            if (revertTimer !== undefined) clearTimeout(revertTimer);
+            revertTimer = setTimeout(() => {
+              if (active) button.classList.remove('is-copied');
+            }, 1800);
+          }
           button.disabled = false;
         }
         pending = false;
@@ -62,7 +71,9 @@ function enhanceCopyControls(
 
     button.addEventListener('click', onCopy);
     disposers.push(() => {
+      if (revertTimer !== undefined) clearTimeout(revertTimer);
       button.removeEventListener('click', onCopy);
+      button.classList.remove('is-copied');
       button.hidden = true;
     });
   }

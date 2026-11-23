@@ -1048,9 +1048,33 @@ figcaption {
 .step-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 16px;
   margin-bottom: 14px;
+}
+.step-head .copy-button {
+  margin-left: auto;
+}
+.copy-check {
+  color: var(--n-cyan);
+  font-size: 15px;
+  opacity: 0;
+  min-width: 12px;
+  pointer-events: none;
+}
+.copy-button.is-copied + .copy-check {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .copy-check {
+    transform: translateX(-4px);
+    transition:
+      opacity 160ms ease,
+      transform 160ms ease;
+  }
+  .copy-button.is-copied + .copy-check {
+    transform: none;
+  }
 }
 .step-head h3 {
   font-size: 17px;
@@ -1111,6 +1135,16 @@ pre code {
   color: var(--n-faint);
   margin-top: 16px;
   max-width: 62ch;
+}
+.copy-status:not(.is-shown) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .copy-status:empty {
   display: none;
