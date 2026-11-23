@@ -25,7 +25,7 @@ Use `pnpm format` and `pnpm lint:fix` for automated Oxc formatting and safe lint
 
 The Console development server binds strictly to `http://localhost:5174`; `/v1` requests proxy to the product API on port 4400.
 
-The public introduction is at `http://localhost:5174/landing/`. Run `pnpm --filter @spectro/web dev` to preview it without backend services. `pnpm --filter @spectro/web build` emits both the console and the static landing page; `/` remains the console. See [the landing-page notes](docs/design/LANDING_PAGE.md) for content sources, visual decisions, and verification.
+The public introduction is at `http://localhost:5174/`; the console lives at `http://localhost:5174/app/`. Run `pnpm --filter @spectro/web dev` to preview the landing page without backend services. `pnpm --filter @spectro/web build` emits the static landing page at the root and the console under `app/`. See [the landing-page notes](docs/design/LANDING_PAGE.md) for content sources, visual decisions, and verification.
 
 See `PRODUCT.md`, `AGENTS.md`, and `docs/` before changing protocol or architecture. Product API query usage is documented in `apps/api/README.md`; the current tool and state-management evaluation is recorded in `docs/architecture/STACK_EVALUATION_2026-09-14.md`.
 

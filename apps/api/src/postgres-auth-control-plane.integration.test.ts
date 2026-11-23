@@ -106,9 +106,9 @@ describe('PostgresAuthControlPlane integration', () => {
       state: continuationState,
       codeVerifier: 'verifier',
       nonce: 'nonce',
-      returnPath: '/invite',
+      returnPath: '/app/invite',
     });
-    expect((await store.consumeLoginAttempt(continuationState))?.returnPath).toBe('/invite');
+    expect((await store.consumeLoginAttempt(continuationState))?.returnPath).toBe('/app/invite');
   });
 
   it('enforces live membership and actor identity across HTTP and PostgreSQL', async () => {

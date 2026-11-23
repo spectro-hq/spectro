@@ -60,6 +60,7 @@ Status: accepted unless marked open.
 | ADR-054 | Deploy operator staging on one ARM64 host with private data services, scoped credentials, and a same-origin HTTPS Console.                             |
 | ADR-055 | License the four public SDK/protocol packages under MIT and verify independent-consumer alpha artifacts before npm publication.                        |
 | ADR-056 | Serve a static public landing page at `/landing/` alongside the existing Vite console entry, preserving console routes and authentication.             |
+| ADR-057 | Make the landing page the public root and move the console under `/app/`, re-scoping hosted-auth return paths and Caddy routing.                       |
 
 Detailed records:
 
@@ -86,6 +87,7 @@ Detailed records:
 - [ADR-054: Single-host staging deployment](./ADR-054_SINGLE_HOST_STAGING.md)
 - [ADR-055: SDK license and alpha releases](./ADR-055_SDK_LICENSE_AND_ALPHA_RELEASE.md)
 - [ADR-056: Static public landing entry](./ADR-056_PUBLIC_LANDING_ENTRY.md)
+- [ADR-057: Landing page at root, console under /app/](./ADR-057_LANDING_AT_ROOT_CONSOLE_UNDER_APP.md)
 
 ## Change rule
 

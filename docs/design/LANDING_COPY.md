@@ -1,6 +1,6 @@
 # Spectro landing page: English copy and structure
 
-Status: shipped copy deck for the **The page is a session** redesign at `/landing/`. All product examples use sample data. No customer, adoption, pricing, benchmark, or integration-time claims are made.
+Status: shipped copy deck for the **The page is a session** redesign at `/`. All product examples use sample data. No customer, adoption, pricing, benchmark, or integration-time claims are made.
 
 Every major section carries a spine marker labeled in machine register: `runtime_error`, `context`, `issue`, `web_vital_lcp` + `fetch_request`, `init()`, `privacy`, `faq`, `early_access`.
 

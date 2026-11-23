@@ -3,40 +3,723 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f5f5f7" />
-    <meta name="description" content="Spectro digital product observatory" />
+    <meta name="theme-color" content="#0e1420" />
+    <meta
+      name="description"
+      content="Frontend observability with shared context. Investigate browser errors alongside requests, performance and custom events. Request early access to Spectro."
+    />
+    <meta property="og:title" content="Spectro — Follow the error" />
+    <meta
+      property="og:description"
+      content="Investigate browser errors alongside requests, performance and custom events, with shared session, page and release context."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/landing/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="The Spectro landing hero: a checkout session trace instrument with element_click, fetch_request and runtime_error events sharing session, page and release context. Sample data."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
-    <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-    <link rel="manifest" href="/site.webmanifest" />
-    <title>Spectro · Digital Product Observatory</title>
-    <script>
-      try {
-        const savedTheme = localStorage.getItem('spectro.color-theme');
-        const theme =
-          savedTheme === 'light' || savedTheme === 'dark'
-            ? savedTheme
-            : matchMedia('(prefers-color-scheme: dark)').matches
-              ? 'dark'
-              : 'light';
-        document.documentElement.dataset.theme = theme;
-        document.documentElement.style.colorScheme = theme;
-      } catch {
-        document.documentElement.dataset.theme = 'light';
-      }
-    </script>
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/src/landing/landing.css" />
+    <title>Spectro — Follow the error</title>
   </head>
   <body>
-    <!--
-      THESIS: Make event context a continuous investigation bench, refusing a KPI-card dashboard or an isolated log table.
-      OWN-WORLD: Cool daylight fields, white instruments, ink humanist type, compact mono telemetry, hairlines, and sparse ultraviolet/cyan state.
-      STORY: A developer narrows a project window, scans mixed signals, selects one event, and reads its causal context without leaving the timeline.
-      FIRST VIEWPORT: A slim rail frames a command row and time ruler; below, a 60% event ledger aligns one selected signal with a 40% persistent detail bench.
-      FORM: Focus Bench, ranked 7 and selected from surface seed 299e769a.
-      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
-    -->
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="trace">
+      <div class="field field-night">
+        <header class="site-header">
+          <div class="page-width header-inner">
+            <a class="brand" href="/" aria-label="Spectro home">
+              <img src="/spectro-logo.png" alt="" width="36" height="36" />
+              <span>spectro</span>
+            </a>
+            <nav aria-label="Main navigation">
+              <a href="#product">Product</a>
+              <a href="#developers">SDK</a>
+              <a href="#privacy">Privacy</a>
+            </nav>
+            <a class="console-link" href="/app/">Console</a>
+          </div>
+        </header>
+      </div>
+
+      <main id="main">
+        <div class="field field-night">
+          <section class="hero page-width" aria-labelledby="hero-title">
+            <span class="trace-marker" aria-hidden="true" style="--my: 64px"
+              ><span class="marker-labels"><span>runtime_error</span></span
+              ><span class="marker-dot"></span
+            ></span>
+            <div class="hero-copy">
+              <h1 id="hero-title">
+                Follow the<br />
+                error
+              </h1>
+              <div class="hero-side">
+                <p class="hero-category">Frontend observability with shared context.</p>
+                <p class="hero-description">
+                  Investigate browser errors alongside requests, performance and custom events, with
+                  shared session, page and release context.
+                </p>
+                <div class="hero-actions">
+                  <a
+                    class="button primary"
+                    href="https://github.com/spectro-hq/spectro/issues/new?title=Early%20access%20request&amp;body=I%20would%20like%20to%20try%20Spectro%20with%20a%20real%20project.%0A%0A%23%23%20Frontend%20stack%0A%0A%23%23%20Project%20type%0AIndependent%20project%20%2F%20small%20product%20team%20%2F%20other%0A%0A%23%23%20What%20I%20want%20to%20investigate%0A%0A%23%23%20Public%20project%20URL%20(optional)%0A%0APlease%20reply%20in%20this%20issue.%20I%20understand%20that%20this%20request%20is%20public%20and%20does%20not%20confirm%20access.%20I%20have%20not%20included%20credentials%2C%20private%20project%20details%2C%20or%20customer%20data."
+                    aria-describedby="hero-access-note"
+                    >Request early access</a
+                  >
+                  <a class="text-link" href="#product">Explore the product</a>
+                </div>
+                <p class="hero-note" id="hero-access-note">
+                  Opens a public GitHub issue. A GitHub account is required.
+                </p>
+              </div>
+            </div>
+
+            <div class="signal-instrument">
+              <div class="instrument-top">
+                <strong>Checkout session</strong>
+                <span class="instrument-hint"
+                  >Select an event — this example sends no telemetry.</span
+                >
+                <span class="sample-tag">Sample data</span>
+              </div>
+              <div class="trace-grid">
+                <div class="session-context">
+                  <div class="context-band">
+                    <div class="band-head">
+                      <span class="band-label">session</span
+                      ><span class="band-value">ses_8f3e2c</span>
+                    </div>
+                    <div class="band-track"><span class="band-tick"></span></div>
+                  </div>
+                  <div class="context-band">
+                    <div class="band-head">
+                      <span class="band-label">page</span
+                      ><span class="band-value">/checkout · page_checkout</span>
+                    </div>
+                    <div class="band-track"><span class="band-tick"></span></div>
+                  </div>
+                  <div class="context-band">
+                    <div class="band-head">
+                      <span class="band-label">release</span
+                      ><span class="band-value">web@1.4.2</span>
+                    </div>
+                    <div class="band-track"><span class="band-tick"></span></div>
+                  </div>
+                </div>
+                <div class="timeline-head"><span class="band-label">timeline</span></div>
+                <fieldset class="signal-picker">
+                  <legend class="visually-hidden">Select an event to inspect</legend>
+                  <div class="axis-row" aria-hidden="true">
+                    <span>−60 s</span><span>−30 s</span><span>0 s</span>
+                  </div>
+                  <div class="nodes">
+                    <span class="nodes-line" aria-hidden="true"></span>
+                    <span class="nodes-connector" aria-hidden="true"></span>
+                    <span class="axis-v axis-v-top" aria-hidden="true">−60 s</span>
+                    <span class="axis-v axis-v-bottom" aria-hidden="true">0 s</span>
+                    <div class="signal-choice" style="--x: 25%">
+                      <input
+                        id="signal-click"
+                        type="radio"
+                        name="signal"
+                        value="click"
+                        aria-controls="evidence-click"
+                      />
+                      <label for="signal-click"
+                        ><span class="node-dot" aria-hidden="true"></span
+                        ><span class="node-name">element_click</span
+                        ><span class="node-meta">Interaction · −45 s</span></label
+                      >
+                    </div>
+                    <div class="signal-choice" style="--x: 53.3333%">
+                      <input
+                        id="signal-request"
+                        type="radio"
+                        name="signal"
+                        value="request"
+                        aria-controls="evidence-request"
+                      />
+                      <label for="signal-request"
+                        ><span class="node-dot" aria-hidden="true"></span
+                        ><span class="node-name">fetch_request</span
+                        ><span class="node-meta">Network · −28 s</span></label
+                      >
+                    </div>
+                    <div class="signal-choice" style="--x: 80%">
+                      <input
+                        id="signal-error"
+                        type="radio"
+                        name="signal"
+                        value="error"
+                        aria-controls="evidence-error"
+                        checked
+                      />
+                      <label for="signal-error"
+                        ><span class="node-dot" aria-hidden="true"></span
+                        ><span class="node-name">runtime_error</span
+                        ><span class="node-meta">Error · −12 s</span></label
+                      >
+                    </div>
+                  </div>
+                </fieldset>
+                <div class="drop-cell" aria-hidden="true"><span class="drop-line"></span></div>
+              </div>
+              <div class="signal-evidence" aria-live="polite" aria-atomic="true">
+                <div class="evidence evidence-click" id="evidence-click">
+                  <p class="evidence-name">A deliberate interaction</p>
+                  <p class="evidence-description">
+                    A click on the explicitly marked checkout button.
+                  </p>
+                  <dl>
+                    <div>
+                      <dt>Monitor ID</dt>
+                      <dd>submit-order</dd>
+                    </div>
+                    <div>
+                      <dt>Target</dt>
+                      <dd>button</dd>
+                    </div>
+                  </dl>
+                </div>
+                <div class="evidence evidence-request" id="evidence-request">
+                  <p class="evidence-name">A completed request</p>
+                  <p class="evidence-description">POST shop.example/api/payments</p>
+                  <dl>
+                    <div>
+                      <dt>Response</dt>
+                      <dd>200</dd>
+                    </div>
+                    <div>
+                      <dt>Duration</dt>
+                      <dd>418.2 ms</dd>
+                    </div>
+                  </dl>
+                </div>
+                <div class="evidence evidence-error" id="evidence-error">
+                  <p class="evidence-name">TypeError</p>
+                  <p class="evidence-description">
+                    Cannot read properties of undefined (reading 'id')
+                  </p>
+                  <dl>
+                    <div>
+                      <dt>Source</dt>
+                      <dd>/checkout:412</dd>
+                    </div>
+                    <div>
+                      <dt>Handled</dt>
+                      <dd>No</dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+              <div class="instrument-footer">
+                <p class="evidence-note">
+                  The request returned 200. These events share context; their order does not
+                  establish a cause.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="field field-day">
+          <section id="product" class="page-width" aria-labelledby="product-title">
+            <span class="trace-marker" aria-hidden="true"
+              ><span class="marker-labels"><span>context</span></span
+              ><span class="marker-dot"></span
+            ></span>
+            <h2 id="product-title" class="t2">Keep the context</h2>
+            <p class="section-lede">
+              Select an error. Inspect its page and release, then open its session to explore the
+              events captured there.
+            </p>
+            <div class="context-grid">
+              <figure class="proof-image">
+                <div class="capture-frame">
+                  <a
+                    href="/landing/events.webp"
+                    aria-label="View the full-size event explorer capture"
+                  >
+                    <picture
+                      ><source
+                        media="(max-width: 540px)"
+                        srcset="/landing/event-context.webp"
+                        width="482"
+                        height="714" />
+                      <img
+                        src="/landing/events.webp"
+                        alt="Spectro event explorer: the selected runtime error with its session, page and release context; desktop also shows the surrounding event ledger."
+                        width="1198"
+                        height="716"
+                        loading="lazy"
+                    /></picture>
+                  </a>
+                  <span class="annotate annotate-1" aria-hidden="true">1</span>
+                  <span class="annotate annotate-2" aria-hidden="true">2</span>
+                  <span class="annotate annotate-3" aria-hidden="true">3</span>
+                </div>
+                <figcaption>
+                  <span class="caption-copy"
+                    >The event explorer, with a selected checkout error and its context. Every
+                    product capture on this page uses sample data.
+                    <a class="capture-link" href="/landing/events.webp"
+                      >View full-size capture</a
+                    ></span
+                  ><span class="sample-tag">Sample data</span>
+                </figcaption>
+              </figure>
+              <ol class="investigation-steps">
+                <li>
+                  <strong>Select the error</strong
+                  ><span>Start with the error message and source.</span>
+                </li>
+                <li>
+                  <strong>Read its context</strong
+                  ><span>Keep the session, page and release in view.</span>
+                </li>
+                <li>
+                  <strong>Follow the session</strong
+                  ><span>Inspect other captured events in the same session.</span>
+                </li>
+              </ol>
+            </div>
+          </section>
+
+          <section class="page-width" aria-labelledby="issues-title">
+            <span class="trace-marker" aria-hidden="true"
+              ><span class="marker-labels"><span>issue</span></span
+              ><span class="marker-dot"></span
+            ></span>
+            <div class="split">
+              <figure class="proof-image">
+                <div class="capture-frame">
+                  <a
+                    href="/landing/issues.webp"
+                    aria-label="View the full-size error group capture"
+                  >
+                    <img
+                      src="/landing/issues.webp"
+                      alt="Issue detail with a grouped TypeError, affected sessions, lifecycle status and a link to matching events. Sample data."
+                      width="711"
+                      height="662"
+                      loading="lazy"
+                    />
+                  </a>
+                </div>
+                <figcaption>
+                  <span class="caption-copy"
+                    >28 occurrences, 17 affected sessions and an entry to matching events.
+                    <a class="capture-link" href="/landing/issues.webp"
+                      >View full-size capture</a
+                    ></span
+                  ><span class="sample-tag">Sample data</span>
+                </figcaption>
+              </figure>
+              <div class="split-copy">
+                <h2 id="issues-title" class="t2">Investigate recurring errors</h2>
+                <p>
+                  See occurrences and affected sessions for each error group. Open the matching
+                  events to investigate individual reports.
+                </p>
+                <p class="supporting-copy">
+                  Track open, resolved and ignored issues as your team investigates.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section class="page-width" aria-label="Performance and request details">
+            <span class="trace-marker" aria-hidden="true"
+              ><span class="marker-labels marker-pair"
+                ><span>web_vital_lcp</span><span>fetch_request</span></span
+              ><span class="marker-dot"></span
+            ></span>
+            <div class="pair">
+              <article class="pair-item">
+                <h2 class="t3">Inspect page performance</h2>
+                <p>
+                  Read Web Vitals by page. Compare percentiles and rating distributions, then open
+                  the contributing events with their context.
+                </p>
+                <figure class="proof-image">
+                  <div class="capture-frame">
+                    <a
+                      href="/landing/performance.webp"
+                      aria-label="View the full-size performance capture"
+                    >
+                      <img
+                        src="/landing/performance.webp"
+                        alt="Performance detail for checkout LCP, with percentiles, sample counts and rating distribution. Sample data."
+                        width="711"
+                        height="515"
+                        loading="lazy"
+                      />
+                    </a>
+                  </div>
+                  <figcaption>
+                    <span class="caption-copy"
+                      >Checkout LCP with percentiles and rating distribution.
+                      <a class="capture-link" href="/landing/performance.webp"
+                        >View full-size capture</a
+                      ></span
+                    ><span class="sample-tag">Sample data</span>
+                  </figcaption>
+                </figure>
+              </article>
+              <article class="pair-item">
+                <h2 class="t3">Inspect the request</h2>
+                <p>
+                  Compare request duration, failures and response status by target and page. Move
+                  from a request group to individual network events.
+                </p>
+                <p class="supporting-copy">
+                  Timing and status help you investigate. Request and response bodies are excluded
+                  by default.
+                </p>
+                <figure class="proof-image">
+                  <div class="capture-frame">
+                    <a href="/landing/network.webp" aria-label="View the full-size network capture">
+                      <img
+                        src="/landing/network.webp"
+                        alt="Network detail for checkout requests, with latency percentiles, failures and response status distribution. Sample data."
+                        width="711"
+                        height="586"
+                        loading="lazy"
+                      />
+                    </a>
+                  </div>
+                  <figcaption>
+                    <span class="caption-copy"
+                      >Request timing, failures and response status.
+                      <a class="capture-link" href="/landing/network.webp"
+                        >View full-size capture</a
+                      ></span
+                    ><span class="sample-tag">Sample data</span>
+                  </figcaption>
+                </figure>
+              </article>
+            </div>
+          </section>
+        </div>
+
+        <div class="field field-night">
+          <section id="developers" class="page-width" aria-labelledby="developer-title">
+            <span class="trace-marker" aria-hidden="true"
+              ><span class="marker-labels"><span>init()</span></span
+              ><span class="marker-dot"></span
+            ></span>
+            <div class="dev-grid">
+              <div class="dev-copy">
+                <h2 id="developer-title" class="t2">Connect your browser app</h2>
+                <p>
+                  Initialize the browser SDK with your project and environment. Errors, Web Vitals,
+                  requests and page lifecycles share the same event context.
+                </p>
+                <p>
+                  Add your own product events with <code>track()</code>. Inspect them in the same
+                  event explorer.
+                </p>
+                <p>
+                  Working with a coding agent? The brief gives it everything it needs — install,
+                  init, and instrumentation in one pass.
+                </p>
+                <a
+                  class="text-link"
+                  href="https://github.com/spectro-hq/spectro/blob/main/packages/browser/README.md"
+                  >Read the SDK guide</a
+                >
+              </div>
+              <div class="setup">
+                <div class="agent-brief">
+                  <div class="step-head">
+                    <h3>Hand it to your coding agent</h3>
+                    <button
+                      type="button"
+                      class="copy-button"
+                      data-copy
+                      data-copy-target="agent-brief-text"
+                      data-copy-success="Agent brief copied. Paste it into your coding agent."
+                      aria-label="Copy the coding agent brief"
+                      hidden
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <pre
+                    id="agent-brief-text"
+                    tabindex="0"
+                    aria-label="Brief for an AI coding agent to integrate the browser SDK"
+                  ><code>Integrate the Spectro browser SDK into this app.
+
+Install @spectro/browser@0.1.0-alpha.0, call init() once at
+startup with our projectId, environment, browser write key,
+ingestion origin (no /v1/envelope — the SDK appends it) and
+release, then instrument the key product actions with
+track(). Follow the SDK guide for the API:
+https://github.com/spectro-hq/spectro/blob/main/packages/browser/README.md</code></pre>
+                  <p class="code-note">
+                    Paste it into Claude Code, Cursor, Codex or any agent that can edit your repo.
+                    It performs the same steps below with your real project settings.
+                  </p>
+                </div>
+                <p class="setup-alt"><span>or integrate by hand</span></p>
+                <ol class="setup-steps">
+                  <li>
+                    <div class="step-head">
+                      <h3>Install</h3>
+                      <button
+                        type="button"
+                        class="copy-button"
+                        data-copy
+                        data-copy-target="install-command"
+                        data-copy-success="Install command copied."
+                        aria-label="Copy install command"
+                        hidden
+                      >
+                        Copy
+                      </button>
+                    </div>
+                    <pre
+                      class="install-command"
+                      id="install-command"
+                      tabindex="0"
+                      aria-label="Install the alpha browser SDK"
+                    ><code>npm install @spectro/browser@0.1.0-alpha.0</code></pre>
+                  </li>
+                  <li>
+                    <div class="step-head">
+                      <h3>Initialize and track</h3>
+                      <button
+                        type="button"
+                        class="copy-button"
+                        data-copy
+                        data-copy-target="sdk-example"
+                        data-copy-success="Code copied. Replace the example values with your project settings."
+                        aria-label="Copy setup code"
+                        hidden
+                      >
+                        Copy
+                      </button>
+                    </div>
+                    <pre
+                      tabindex="0"
+                      aria-label="Browser SDK initialization example"
+                    ><code id="sdk-example"><span class="code-keyword">import</span> { init, track } <span class="code-keyword">from</span> <span class="code-string">'@spectro/browser'</span>;
+
+init({
+  projectId: <span class="code-string">'YOUR_PROJECT_ID'</span>,
+  environment: <span class="code-string">'production'</span>,
+  apiKey: <span class="code-string">'YOUR_BROWSER_WRITE_KEY'</span>,
+  endpoint: <span class="code-string">'https://YOUR_INGESTION_ORIGIN'</span>,
+  release: <span class="code-string">'YOUR_APP_RELEASE'</span>,
+});
+
+track(<span class="code-string">'checkout_started'</span>, {
+  source: <span class="code-string">'cart'</span>,
+});</code></pre>
+                    <p class="code-note">
+                      The SDK is in alpha. Replace the example values with your project settings.
+                      Use the ingestion origin without <code>/v1/envelope</code>; the SDK appends
+                      that path. Restrict your browser write key to your app’s allowed origins.
+                    </p>
+                  </li>
+                </ol>
+                <p class="copy-status" role="status" data-copy-status></p>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="field field-day">
+          <section id="privacy" class="page-width" aria-labelledby="privacy-title">
+            <span class="trace-marker" aria-hidden="true"
+              ><span class="marker-labels"><span>privacy</span></span
+              ><span class="marker-dot"></span
+            ></span>
+            <div class="split privacy-split">
+              <div class="split-copy">
+                <h2 id="privacy-title" class="t2">Capture with care</h2>
+                <p>
+                  By default, the browser SDK excludes passwords, input values, cookies,
+                  authorization headers, request and response bodies, and element text. It does not
+                  capture DOM snapshots or screen recordings.
+                </p>
+                <p class="supporting-copy">
+                  Interaction capture observes only explicitly marked elements. Review custom event
+                  properties before sending them; filtering is not a substitute for deciding what
+                  your app should collect.
+                </p>
+              </div>
+              <div class="privacy-ledger">
+                <p class="ledger-title">Not collected by default</p>
+                <ul>
+                  <li>
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                      <circle cx="10" cy="10" r="7" />
+                      <path d="m5.5 5.5 9 9" />
+                    </svg>
+                    passwords
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                      <circle cx="10" cy="10" r="7" />
+                      <path d="m5.5 5.5 9 9" />
+                    </svg>
+                    input values
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                      <circle cx="10" cy="10" r="7" />
+                      <path d="m5.5 5.5 9 9" />
+                    </svg>
+                    cookies
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                      <circle cx="10" cy="10" r="7" />
+                      <path d="m5.5 5.5 9 9" />
+                    </svg>
+                    authorization headers
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                      <circle cx="10" cy="10" r="7" />
+                      <path d="m5.5 5.5 9 9" />
+                    </svg>
+                    request and response bodies
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                      <circle cx="10" cy="10" r="7" />
+                      <path d="m5.5 5.5 9 9" />
+                    </svg>
+                    element text
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                      <circle cx="10" cy="10" r="7" />
+                      <path d="m5.5 5.5 9 9" />
+                    </svg>
+                    DOM snapshots
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                      <circle cx="10" cy="10" r="7" />
+                      <path d="m5.5 5.5 9 9" />
+                    </svg>
+                    screen recordings
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section id="questions" class="page-width" aria-labelledby="faq-title">
+            <span class="trace-marker" aria-hidden="true"
+              ><span class="marker-labels"><span>faq</span></span
+              ><span class="marker-dot"></span
+            ></span>
+            <h2 id="faq-title" class="t3">Before you begin</h2>
+            <div class="faq-list">
+              <details name="questions" open>
+                <summary>What can I investigate today?</summary>
+                <div class="faq-answer">
+                  <p>
+                    Browser errors, performance, network activity and sessions, plus custom events.
+                    Release views and the shared event explorer connect these signals to captured
+                    evidence.
+                  </p>
+                </div>
+              </details>
+              <details name="questions">
+                <summary>Does Spectro record the screen?</summary>
+                <div class="faq-answer">
+                  <p>
+                    No. Spectro captures structured events and their context. Session timelines show
+                    those events; they do not record screens or take DOM snapshots.
+                  </p>
+                </div>
+              </details>
+              <details name="questions">
+                <summary>Is the browser SDK open source?</summary>
+                <div class="faq-answer">
+                  <p>
+                    Yes. The browser, core, types and protocol packages are MIT-licensed. They are
+                    currently in alpha. The hosted platform’s license is separate and has not been
+                    finalized.
+                  </p>
+                  <a
+                    class="text-link"
+                    href="https://github.com/spectro-hq/spectro/tree/main/packages/browser"
+                    >Explore the SDK source</a
+                  >
+                </div>
+              </details>
+              <details name="questions">
+                <summary>How does early access work?</summary>
+                <div class="faq-answer">
+                  <p>
+                    Submit a public request on GitHub with your frontend stack and what you want to
+                    investigate. Do not include credentials, private project details or customer
+                    data. The team can follow up in that issue; a request is not a confirmed
+                    invitation.
+                  </p>
+                </div>
+              </details>
+            </div>
+          </section>
+
+          <section
+            id="early-access"
+            class="closing-section page-width"
+            aria-labelledby="closing-title"
+          >
+            <span class="trace-marker" aria-hidden="true"
+              ><span class="marker-labels"><span>early_access</span></span
+              ><span class="marker-dot"></span
+            ></span>
+            <h2 id="closing-title" class="display">Bring a real project</h2>
+            <p class="closing-copy">
+              Spectro is still evolving. We’re looking for independent developers and small product
+              teams willing to connect a real project and share what helps, what is missing and
+              where setup gets in the way.
+            </p>
+            <a
+              class="button primary"
+              href="https://github.com/spectro-hq/spectro/issues/new?title=Early%20access%20request&amp;body=I%20would%20like%20to%20try%20Spectro%20with%20a%20real%20project.%0A%0A%23%23%20Frontend%20stack%0A%0A%23%23%20Project%20type%0AIndependent%20project%20%2F%20small%20product%20team%20%2F%20other%0A%0A%23%23%20What%20I%20want%20to%20investigate%0A%0A%23%23%20Public%20project%20URL%20(optional)%0A%0APlease%20reply%20in%20this%20issue.%20I%20understand%20that%20this%20request%20is%20public%20and%20does%20not%20confirm%20access.%20I%20have%20not%20included%20credentials%2C%20private%20project%20details%2C%20or%20customer%20data."
+              aria-describedby="access-explanation"
+              >Request early access</a
+            >
+            <p class="access-explanation" id="access-explanation">
+              Opens a prefilled public GitHub issue. A GitHub account is required. Share your
+              frontend stack and what you want to investigate; keep credentials and private data
+              out. The team can reply there — a request does not confirm access or a response time.
+            </p>
+          </section>
+        </div>
+      </main>
+
+      <div class="field field-day field-footer">
+        <footer class="site-footer page-width">
+          <a class="brand" href="/" aria-label="Spectro home"
+            ><img src="/spectro-logo.png" alt="" width="36" height="36" /><span>spectro</span></a
+          >
+          <p>From signals to better products.</p>
+          <nav aria-label="Footer navigation">
+            <a href="https://github.com/spectro-hq/spectro">GitHub</a
+            ><a href="https://github.com/spectro-hq/spectro/blob/main/packages/browser/README.md"
+              >SDK guide</a
+            ><a href="/app/">Console</a>
+          </nav>
+        </footer>
+      </div>
+    </div>
+    <script type="module" src="/src/landing/main.ts"></script>
   </body>
 </html>

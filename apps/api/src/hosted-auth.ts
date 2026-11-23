@@ -253,7 +253,7 @@ export async function requireConsoleSession(
 function redirectToLoginFailure(
   reply: FastifyReply,
   publicOrigin: string,
-  returnPath: '/' | '/invite',
+  returnPath: '/app' | '/app/invite',
 ): FastifyReply {
   const destination = new URL(returnPath, publicOrigin);
   destination.searchParams.set('auth_error', 'login_failed');
@@ -265,7 +265,7 @@ function failLogin(
   options: HostedAuthOptions,
   reason: HostedAuthFailureReason,
   details?: HostedAuthFailureDetails,
-  returnPath: '/' | '/invite' = '/',
+  returnPath: '/app' | '/app/invite' = '/app',
 ): FastifyReply {
   try {
     options.onLoginFailure?.(reason, details);
@@ -325,7 +325,7 @@ export function registerHostedAuth(app: FastifyInstance, options: HostedAuthOpti
     reply.header('cache-control', 'no-store');
     const continuation = z
       .object({
-        returnTo: z.enum(['/', '/invite']).optional(),
+        returnTo: z.enum(['/app', '/app/invite']).optional(),
         prompt: z.literal('login').optional(),
       })
       .strict()
@@ -334,7 +334,7 @@ export function registerHostedAuth(app: FastifyInstance, options: HostedAuthOpti
       return reply
         .code(400)
         .send({ error: { code: 'invalid_request', message: 'Login destination is invalid.' } });
-    const returnPath = continuation.data.returnTo ?? '/';
+    const returnPath = continuation.data.returnTo ?? '/app';
     const state = randomBytes(32).toString('base64url');
     const nonce = randomBytes(32).toString('base64url');
     const codeVerifier = oidc.randomPKCECodeVerifier();
@@ -370,11 +370,11 @@ export function registerHostedAuth(app: FastifyInstance, options: HostedAuthOpti
       return failLogin(reply, options, 'callback_state_invalid');
     }
     let failureReason: HostedAuthFailureReason = 'login_attempt_store_failed';
-    let returnPath: '/' | '/invite' = '/';
+    let returnPath: '/app' | '/app/invite' = '/app';
     try {
       const attempt = await options.controlPlane.consumeLoginAttempt(parsed.data.state);
       if (attempt === undefined) return failLogin(reply, options, 'login_attempt_unavailable');
-      returnPath = attempt.returnPath ?? '/';
+      returnPath = attempt.returnPath ?? '/app';
       if (parsed.data.error !== undefined)
         return failLogin(reply, options, 'provider_rejected', undefined, returnPath);
       if (parsed.data.code === undefined)

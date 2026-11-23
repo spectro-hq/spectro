@@ -15,7 +15,7 @@ interface ProjectMembershipRow extends SessionUserRow {
 interface LoginAttemptRow {
   readonly code_verifier: string;
   readonly nonce: string;
-  readonly return_path: '/' | '/invite';
+  readonly return_path: '/app' | '/app/invite';
 }
 
 function tokenHash(token: string): Buffer {
@@ -41,12 +41,12 @@ export class PostgresAuthControlPlane {
     readonly state: string;
     readonly codeVerifier: string;
     readonly nonce: string;
-    readonly returnPath?: '/' | '/invite';
+    readonly returnPath?: '/app' | '/app/invite';
   }): Promise<void> {
     await this.#sql`DELETE FROM oidc_login_attempts WHERE expires_at < now()`;
     await this.#sql`
       INSERT INTO oidc_login_attempts (state_hash, code_verifier, nonce, expires_at, return_path)
-      VALUES (${tokenHash(input.state)}, ${input.codeVerifier}, ${input.nonce}, now() + interval '10 minutes', ${input.returnPath ?? '/'})
+      VALUES (${tokenHash(input.state)}, ${input.codeVerifier}, ${input.nonce}, now() + interval '10 minutes', ${input.returnPath ?? '/app'})
     `;
   }
 
@@ -54,7 +54,7 @@ export class PostgresAuthControlPlane {
     | {
         readonly codeVerifier: string;
         readonly nonce: string;
-        readonly returnPath?: '/' | '/invite';
+        readonly returnPath?: '/app' | '/app/invite';
       }
     | undefined
   > {
@@ -69,7 +69,7 @@ export class PostgresAuthControlPlane {
       : {
           codeVerifier: row.code_verifier,
           nonce: row.nonce,
-          ...(row.return_path === '/' ? {} : { returnPath: row.return_path }),
+          ...(row.return_path === '/app' ? {} : { returnPath: row.return_path }),
         };
   }
 

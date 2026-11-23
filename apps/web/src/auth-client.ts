@@ -27,5 +27,5 @@ export async function logoutConsole(): Promise<void> {
     headers: { 'x-csrf-token': session.csrfToken },
   });
   if (!response.ok) throw new Error('Sign out failed. Please try again.');
-  window.location.assign('/');
+  window.location.assign('/app/');
 }

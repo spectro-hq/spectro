@@ -64,7 +64,7 @@ export function InviteAcceptance(): ReactNode {
   return (
     <main className="workspace-gate">
       <section className="workspace-setup-panel invitation-acceptance" aria-labelledby="join-title">
-        <a className="wordmark workspace-setup-brand" href="/" aria-label="Spectro">
+        <a className="wordmark workspace-setup-brand" href="/app/" aria-label="Spectro">
           <SpectroMark />
           <span>spectro</span>
         </a>
@@ -89,7 +89,7 @@ export function InviteAcceptance(): ReactNode {
                 then try again.
               </p>
             ) : null}
-            <a className="primary-button" href="/v1/auth/login?returnTo=%2Finvite">
+            <a className="primary-button" href="/v1/auth/login?returnTo=%2Fapp%2Finvite">
               Sign in to continue
             </a>
           </>
@@ -101,14 +101,17 @@ export function InviteAcceptance(): ReactNode {
                 : error.message}
             </p>
             {switchAccount ? (
-              <a className="primary-button" href="/v1/auth/login?returnTo=%2Finvite&prompt=login">
+              <a
+                className="primary-button"
+                href="/v1/auth/login?returnTo=%2Fapp%2Finvite&prompt=login"
+              >
                 {error.code === 'email_unverified'
                   ? 'Sign in again after verification'
                   : 'Sign in with another account'}
               </a>
             ) : error instanceof MemberRequestError &&
               (error.status === 410 || error.code === 'already_member') ? (
-              <a className="secondary-button" href="/">
+              <a className="secondary-button" href="/app/">
                 Open your workspaces
               </a>
             ) : (

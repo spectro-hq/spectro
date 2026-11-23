@@ -18,7 +18,7 @@ const sessionCookie = '__Host-spectro-session=session-credential';
 function setup() {
   const attempts = new Map<
     string,
-    { nonce: string; codeVerifier: string; returnPath?: '/' | '/invite' }
+    { nonce: string; codeVerifier: string; returnPath?: '/app' | '/app/invite' }
   >();
   const resolveSession = vi.fn<HostedAuthOptions['controlPlane']['resolveSession']>(
     async (token) => (token === 'session-credential' ? { userId: 'usr_one' } : undefined),
@@ -88,7 +88,7 @@ describe('hosted product API authentication', () => {
       for (const destination of [
         'https://evil.example',
         '//evil.example',
-        '/invite?token=private',
+        '/app/invite?token=private',
         '/settings',
       ]) {
         expect(
@@ -97,21 +97,21 @@ describe('hosted product API authentication', () => {
             .statusCode,
         ).toBe(400);
       }
-      const login = await app.inject('/v1/auth/login?returnTo=%2Finvite&prompt=login');
+      const login = await app.inject('/v1/auth/login?returnTo=%2Fapp%2Finvite&prompt=login');
       const state = new URL(login.headers.location as string).searchParams.get('state');
       const callback = await app.inject({
         url: `/v1/auth/callback?state=${state}&code=some-code`,
         headers: { cookie: `__Host-spectro-login=${state}` },
       });
-      expect(callback.headers.location).toBe('/invite');
-      const retry = await app.inject('/v1/auth/login?returnTo=%2Finvite');
+      expect(callback.headers.location).toBe('/app/invite');
+      const retry = await app.inject('/v1/auth/login?returnTo=%2Fapp%2Finvite');
       const nextState = new URL(retry.headers.location as string).searchParams.get('state');
       fixture.exchange.mockRejectedValue(new Error('private detail'));
       const failed = await app.inject({
         url: `/v1/auth/callback?state=${nextState}&code=some-code`,
         headers: { cookie: `__Host-spectro-login=${nextState}` },
       });
-      expect(failed.headers.location).toBe(`${origin}/invite?auth_error=login_failed`);
+      expect(failed.headers.location).toBe(`${origin}/app/invite?auth_error=login_failed`);
       expect(failed.body).not.toContain('private detail');
     } finally {
       await app.close();
@@ -134,7 +134,7 @@ describe('hosted product API authentication', () => {
       url: `/v1/auth/callback?state=${state}&code=some-code`,
     });
     expect(missingCookie.statusCode).toBe(302);
-    expect(missingCookie.headers.location).toBe(`${origin}/?auth_error=login_failed`);
+    expect(missingCookie.headers.location).toBe(`${origin}/app?auth_error=login_failed`);
     expect(fixture.onLoginFailure).toHaveBeenCalledWith('callback_state_invalid', undefined);
     expect(fixture.attempts.size).toBe(1);
 
@@ -144,7 +144,7 @@ describe('hosted product API authentication', () => {
       headers: { cookie },
     });
     expect(callback.statusCode).toBe(302);
-    expect(callback.headers.location).toBe('/');
+    expect(callback.headers.location).toBe('/app');
     expect(callback.headers['set-cookie']).toEqual(
       expect.arrayContaining([
         expect.stringContaining('__Host-spectro-session=session-credential'),
@@ -163,7 +163,7 @@ describe('hosted product API authentication', () => {
       headers: { cookie },
     });
     expect(replay.statusCode).toBe(302);
-    expect(replay.headers.location).toBe(`${origin}/?auth_error=login_failed`);
+    expect(replay.headers.location).toBe(`${origin}/app?auth_error=login_failed`);
     expect(fixture.exchange).toHaveBeenCalledOnce();
     expect(fixture.onLoginFailure).toHaveBeenCalledWith('login_attempt_unavailable', undefined);
     await app.close();
@@ -182,7 +182,7 @@ describe('hosted product API authentication', () => {
     });
 
     expect(callback.statusCode).toBe(302);
-    expect(callback.headers.location).toBe(`${origin}/?auth_error=login_failed`);
+    expect(callback.headers.location).toBe(`${origin}/app?auth_error=login_failed`);
     expect(callback.body).not.toContain('Email not verified');
     expect(fixture.attempts.size).toBe(0);
     expect(fixture.exchange).not.toHaveBeenCalled();
@@ -211,7 +211,7 @@ describe('hosted product API authentication', () => {
     });
 
     expect(callback.statusCode).toBe(302);
-    expect(callback.headers.location).toBe(`${origin}/?auth_error=login_failed`);
+    expect(callback.headers.location).toBe(`${origin}/app?auth_error=login_failed`);
     expect(callback.body).not.toContain('private token exchange detail');
     expect(callback.body).not.toContain('private provider detail');
     expect(fixture.onLoginFailure).toHaveBeenCalledOnce();

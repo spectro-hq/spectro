@@ -88,7 +88,7 @@ function AppFrame() {
     return (
       <main className="workspace-gate">
         <section className="workspace-setup-panel auth-gate-panel">
-          <a className="wordmark workspace-setup-brand" href="/" aria-label="Spectro">
+          <a className="wordmark workspace-setup-brand" href="/app/" aria-label="Spectro">
             <SpectroMark />
             <span>spectro</span>
           </a>
@@ -122,7 +122,7 @@ function AppFrame() {
           className="workspace-setup-panel auth-gate-panel"
           aria-labelledby="auth-gate-title"
         >
-          <a className="wordmark workspace-setup-brand" href="/" aria-label="Spectro">
+          <a className="wordmark workspace-setup-brand" href="/app/" aria-label="Spectro">
             <SpectroMark />
             <span>spectro</span>
           </a>
@@ -398,7 +398,7 @@ function WorkspaceSetup({ initialOrganization }: { initialOrganization?: Organiz
   return (
     <main className="workspace-gate">
       <section className="workspace-setup-panel">
-        <a className="wordmark workspace-setup-brand" href="/" aria-label="Spectro">
+        <a className="wordmark workspace-setup-brand" href="/app/" aria-label="Spectro">
           <SpectroMark />
           <span>spectro</span>
         </a>
@@ -549,6 +549,7 @@ const routeTree = rootRoute.addChildren([
 function buildRouter(options?: { readonly history?: RouterHistory; readonly isServer?: boolean }) {
   return createRouter({
     routeTree,
+    basepath: '/app',
     ...(options?.history === undefined ? {} : { history: options.history }),
     ...(options?.isServer === undefined ? {} : { isServer: options.isServer }),
   });
