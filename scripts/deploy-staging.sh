@@ -54,10 +54,12 @@ acceptance() {
   [ "$status" = 200 ] || { printf 'ingest /health: %s\n' "$status" >&2; exit 1; }
   status=$(require_curl "https://$console_host/v1/auth/session")
   [ "$status" = 401 ] || { printf 'auth session must be 401 unauthenticated, got %s\n' "$status" >&2; exit 1; }
-  root_title=$(curl -fsS --max-time 20 "https://$console_host/" | grep -o '<title>[^<]*</title>' | head -1)
+  root_body=$(curl -fsS --max-time 20 "https://$console_host/")
   app_title=$(curl -fsS --max-time 20 "https://$console_host/app/" | grep -o '<title>[^<]*</title>' | head -1)
-  printf '/      %s\n/app/   %s\n' "$root_title" "$app_title"
-  case $root_title in *Spectro*) ;; *) printf 'root did not serve the landing document\n' >&2; exit 1 ;; esac
+  printf '/app/   %s\n' "$app_title"
+  # The console title also contains "Spectro"; check a landing-only marker so a
+  # console-served-at-root misconfiguration cannot pass both assertions.
+  case $root_body in *'class="trace"'*) ;; *) printf 'root did not serve the landing document\n' >&2; exit 1 ;; esac
   case $app_title in *Observatory*) ;; *) printf '/app/ did not serve the console document\n' >&2; exit 1 ;; esac
   printf '%s\n' 'Acceptance passed. Interactive Auth0 login and live SDK delivery remain manual checks.'
 }
@@ -75,15 +77,21 @@ fi
 printf 'Uploading %s to %s:%s\n' "$short" "$host" "$release_dir"
 git archive "$sha" | remote "mkdir -p '$release_dir' && tar -x -C '$release_dir'"
 
-# Server-only env: reuse the most recent release's file, never print it.
+# Server-only env: keep an existing target file on rerun; otherwise copy the
+# most recent prior release's file. Never print contents.
 remote_script -- "$release_dir" <<'EOS'
 set -e
 release_dir=$1
+target=$release_dir/infra/staging/.env
+if [ -f "$target" ]; then
+  chmod 600 "$target"
+  exit 0
+fi
 src=$(ls -t /opt/spectro-releases/*/infra/staging/.env 2>/dev/null | grep -v "^$release_dir" | head -1)
 [ -n "$src" ] || { echo 'No prior infra/staging/.env on host; create it manually first.' >&2; exit 1; }
-cp -a "$src" "$release_dir/infra/staging/.env"
-chmod 600 "$release_dir/infra/staging/.env"
-[ "$(sha256sum "$src" | cut -d' ' -f1)" = "$(sha256sum "$release_dir/infra/staging/.env" | cut -d' ' -f1)" ]
+cp -a "$src" "$target"
+chmod 600 "$target"
+[ "$(sha256sum "$src" | cut -d' ' -f1)" = "$(sha256sum "$target" | cut -d' ' -f1)" ]
 EOS
 
 printf 'Building images on %s (this can take several minutes on ARM64)\n' "$host"
@@ -93,20 +101,38 @@ remote "docker tag spectro-staging-runtime:local spectro-staging-runtime:release
 printf 'Tagged release-%s\n' "$short"
 
 # Record data-service container identities; they must be identical afterwards.
-remote_script -- "$data_services" <<'EOS'
+# Each name is passed as its own argument: SSH joins them into one command
+# line, so they arrive as $1..$N individually.
+remote_script -- $data_services <<'EOS'
 set -e
-for name in $1; do docker ps -q --filter "name=^${name}$"; done | sort > /tmp/spectro-deploy-data-ids
+: > /tmp/spectro-deploy-data-ids
+for name in "$@"; do
+  id=$(docker ps -q --filter "name=^${name}$")
+  [ "$(printf '%s\n' "$id" | wc -l)" = 1 ] && [ -n "$id" ] || { echo "expected exactly one running $name" >&2; exit 1; }
+  health=$(docker inspect --format '{{.State.Health.Status}}' "$name")
+  [ "$health" = healthy ] || { echo "$name is $health, not healthy" >&2; exit 1; }
+  printf '%s %s\n' "$name" "$id" >> /tmp/spectro-deploy-data-ids
+done
 EOS
 
-# Idempotent migration ledger; safe to run when nothing is pending.
-remote "cd '$release_dir' && $compose run --rm migrate"
+# Idempotent migration ledger; safe to run when nothing is pending. --no-deps
+# keeps compose from evaluating postgres: a new release directory changes its
+# ./postgres-init.sh bind-mount source, which would silently recreate the
+# container and interrupt connections (the named volume would survive, the
+# disruption would not be announced).
+remote "cd '$release_dir' && $compose run --rm --no-deps migrate"
 
 printf 'Rolling %s\n' "$app_services"
 remote "cd '$release_dir' && timeout 300 $compose up -d --no-deps --no-build --wait --wait-timeout 120 $app_services"
 
-remote_script -- "$data_services" <<'EOS'
+remote_script -- $data_services <<'EOS'
 set -e
-for name in $1; do docker ps -q --filter "name=^${name}$"; done | sort > /tmp/spectro-deploy-data-ids-after
+: > /tmp/spectro-deploy-data-ids-after
+for name in "$@"; do
+  id=$(docker ps -q --filter "name=^${name}$")
+  [ "$(printf '%s\n' "$id" | wc -l)" = 1 ] && [ -n "$id" ] || { echo "expected exactly one running $name" >&2; exit 1; }
+  printf '%s %s\n' "$name" "$id" >> /tmp/spectro-deploy-data-ids-after
+done
 if ! diff /tmp/spectro-deploy-data-ids /tmp/spectro-deploy-data-ids-after >/dev/null; then
   echo 'DATA SERVICE CONTAINER IDS CHANGED — inspect before trusting this rollout' >&2
   exit 1
