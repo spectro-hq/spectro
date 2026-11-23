@@ -1080,6 +1080,8 @@ figcaption {
   letter-spacing: -0.01em;
 }
 .copy-button {
+  display: inline-flex;
+  align-items: center;
   min-height: 36px;
   padding: 6px 14px;
   font-size: 13px;
