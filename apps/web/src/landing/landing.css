@@ -185,6 +185,7 @@ p {
 .field-day {
   background: var(--ground);
   color: var(--ink);
+  --field-bg: var(--ground);
   --field-ink: var(--ink);
   --field-muted: var(--muted);
   --field-faint: var(--faint);
@@ -201,6 +202,7 @@ p {
 .field-night {
   background: var(--n-ground);
   color: var(--n-ink);
+  --field-bg: var(--n-ground);
   --field-ink: var(--n-ink);
   --field-muted: var(--n-muted);
   --field-faint: var(--n-faint);
@@ -241,7 +243,7 @@ p {
   flex: 0 0 10px;
   border-radius: 50%;
   border: 1.5px solid var(--field-faint);
-  background: transparent;
+  background: var(--field-bg);
 }
 
 @media (min-width: 1100px) {
