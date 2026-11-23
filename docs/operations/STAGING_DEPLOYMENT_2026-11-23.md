@@ -29,8 +29,14 @@ Retained rollback tags: `*-rollback-20261018`, `release-b3e2e9c`.
   and confirmed in `control_plane_migrations`. It widens `oidc_login_attempts.return_path`
   to accept `/app` and `/app/invite` while keeping the previous values readable.
 - Rolling update: `up -d --no-deps --no-build --wait api ingest processor web`.
-  PostgreSQL/NATS/ClickHouse container IDs compared before and after and matched;
-  no volumes touched.
+  No volumes touched.
+- Errata recorded 2026-11-23: the earlier `compose run --rm migrate` (with
+  dependency management enabled) recreated the PostgreSQL container at
+  12:59 UTC — a new release directory changes its `./postgres-init.sh`
+  bind-mount source. The named volume kept all data and no outage was
+  observed, but the container identity did change. `deploy-staging.sh`
+  runs migrations with `--no-deps` and checks data-service identities
+  before and after; NATS and ClickHouse were never recreated.
 - External checks on `https://staging.spectrohq.com`:
   - `/` → 200, `<title>Spectro — Follow the error</title>` (landing)
   - `/app/` → 200, `<title>Spectro · Digital Product Observatory</title>` (console)

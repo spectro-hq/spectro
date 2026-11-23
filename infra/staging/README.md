@@ -23,7 +23,11 @@ docker compose -f infra/staging/compose.yaml ps
 
 Compose reads `.env` adjacent to its first configuration file. PostgreSQL bootstrap creates scoped roles only on a fresh volume. The migration job uses the API schema-owner account and its ordered ledger. The grant job then permits ingestion to read only `project_write_keys`. ClickHouse bootstrap creates the event table and separate SELECT/INSERT users only on a fresh volume. Never change generated database passwords in `.env` without an explicit database credential rotation; restarting containers does not update persisted users.
 
-Caddy serves the static landing page at `/`, the built console SPA under `/app/`, and routes `/v1/*` to the API on the Console HTTPS host. It obtains certificates automatically. The second host routes to ingestion. No database or NATS port is published. The health endpoints are liveness checks, not proof of durable event delivery.
+Caddy serves the static landing page at `/`, the built console SPA under `/app/`, and routes `/v1/*` to the API on the Console HTTPS host.
+
+It obtains certificates automatically. The second host routes to ingestion. No database or NATS port is published. The health endpoints are liveness checks, not proof of durable event delivery.
+
+`scripts/deploy-staging.sh [<sha>]` automates a release from the operator machine: it uploads the tracked tree of `<sha>` (default `HEAD`), reuses the server-side `infra/staging/.env`, builds `release-<sha>` images, runs the migration ledger, rolls `api ingest processor web` with data-service identity checks, and verifies `/health`, `/`, `/app/`, and the auth session endpoint externally. `--verify-only` re-runs the external checks without deploying.
 
 ## Acceptance and operations
 
