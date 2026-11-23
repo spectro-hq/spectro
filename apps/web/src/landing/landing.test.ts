@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve as resolvePath } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import markup from '../../landing/index.html?raw';
+import markup from '../../index.html?raw';
 import { createIllustrativePage } from '../illustrative-events.js';
 import { enhanceLanding } from './enhance.js';
 
@@ -51,7 +51,7 @@ describe('public landing page', () => {
     const picker = page.querySelector('fieldset.signal-picker');
     expect(picker?.querySelector('legend')?.textContent).toContain('Select an event');
     expect(picker?.contains(page.querySelector('#signal-error'))).toBe(true);
-    expect(page.querySelector('.console-link')?.getAttribute('href')).toBe('/');
+    expect(page.querySelector('.console-link')?.getAttribute('href')).toBe('/app/');
     expect(page.querySelector('.hero-actions .text-link')?.getAttribute('href')).toBe('#product');
   });
 

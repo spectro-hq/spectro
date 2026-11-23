@@ -241,7 +241,7 @@ describe('console router navigation', () => {
     const mounted = await mountHostedConsole(`/issues?${liveScope}`, [projectFixture]);
     const { act } = await import('react');
 
-    const settingsLink = mounted.container.querySelector('a[href^="/settings"]');
+    const settingsLink = mounted.container.querySelector('a[href^="/app/settings"]');
     expect(settingsLink).not.toBeNull();
     await act(async () => {
       settingsLink?.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));

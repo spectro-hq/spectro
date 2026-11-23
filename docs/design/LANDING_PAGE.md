@@ -2,9 +2,9 @@
 
 ## Entry and intent
 
-The public page is `apps/web/landing/index.html`, served at `/landing/`. It introduces frontend observability with shared context to independent developers, small product teams and frontend engineers investigating production issues. The primary action requests early access through a real, prefilled GitHub issue. Existing users can still enter the Console at `/`. `apps/web/src/landing/` owns only the public page's CSS and optional enhancement (`main.ts` → `enhance.ts`). Vite emits a separate entry graph; the Console router and authentication are not loaded by the landing page. [ADR-056](../adr/ADR-056_PUBLIC_LANDING_ENTRY.md) records this boundary.
+The public page is `apps/web/index.html`, served at `/`. It introduces frontend observability with shared context to independent developers, small product teams and frontend engineers investigating production issues. The primary action requests early access through a real, prefilled GitHub issue. Existing users can enter the Console at `/app/`. `apps/web/src/landing/` owns only the public page's CSS and optional enhancement (`main.ts` → `enhance.ts`). Vite emits a separate entry graph; the Console router and authentication are not loaded by the landing page. [ADR-056](../adr/ADR-056_PUBLIC_LANDING_ENTRY.md) records the entry boundary and [ADR-057](../adr/ADR-057_LANDING_AT_ROOT_CONSOLE_UNDER_APP.md) the root migration.
 
-Preview with `pnpm --filter @spectro/web dev`, then open `http://localhost:5174/landing/`. The public page needs no backend. Build with `pnpm --filter @spectro/web build`. Hosting the page on a new domain or replacing the Console root is a separate deployment decision.
+Preview with `pnpm --filter @spectro/web dev`, then open `http://localhost:5174/`; the Console dev entry is `http://localhost:5174/app/`. The public page needs no backend. Build with `pnpm --filter @spectro/web build`.
 
 ## Direction: the page is a session
 

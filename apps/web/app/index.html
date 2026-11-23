@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f5f7" />
+    <meta name="description" content="Spectro digital product observatory" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
+    <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <title>Spectro · Digital Product Observatory</title>
+    <script>
+      try {
+        const savedTheme = localStorage.getItem('spectro.color-theme');
+        const theme =
+          savedTheme === 'light' || savedTheme === 'dark'
+            ? savedTheme
+            : matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      } catch {
+        document.documentElement.dataset.theme = 'light';
+      }
+    </script>
+  </head>
+  <body>
+    <!--
+      THESIS: Make event context a continuous investigation bench, refusing a KPI-card dashboard or an isolated log table.
+      OWN-WORLD: Cool daylight fields, white instruments, ink humanist type, compact mono telemetry, hairlines, and sparse ultraviolet/cyan state.
+      STORY: A developer narrows a project window, scans mixed signals, selects one event, and reads its causal context without leaving the timeline.
+      FIRST VIEWPORT: A slim rail frames a command row and time ruler; below, a 60% event ledger aligns one selected signal with a 40% persistent detail bench.
+      FORM: Focus Bench, ranked 7 and selected from surface seed 299e769a.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+    -->
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

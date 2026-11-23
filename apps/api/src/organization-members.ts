@@ -177,7 +177,7 @@ export function registerOrganizationMemberRoutes(
         ...createSchema.parse(request.body),
       });
       const { token, ...invitation } = result;
-      const link = new URL('/invite', auth.publicOrigin);
+      const link = new URL('/app/invite', auth.publicOrigin);
       link.hash = new URLSearchParams({ token }).toString();
       return reply.code(201).send({ ...invitation, link: link.href });
     }),

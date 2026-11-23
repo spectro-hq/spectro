@@ -8,8 +8,8 @@ export default defineConfig({
   build: {
     rolldownOptions: {
       input: {
-        console: fileURLToPath(new URL('./index.html', import.meta.url)),
-        landing: fileURLToPath(new URL('./landing/index.html', import.meta.url)),
+        landing: fileURLToPath(new URL('./index.html', import.meta.url)),
+        console: fileURLToPath(new URL('./app/index.html', import.meta.url)),
       },
     },
   },
